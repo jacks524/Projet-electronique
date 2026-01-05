@@ -56,7 +56,13 @@ public class User implements UserDetails {
   private boolean isActive = true;
 
   @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-  private List<UserRole> roles;
+  @JoinTable(
+       name = "user_roles",
+       joinColumns = @JoinColumn(name = "user_id"),
+       inverseJoinColumns = @JoinColumn(name = "role_id")
+   )
+   private List<UserRole> roles;
+
 
   @ManyToMany
   @JoinTable(name = "teacher_subjects", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "subject_id"))
