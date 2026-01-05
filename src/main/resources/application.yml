@@ -2,7 +2,7 @@ spring:
   application:
     name: studam-web
   datasource:
-    url: jdbc:mysql://${DATABASE_HOST:localhost}:${DATABASE_PORT:3308}/${DATABASE_NAME:studam_database}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://${DATABASE_HOST:localhost}:${DATABASE_PORT:3308}/${DATABASE_NAME:studam_database}?sslMode=${DATABASE_SSL_MODE:DISABLED}&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: ${DATABASE_USER:root}
     password: ${DATABASE_PASSWORD:open2021}
     driver-class-name: com.mysql.cj.jdbc.Driver
