@@ -1,2 +1,13 @@
-# Projet d'électronique: Système d'empreinte digitale
-# Le projet d'électronique consiste à créer un système d'empreinte digitale pour l'appel à l'aide d'Arduino. Le système se devra de remplacer la classique liste de présence faite pendant les cours.
+# studam-web
+Ce projet est la partie web de l'application STUDAM
+## Lancement local (backend)
+1. Démarrer la DB
+   docker compose up -d db
+
+2. Charger les variables d'environnement
+   export $(grep -v '^#' .env | xargs)
+
+3. Lancer l'application
+   ./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=${SERVER_PORT}
+
+Swagger: http://localhost:8081/api/swagger-ui/index.html

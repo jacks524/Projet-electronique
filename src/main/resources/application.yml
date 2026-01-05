@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: studam-web
+  datasource:
+    url: jdbc:mysql://${DATABASE_HOST:localhost}:${DATABASE_PORT:3308}/${DATABASE_NAME:studam_database}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${DATABASE_USER:root}
+    password: ${DATABASE_PASSWORD:open2021}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: tchassidaniel@gmail.com
+    password: ovvc rwfi wfwm xdca
+
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enabled: true
+            required: true
+
+server:
+  servlet:
+    context-path: /api
+
+app:
+  frontend:
+    url: http://localhost:3000

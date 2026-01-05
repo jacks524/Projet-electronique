@@ -1,0 +1,28 @@
+package enspy.studam.studam_web.dto.responseDTO;
+
+import enspy.studam.studam_web.dto.responseDTO.departmentDTO.DepartementResponseDTO;
+import enspy.studam.studam_web.models.Subject;
+import lombok.Data;
+
+@Data
+public class SubjectResponseDTO {
+  private int subjectId;
+
+  private String name;
+
+  private String description;
+
+  private String code;
+
+  DepartementResponseDTO department;
+
+  public static SubjectResponseDTO toDTO(Subject subject) {
+    SubjectResponseDTO dto = new SubjectResponseDTO();
+    dto.setSubjectId(subject.getSubjectId());
+    dto.setName(subject.getName());
+    dto.setDescription(subject.getDescription());
+    dto.setCode(subject.getCode());
+    dto.setDepartment(DepartementResponseDTO.toDTO(subject.getDepartment()));
+    return dto;
+  }
+}
