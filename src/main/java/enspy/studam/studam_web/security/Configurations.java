@@ -38,6 +38,8 @@ public class Configurations {
                   .requestMatchers("/user/signin").permitAll()
                   .requestMatchers("/user/forgot-password").permitAll()
                   .requestMatchers("/user/reset-password").permitAll()
+                  .requestMatchers("/public/time").permitAll()
+                  .requestMatchers("/public/time/**").permitAll()
                   .requestMatchers("/swagger-ui/**").permitAll()
                   .requestMatchers("/v3/api-docs/**").permitAll()
                   .anyRequest().authenticated();
