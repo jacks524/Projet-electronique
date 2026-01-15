@@ -4,7 +4,7 @@
  * À utiliser en développement pour voir exactement ce qui se passe
  */
 
-const BACKEND_URL = 'https://tchassidaniel-spring-boot-app--8080.prod2b.defang.dev/api';
+const BACKEND_URL = 'https://projet-electronique.onrender.com/api';
 
 /**
  * 🔍 Teste la connectivité de base au backend avec debug complet

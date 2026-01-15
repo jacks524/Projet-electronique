@@ -120,11 +120,12 @@ export default function CreateUser() {
             newErrors.username = "Le nom d'utilisateur ne peut contenir que des lettres, chiffres et tirets bas";
         }
 
-        // Validation téléphone
+        // Validation telephone
+        const phoneDigits = formData.phoneNumber.replace(/\D/g, '');
         if (!formData.phoneNumber.trim()) {
-            newErrors.phoneNumber = "Le numéro de téléphone est requis";
-        } else if (!/^[\+]?[0-9\s\-\(\)]{8,15}$/.test(formData.phoneNumber.replace(/\s/g, ''))) {
-            newErrors.phoneNumber = "Le numéro de téléphone n'est pas valide";
+            newErrors.phoneNumber = "Le numero de telephone est requis";
+        } else if (phoneDigits.length < 9 || phoneDigits.length > 12) {
+            newErrors.phoneNumber = "Le numero de telephone doit contenir entre 9 et 12 chiffres";
         }
 
         // Validation mot de passe
@@ -141,6 +142,11 @@ export default function CreateUser() {
             newErrors.password_confirmation = "La confirmation du mot de passe est requise";
         } else if (formData.password !== formData.password_confirmation) {
             newErrors.password_confirmation = "Les mots de passe ne correspondent pas";
+        }
+
+        // Validation matricule
+        if (!formData.matricule.trim()) {
+            newErrors.matricule = "Le matricule est requis";
         }
 
         // Validation rôle
@@ -402,7 +408,7 @@ export default function CreateUser() {
                                 {/* Matricule*/}
                                 <div className="space-y-2">
                                     <label htmlFor="matricule" className="block text-sm font-medium text-gray-700">
-                                        Matricule
+                                        Matricule <span className="text-red-500">*</span>
                                     </label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

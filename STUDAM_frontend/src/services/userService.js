@@ -146,11 +146,12 @@ const remove = async (userId) => {
 
 const register = async (userData) => {
     try {
+        const normalizedPhoneNumber = (userData.phoneNumber || '').replace(/\D/g, '');
         const payload = {
             name: userData.name,
             email: userData.email,
             password: userData.password,
-            phoneNumber: userData.phoneNumber,
+            phoneNumber: normalizedPhoneNumber,
             username: userData.username,
             matricule: userData.matricule,
             role: userData.role.toUpperCase(),
