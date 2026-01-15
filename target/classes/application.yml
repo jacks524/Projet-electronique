@@ -2,7 +2,7 @@ spring:
   application:
     name: studam-web
   datasource:
-    url: jdbc:mysql://${DATABASE_HOST:localhost}:${DATABASE_PORT:3308}/${DATABASE_NAME:studam_database}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://${DATABASE_HOST:localhost}:${DATABASE_PORT:3308}/${DATABASE_NAME:studam_database}?sslMode=${DATABASE_SSL_MODE:DISABLED}&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: ${DATABASE_USER:root}
     password: ${DATABASE_PASSWORD:open2021}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -28,9 +28,74 @@ spring:
             required: true
 
 server:
+  port: ${PORT:8080}
   servlet:
     context-path: /api
 
 app:
   frontend:
     url: http://localhost:3000
+  schedule:
+    time-zone: Africa/Douala
+    default-room: gi4-sem1
+    rooms:
+      gi4-sem1:
+        MONDAY:
+          - start-time: "08:00"
+            end-time: "10:00"
+            course-name: "Cours Grammaires et Langages"
+          - start-time: "10:15"
+            end-time: "12:15"
+            course-name: "Cours Electronique et Interfacage"
+          - start-time: "13:30"
+            end-time: "15:30"
+            course-name: "Cours Technique de Management"
+          - start-time: "15:45"
+            end-time: "17:45"
+            course-name: "Cours Anglais"
+        TUESDAY:
+          - start-time: "08:00"
+            end-time: "10:00"
+            course-name: "Cours Analyse de Donnee"
+          - start-time: "10:15"
+            end-time: "12:15"
+            course-name: "TD/TP Machine Learning I"
+          - start-time: "13:30"
+            end-time: "15:30"
+            course-name: "TD/TP Electronique et Interfacage"
+          - start-time: "15:45"
+            end-time: "17:45"
+            course-name: "Cours Machine Learning I"
+        WEDNESDAY:
+          - start-time: "08:00"
+            end-time: "10:00"
+            course-name: "Cours Admin Reseaux"
+          - start-time: "10:15"
+            end-time: "12:15"
+            course-name: "TD Grammaire et Langages"
+          - start-time: "13:30"
+            end-time: "15:30"
+            course-name: "Cours Interface Homme Machine"
+        THURSDAY:
+          - start-time: "08:00"
+            end-time: "10:00"
+            course-name: "TD/TP Analyse de Donnee"
+          - start-time: "10:15"
+            end-time: "12:15"
+            course-name: "Conduite de Projets"
+          - start-time: "13:30"
+            end-time: "15:30"
+            course-name: "TD/TP Interface Homme Machine"
+          - start-time: "15:45"
+            end-time: "17:45"
+            course-name: "Cours Programmation Web"
+        FRIDAY:
+          - start-time: "08:00"
+            end-time: "10:00"
+            course-name: "TD/TP Programmation Web"
+          - start-time: "10:15"
+            end-time: "12:15"
+            course-name: "TD/TP Administration Reseau"
+          - start-time: "13:30"
+            end-time: "15:30"
+            course-name: "TD/TP Technique de Management"
