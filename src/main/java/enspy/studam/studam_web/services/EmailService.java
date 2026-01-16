@@ -11,15 +11,22 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class EmailService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(EmailService.class);
 
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
+
+    @Value("${app.mail.enabled:true}")
+    private boolean mailEnabled;
 
     public EmailService(JavaMailSender mailSender, TemplateEngine templateEngine) {
         this.mailSender = mailSender;
@@ -28,6 +35,10 @@ public class EmailService {
 
     @Async
     public void sendPasswordResetEmail(String to, String name, String token) throws MessagingException {
+        if (!mailEnabled) {
+            LOG.info("Email disabled; skipping password reset email to {}", to);
+            return;
+        }
         Context context = new Context();
         context.setVariable("name", name);
         context.setVariable("resetLink", frontendUrl + "/auth/reset-password?token=" + token);
@@ -46,6 +57,10 @@ public class EmailService {
     @Async
     public void sendWelcomeEmail(String to, String name, String username, String password, String role)
             throws MessagingException {
+        if (!mailEnabled) {
+            LOG.info("Email disabled; skipping welcome email to {}", to);
+            return;
+        }
         Context context = new Context();
         context.setVariable("name", name);
         context.setVariable("username", username);

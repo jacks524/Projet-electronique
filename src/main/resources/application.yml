@@ -35,6 +35,8 @@ server:
 app:
   frontend:
     url: http://localhost:3000
+  mail:
+    enabled: ${APP_MAIL_ENABLED:true}
   schedule:
     time-zone: Africa/Douala
     default-room: gi4-sem1
