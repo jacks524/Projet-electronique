@@ -34,14 +34,15 @@ public class Configurations {
         .cors(Customizer.withDefaults())
         .authorizeHttpRequests(
             (auth) -> {
-              auth.requestMatchers("/user/register").permitAll()
-                  .requestMatchers("/user/signin").permitAll()
-                  .requestMatchers("/user/forgot-password").permitAll()
-                  .requestMatchers("/user/reset-password").permitAll()
-                  .requestMatchers("/public/time").permitAll()
-                  .requestMatchers("/public/time/**").permitAll()
-                  .requestMatchers("/swagger-ui/**").permitAll()
-                  .requestMatchers("/v3/api-docs/**").permitAll()
+              auth.requestMatchers("/user/register", "/api/user/register").permitAll()
+                  .requestMatchers("/user/signin", "/api/user/signin").permitAll()
+                  .requestMatchers("/user/forgot-password", "/api/user/forgot-password").permitAll()
+                  .requestMatchers("/user/reset-password", "/api/user/reset-password").permitAll()
+                  .requestMatchers("/fingerprint/text", "/api/fingerprint/text").permitAll()
+                  .requestMatchers("/public/time", "/api/public/time").permitAll()
+                  .requestMatchers("/public/time/**", "/api/public/time/**").permitAll()
+                  .requestMatchers("/swagger-ui/**", "/api/swagger-ui/**").permitAll()
+                  .requestMatchers("/v3/api-docs/**", "/api/v3/api-docs/**").permitAll()
                   .anyRequest().authenticated();
             })
         .exceptionHandling(ex -> ex

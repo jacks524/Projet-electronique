@@ -21,6 +21,12 @@ public class SubjectLookupService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found"));
   }
 
+  public Subject getSubjectByName(String name) {
+    return this.subjectRepository.findByNameIgnoreCase(name)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "Subject not found with name: " + name));
+  }
+
   public boolean isTeacherAssignToSubject(User teacher, Subject subject) {
     return this.subjectRepository.existsBySubjectIdAndTeachers(subject.getSubjectId(), Collections.singleton(teacher));
   }
