@@ -1,16 +1,34 @@
 package enspy.studam.studam_web.controllers;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import enspy.studam.studam_web.dto.responseDTO.StatisticsResponseDTO;
+import enspy.studam.studam_web.dto.responseDTO.report.RecentActivityResponseDTO;
+import enspy.studam.studam_web.dto.responseDTO.report.TeacherAttendanceReportDTO;
 import enspy.studam.studam_web.enumeration.UserRoleEnum;
-import enspy.studam.studam_web.services.DepartmentService;
-import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
+import enspy.studam.studam_web.models.AttendanceSession;
+import enspy.studam.studam_web.models.Department;
+import enspy.studam.studam_web.models.User;
+import enspy.studam.studam_web.repositories.AttendanceSessionRepository;
+import enspy.studam.studam_web.repositories.UserRepository;
 import enspy.studam.studam_web.services.lookup.StudentLookupService;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
+import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
 import lombok.AllArgsConstructor;
 
 @RestController
@@ -21,6 +39,8 @@ public class ReportController {
   private final DepartmentLookupService departmentLookupService;
   private final UserLookupService userLookupService;
   private final StudentLookupService studentLookupService;
+  private final AttendanceSessionRepository attendanceSessionRepository;
+  private final UserRepository userRepository;
 
   @GetMapping("/statistics")
   public ResponseEntity<StatisticsResponseDTO> getStatistics() {
@@ -31,5 +51,89 @@ public class ReportController {
     statistics.setTotalUsers(userLookupService.countAllUsers());
 
     return ResponseEntity.ok(statistics);
+  }
+
+  @GetMapping("/admin/recent-activity")
+  public ResponseEntity<List<RecentActivityResponseDTO>> getRecentActivity(
+      @RequestParam(defaultValue = "20") int limit) {
+    int pageSize = Math.max(1, Math.min(limit, 50));
+    List<RecentActivityResponseDTO> activities = new ArrayList<>();
+
+    List<AttendanceSession> sessions = attendanceSessionRepository
+        .findRecentSessions(PageRequest.of(0, pageSize));
+    for (AttendanceSession session : sessions) {
+      String subjectName = session.getSubject() != null ? session.getSubject().getName() : "Matiere";
+      String teacherName = session.getTeacher() != null ? session.getTeacher().getName() : "Enseignant";
+      activities.add(new RecentActivityResponseDTO(
+          "attendance-" + session.getAttendanceSessionId(),
+          "Session de presence: " + subjectName + " (" + teacherName + ")",
+          session.getDate(),
+          "attendance"));
+    }
+
+    List<User> users = userRepository.findRecentUsers(PageRequest.of(0, pageSize));
+    for (User user : users) {
+      activities.add(new RecentActivityResponseDTO(
+          "user-" + user.getId(),
+          "Nouvel utilisateur: " + user.getName(),
+          user.getCreatedDate(),
+          "user"));
+    }
+
+    activities.sort(Comparator.comparing(RecentActivityResponseDTO::getTimestamp,
+        Comparator.nullsLast(Comparator.reverseOrder())));
+    if (activities.size() > pageSize) {
+      activities = activities.subList(0, pageSize);
+    }
+    return ResponseEntity.ok(activities);
+  }
+
+  @GetMapping("/teachers-attendance")
+  public ResponseEntity<List<TeacherAttendanceReportDTO>> getTeachersAttendance(
+      @RequestParam(required = false) Integer departmentId,
+      @RequestParam(required = false) Integer teacherId,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam(required = false) String status) {
+
+    Department department = departmentId != null ? departmentLookupService.getDepartmentById(departmentId) : null;
+    User teacher = teacherId != null ? userLookupService.getUserById(teacherId) : null;
+
+    LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+    LocalDateTime endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX) : null;
+
+    List<AttendanceSession> sessions = attendanceSessionRepository.searchSessions(teacher, department, startDateTime,
+        endDateTime);
+
+    String normalizedStatus = status != null ? status.trim().toUpperCase() : null;
+    if (normalizedStatus != null && !normalizedStatus.isEmpty()
+        && !normalizedStatus.equals("ALL")
+        && !normalizedStatus.equals("VALIDATED")
+        && !normalizedStatus.equals("PENDING")) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status value");
+    }
+
+    List<TeacherAttendanceReportDTO> results = new ArrayList<>();
+    for (AttendanceSession session : sessions) {
+      boolean validated = session.isValidated();
+      String sessionStatus = validated ? "VALIDATED" : "PENDING";
+      if (normalizedStatus != null && !normalizedStatus.isEmpty()
+          && !normalizedStatus.equals("ALL")
+          && !sessionStatus.equals(normalizedStatus)) {
+        continue;
+      }
+      String departmentName = session.getSubject() != null && session.getSubject().getDepartment() != null
+          ? session.getSubject().getDepartment().getName()
+          : (department != null ? department.getName() : null);
+      results.add(new TeacherAttendanceReportDTO(
+          session.getAttendanceSessionId(),
+          session.getTeacher() != null ? session.getTeacher().getName() : null,
+          departmentName,
+          session.getDate(),
+          session.getSubject() != null ? session.getSubject().getName() : null,
+          sessionStatus));
+    }
+
+    return ResponseEntity.ok(results);
   }
 }

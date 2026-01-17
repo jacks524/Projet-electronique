@@ -2,6 +2,7 @@ package enspy.studam.studam_web.services;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDateTime;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -111,7 +112,12 @@ public class LoginService {
     user.setPassword(new BCryptPasswordEncoder().encode(registerRequestDTO.getPassword()));
     user.setPhoneNumber(registerRequestDTO.getPhoneNumber());
     user.setMatricule(registerRequestDTO.getMatricule());
-    user.setActive(true);
+    if (registerRequestDTO.getActive() != null) {
+      user.setActive(registerRequestDTO.getActive());
+    } else {
+      user.setActive(true);
+    }
+    user.setCreatedDate(LocalDateTime.now());
 
     UserRole role = new UserRole(registerRequestDTO.getRole());
     List<UserRole> roles = new ArrayList<>();
@@ -180,6 +186,15 @@ public class LoginService {
     user.setEmail(userRequestDTO.getEmail());
     user.setPhoneNumber(userRequestDTO.getPhoneNumber());
     user.setMatricule(userRequestDTO.getMatricule());
+    if (userRequestDTO.getActive() != null) {
+      user.setActive(userRequestDTO.getActive());
+    }
+    if (userRequestDTO.getRole() != null) {
+      user = this.userLookupService.UpdateUserRoles(user, userRequestDTO.getRole());
+    }
+    if (userRequestDTO.getDepartmentsIds() != null) {
+      departmentLookupService.updateDepartmentsForUser(userRequestDTO.getDepartmentsIds(), user);
+    }
     return this.userRepository.save(user);
   }
 

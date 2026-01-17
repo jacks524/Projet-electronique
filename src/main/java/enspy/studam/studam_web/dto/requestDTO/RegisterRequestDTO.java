@@ -35,4 +35,6 @@ public class RegisterRequestDTO {
   String matricule;
 
   List<Integer> departmentsIds;
+
+  Boolean active;
 }

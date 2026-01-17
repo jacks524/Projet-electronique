@@ -38,11 +38,28 @@ public class DepartmentLookupService {
   }
 
   @Transactional
+  public Department saveDepartment(Department department) {
+    return departmentRepository.save(department);
+  }
+
+  @Transactional
   public void assignDepartmentsToUser(List<Integer> departmentsIds, User user) {
     for (int departmentId : departmentsIds) {
       Department department = this.getDepartmentById(departmentId);
       department.addTeacher(user);
       departmentRepository.save(department);
     }
+  }
+
+  @Transactional
+  public void updateDepartmentsForUser(List<Integer> departmentsIds, User user) {
+    for (Department department : new java.util.HashSet<>(user.getDepartments())) {
+      department.removeTeacher(user);
+      departmentRepository.save(department);
+    }
+    if (departmentsIds == null || departmentsIds.isEmpty()) {
+      return;
+    }
+    assignDepartmentsToUser(departmentsIds, user);
   }
 }

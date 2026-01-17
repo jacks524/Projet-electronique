@@ -63,6 +63,19 @@ public class UserService implements UserDetailsService {
     Department department = this.departmentLookupService.getDepartmentById(departmentId);
     List<User> users = this.userRepository.getUsersByRoleAndDepartment(role, department);
 
+    if (users.isEmpty() && role == UserRoleEnum.DEPARTMENT_MANAGER) {
+      User manager = department.getDepartmentManager();
+      if (manager != null) {
+        department.addTeacher(manager);
+        department = this.departmentLookupService.saveDepartment(department);
+        users = List.of(manager);
+      }
+    }
+    if (role == UserRoleEnum.DEPARTMENT_MANAGER && users.size() == 1 && department.getDepartmentManager() == null) {
+      department.setDepartmentManager(users.get(0));
+      this.departmentLookupService.saveDepartment(department);
+    }
+
     return users.stream().map(user -> {
       return TeacherResponseDTO.toDTO(user, user.getSubjects());
     }).toList();

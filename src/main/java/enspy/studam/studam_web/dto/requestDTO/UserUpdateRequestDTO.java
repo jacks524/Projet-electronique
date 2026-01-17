@@ -1,5 +1,8 @@
 package enspy.studam.studam_web.dto.requestDTO;
 
+import java.util.List;
+
+import enspy.studam.studam_web.enumeration.UserRoleEnum;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -21,4 +24,10 @@ public class UserUpdateRequestDTO {
 
   @NotNull(message = "matricule must be not null")
   String matricule;
+
+  UserRoleEnum role;
+
+  List<Integer> departmentsIds;
+
+  Boolean active;
 }

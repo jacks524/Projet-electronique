@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import enspy.studam.studam_web.enumeration.UserRoleEnum;
@@ -46,6 +47,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
   long countByRoles(List<UserRole> roles);
 
-  @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE r.role = :role")
+  @Query("SELECT COUNT(DISTINCT u.id) FROM User u JOIN u.roles r WHERE r.role = :role")
   long countByUserRoleEnum(UserRoleEnum role);
+
+  @Query("SELECT u FROM User u WHERE u.createdDate IS NOT NULL ORDER BY u.createdDate DESC")
+  List<User> findRecentUsers(Pageable pageable);
 }
