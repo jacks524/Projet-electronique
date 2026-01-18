@@ -16,8 +16,10 @@ public class UserResponseDTO {
   private String username;
   private String matricule;
   private List<UserRole> roles;
+  private boolean active;
 
   private List<String> departmentsNames;
+  private List<Integer> departmentsIds;
   private LocalDateTime lastConnection;
 
   public static UserResponseDTO toDTO(User user) {
@@ -29,8 +31,12 @@ public class UserResponseDTO {
     dto.setUsername(user.getUsername());
     dto.setRoles(user.getRoles());
     dto.setMatricule(user.getMatricule());
+    dto.setActive(user.isActive());
     dto.setDepartmentsNames(user.getDepartments().stream()
         .map(department -> department.getName())
+        .toList());
+    dto.setDepartmentsIds(user.getDepartments().stream()
+        .map(department -> department.getDepartmentId())
         .toList());
     dto.setLastConnection(user.getLastConnection());
 

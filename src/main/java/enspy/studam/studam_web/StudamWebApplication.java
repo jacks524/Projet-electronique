@@ -3,6 +3,7 @@ package enspy.studam.studam_web;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.context.annotation.Bean;
 
 import io.swagger.v3.oas.models.ExternalDocumentation;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.models.info.License;
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
+@EnableAsync
 public class StudamWebApplication {
 
 	public static void main(String[] args) {
