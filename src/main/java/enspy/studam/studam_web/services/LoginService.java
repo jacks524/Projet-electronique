@@ -20,6 +20,7 @@ import enspy.studam.studam_web.dto.requestDTO.ResetPasswordRequestDTO;
 import enspy.studam.studam_web.dto.requestDTO.UserUpdateRequestDTO;
 import enspy.studam.studam_web.dto.responseDTO.TokenDTO;
 import enspy.studam.studam_web.dto.responseDTO.UserResponseDTO;
+import enspy.studam.studam_web.enumeration.UserRoleEnum;
 import enspy.studam.studam_web.models.Department;
 import enspy.studam.studam_web.models.Subject;
 import enspy.studam.studam_web.models.User;
@@ -104,6 +105,18 @@ public class LoginService {
       });
     }
 
+    if (registerRequestDTO.getRole() == UserRoleEnum.DEPARTMENT_MANAGER) {
+      if (registerRequestDTO.getDepartmentsIds() == null || registerRequestDTO.getDepartmentsIds().size() != 1) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            "Department manager must belong to exactly one department");
+      }
+      Department department = departmentLookupService.getDepartmentById(registerRequestDTO.getDepartmentsIds().get(0));
+      if (department.getDepartmentManager() != null) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            "Department already has a manager");
+      }
+    }
+
     User user = new User();
 
     user.setEmail(registerRequestDTO.getEmail());
@@ -136,7 +149,11 @@ public class LoginService {
 
     // Assign departments if provided
     if (registerRequestDTO.getDepartmentsIds() != null && !registerRequestDTO.getDepartmentsIds().isEmpty()) {
-      departmentLookupService.assignDepartmentsToUser(registerRequestDTO.getDepartmentsIds(), user);
+      if (registerRequestDTO.getRole() == UserRoleEnum.DEPARTMENT_MANAGER) {
+        departmentLookupService.assignDepartmentManager(registerRequestDTO.getDepartmentsIds().get(0), user);
+      } else {
+        departmentLookupService.assignDepartmentsToUser(registerRequestDTO.getDepartmentsIds(), user);
+      }
     }
 
     return user;
@@ -181,6 +198,9 @@ public class LoginService {
 
   public User updateUser(int id, UserUpdateRequestDTO userRequestDTO) {
     User user = this.userLookupService.getUserById(id);
+    UserRoleEnum currentRole = user.getRoles().stream().findFirst()
+        .map(UserRole::getRole).orElse(null);
+    UserRoleEnum targetRole = userRequestDTO.getRole() != null ? userRequestDTO.getRole() : currentRole;
     user.setName(userRequestDTO.getName());
     user.setUsername(userRequestDTO.getUsername());
     user.setEmail(userRequestDTO.getEmail());
@@ -193,6 +213,13 @@ public class LoginService {
       user = this.userLookupService.UpdateUserRoles(user, userRequestDTO.getRole());
     }
     if (userRequestDTO.getDepartmentsIds() != null) {
+      if (targetRole == UserRoleEnum.DEPARTMENT_MANAGER) {
+        if (userRequestDTO.getDepartmentsIds().size() != 1) {
+          throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+              "Department manager must belong to exactly one department");
+        }
+        departmentLookupService.assignDepartmentManager(userRequestDTO.getDepartmentsIds().get(0), user);
+      }
       departmentLookupService.updateDepartmentsForUser(userRequestDTO.getDepartmentsIds(), user);
     }
     return this.userRepository.save(user);

@@ -18,10 +18,12 @@ import enspy.studam.studam_web.enumeration.UserRoleEnum;
 import enspy.studam.studam_web.models.Department;
 import enspy.studam.studam_web.models.Subject;
 import enspy.studam.studam_web.models.User;
+import enspy.studam.studam_web.models.UserRole;
 import enspy.studam.studam_web.repositories.DepartmentRepository;
 import enspy.studam.studam_web.repositories.UserRepository;
 import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
 import enspy.studam.studam_web.services.lookup.SubjectLookupService;
+import enspy.studam.studam_web.services.lookup.StudentLookupService;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -36,6 +38,7 @@ public class UserService implements UserDetailsService {
   private UserLookupService userLookupService;
   private SubjectLookupService subjectLookupService;
   private DepartmentLookupService departmentLookupService;
+  private final StudentLookupService studentLookupService;
 
   @Override
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -60,20 +63,26 @@ public class UserService implements UserDetailsService {
   }
 
   public List<TeacherResponseDTO> getUsersByRoleAndDepartment(UserRoleEnum role, int departmentId) {
-    Department department = this.departmentLookupService.getDepartmentById(departmentId);
-    List<User> users = this.userRepository.getUsersByRoleAndDepartment(role, department);
+    List<User> users;
 
-    if (users.isEmpty() && role == UserRoleEnum.DEPARTMENT_MANAGER) {
-      User manager = department.getDepartmentManager();
-      if (manager != null) {
-        department.addTeacher(manager);
-        department = this.departmentLookupService.saveDepartment(department);
-        users = List.of(manager);
+    if (departmentId == 0) {
+      users = this.userRepository.findByRoles(role);
+    } else {
+      Department department = this.departmentLookupService.getDepartmentById(departmentId);
+      users = this.userRepository.getUsersByRoleAndDepartment(role, department);
+
+      if (users.isEmpty() && role == UserRoleEnum.DEPARTMENT_MANAGER) {
+        User manager = department.getDepartmentManager();
+        if (manager != null) {
+          department.addTeacher(manager);
+          department = this.departmentLookupService.saveDepartment(department);
+          users = List.of(manager);
+        }
       }
-    }
-    if (role == UserRoleEnum.DEPARTMENT_MANAGER && users.size() == 1 && department.getDepartmentManager() == null) {
-      department.setDepartmentManager(users.get(0));
-      this.departmentLookupService.saveDepartment(department);
+      if (role == UserRoleEnum.DEPARTMENT_MANAGER && users.size() == 1 && department.getDepartmentManager() == null) {
+        department.setDepartmentManager(users.get(0));
+        this.departmentLookupService.saveDepartment(department);
+      }
     }
 
     return users.stream().map(user -> {
@@ -120,7 +129,9 @@ public class UserService implements UserDetailsService {
     int totalTeachers = this.userLookupService.countUsersByRole(UserRoleEnum.TEACHER);
     int totalDepartmentsManagers = this.userLookupService.countUsersByRole(UserRoleEnum.DEPARTMENT_MANAGER);
     int totalAdmins = this.userLookupService.countUsersByRole(UserRoleEnum.ADMIN);
-    return new UsersResponseStatictics(totalUsers, totalTeachers, totalDepartmentsManagers, totalAdmins);
+    int totalStudents = this.studentLookupService.countStudents();
+    int totalDepartments = this.departmentLookupService.countDepartments();
+    return new UsersResponseStatictics(totalUsers, totalTeachers, totalStudents, totalDepartments, totalDepartmentsManagers, totalAdmins);
   }
 
   public User removeSubjetToTeacher(int teacherId, int subjectId) {
@@ -144,6 +155,15 @@ public class UserService implements UserDetailsService {
 
   public void assignUserToDepartments(int teacherId, List<Integer> departments) {
     User teacher = this.userLookupService.getUserById(teacherId);
+    UserRoleEnum role = teacher.getRoles().stream().findFirst().map(UserRole::getRole).orElse(null);
+    if (role == UserRoleEnum.DEPARTMENT_MANAGER) {
+      if (departments == null || departments.size() != 1) {
+        throw new IllegalArgumentException("Department manager must belong to exactly one department");
+      }
+      this.departmentLookupService.assignDepartmentManager(departments.get(0), teacher);
+      this.departmentLookupService.updateDepartmentsForUser(departments, teacher);
+      return;
+    }
     this.departmentLookupService.assignDepartmentsToUser(departments, teacher);
   }
 

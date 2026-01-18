@@ -51,6 +51,28 @@ public class DepartmentLookupService {
     }
   }
 
+
+  @Transactional
+  public void assignDepartmentManager(int departmentId, User user) {
+    Department department = this.getDepartmentById(departmentId);
+
+    Department currentManaged = departmentRepository.getDepartmentByUserIfManager(user).orElse(null);
+    if (currentManaged != null && currentManaged.getDepartmentId() != departmentId) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "User is already a manager of another department");
+    }
+
+    User currentManager = department.getDepartmentManager();
+    if (currentManager != null && currentManager.getId() != user.getId()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Department already has a manager");
+    }
+
+    department.setDepartmentManager(user);
+    department.addTeacher(user);
+    departmentRepository.save(department);
+  }
+
   @Transactional
   public void updateDepartmentsForUser(List<Integer> departmentsIds, User user) {
     for (Department department : new java.util.HashSet<>(user.getDepartments())) {
