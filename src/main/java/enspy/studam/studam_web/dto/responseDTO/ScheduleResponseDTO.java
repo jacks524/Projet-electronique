@@ -8,6 +8,7 @@ import lombok.Data;
 
 @Data
 public class ScheduleResponseDTO {
+  private int scheduleId;
   private DayOfWeek day;
   private LocalTime startHour;
   private LocalTime endHour;
@@ -17,6 +18,7 @@ public class ScheduleResponseDTO {
 
   public static ScheduleResponseDTO toDTO(Schedule schedule) {
     ScheduleResponseDTO dto = new ScheduleResponseDTO();
+    dto.setScheduleId(schedule.getScheduleId());
     dto.setDay(schedule.getDay());
     dto.setStartHour(schedule.getStartHour());
     dto.setEndHour(schedule.getEndHour());

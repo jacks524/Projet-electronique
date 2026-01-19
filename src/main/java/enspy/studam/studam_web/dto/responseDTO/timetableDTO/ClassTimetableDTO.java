@@ -27,6 +27,8 @@ public class ClassTimetableDTO {
   @Data
   public static class ScheduleDTO {
 
+    private int scheduleId;
+
     private DayOfWeek day;
 
     private LocalTime startHour;
@@ -39,6 +41,7 @@ public class ClassTimetableDTO {
 
     public static ScheduleDTO toDTO(Schedule schedule, Timetable timetable) {
       ScheduleDTO dto = new ScheduleDTO();
+      dto.setScheduleId(schedule.getScheduleId());
       dto.setDay(schedule.getDay());
       dto.setStartHour(schedule.getStartHour());
       dto.setEndHour(schedule.getEndHour());

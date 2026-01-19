@@ -1,7 +1,9 @@
 package enspy.studam.studam_web.dto.responseDTO;
 
 import enspy.studam.studam_web.dto.responseDTO.departmentDTO.DepartementResponseDTO;
+import enspy.studam.studam_web.dto.responseDTO.UserResponseDTO;
 import enspy.studam.studam_web.models.Subject;
+import enspy.studam.studam_web.models.User;
 import lombok.Data;
 
 @Data
@@ -16,6 +18,8 @@ public class SubjectResponseDTO {
 
   DepartementResponseDTO department;
 
+  UserResponseDTO teacher;
+
   public static SubjectResponseDTO toDTO(Subject subject) {
     SubjectResponseDTO dto = new SubjectResponseDTO();
     dto.setSubjectId(subject.getSubjectId());
@@ -23,6 +27,10 @@ public class SubjectResponseDTO {
     dto.setDescription(subject.getDescription());
     dto.setCode(subject.getCode());
     dto.setDepartment(DepartementResponseDTO.toDTO(subject.getDepartment()));
+    User teacher = subject.getTeachers().stream().findFirst().orElse(null);
+    if (teacher != null) {
+      dto.setTeacher(UserResponseDTO.toDTO(teacher));
+    }
     return dto;
   }
 }

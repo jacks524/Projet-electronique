@@ -20,5 +20,7 @@ public class SubjectRequestDTO {
   @NotNull(message = "Department ID is required")
   private int departmentId;
 
+  private Integer teacherId;
+
   private List<Integer> classes;
 }

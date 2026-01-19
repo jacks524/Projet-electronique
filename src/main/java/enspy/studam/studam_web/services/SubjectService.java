@@ -15,6 +15,7 @@ import enspy.studam.studam_web.models.User;
 import enspy.studam.studam_web.models.Class;
 import enspy.studam.studam_web.repositories.DepartmentRepository;
 import enspy.studam.studam_web.repositories.SubjectRepository;
+import enspy.studam.studam_web.repositories.UserRepository;
 import enspy.studam.studam_web.services.lookup.ClassLookupService;
 import enspy.studam.studam_web.services.lookup.SubjectLookupService;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
@@ -24,6 +25,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class SubjectService {
   private final SubjectRepository subjectRepository;
+  private final UserRepository userRepository;
   private final DepartmentRepository departmentRepository;
   private final UserLookupService userLookupService;
   private final SubjectLookupService subjectLookupService;
@@ -51,7 +53,51 @@ public class SubjectService {
     if (!classes.isEmpty()) {
       subject.setClasses(classes);
     }
-    return subjectRepository.save(subject);
+
+    subject = subjectRepository.save(subject);
+
+    if (subjectRequestDTO.getTeacherId() != null) {
+      User teacher = userLookupService.getUserById(subjectRequestDTO.getTeacherId());
+      if (!subjectLookupService.isTeacherAssignToSubject(teacher, subject)) {
+        teacher.addSubject(subject);
+        userRepository.save(teacher);
+      }
+    }
+
+    return subject;
+  }
+
+
+  public Subject updateSubject(int subjectId, SubjectRequestDTO subjectRequestDTO) {
+    Subject subject = this.subjectLookupService.getSubjectById(subjectId);
+
+    Department department = this.departmentRepository.findById(subjectRequestDTO.getDepartmentId())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
+
+    subject.setName(subjectRequestDTO.getName());
+    subject.setDescription(subjectRequestDTO.getDescription());
+    subject.setCode(subjectRequestDTO.getCode());
+    subject.setDepartment(department);
+
+    if (subjectRequestDTO.getClasses() != null) {
+      List<Class> classes = new ArrayList<Class>();
+      for (int classId : subjectRequestDTO.getClasses()) {
+        classes.add(classLookupService.getClassById(classId));
+      }
+      subject.setClasses(classes);
+    }
+
+    subject = subjectRepository.save(subject);
+
+    if (subjectRequestDTO.getTeacherId() != null) {
+      User teacher = userLookupService.getUserById(subjectRequestDTO.getTeacherId());
+      if (!subjectLookupService.isTeacherAssignToSubject(teacher, subject)) {
+        teacher.addSubject(subject);
+        userRepository.save(teacher);
+      }
+    }
+
+    return subject;
   }
 
   public List<Subject> getSubjectsByDepartment(int departmentId) {

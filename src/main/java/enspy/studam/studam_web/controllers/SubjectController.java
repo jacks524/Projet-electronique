@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -45,6 +46,20 @@ public class SubjectController {
   })
   public ResponseEntity<SubjectResponseDTO> createSubject(@RequestBody @Valid SubjectRequestDTO subjectRequestDTO) {
     Subject subject = this.subjectService.createSubject(subjectRequestDTO);
+    return ResponseEntity.ok().body(SubjectResponseDTO.toDTO(subject));
+  }
+
+
+  @PutMapping("/{id}")
+  @Operation(summary = "Update subject", description = "Updates an existing subject.", tags = { "Subject Management" })
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Subject successfully updated.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SubjectResponseDTO.class))),
+      @ApiResponse(responseCode = "400", description = "Bad Request: Invalid input data.", content = @Content(mediaType = "application/json")),
+      @ApiResponse(responseCode = "404", description = "Not Found: Subject not found.", content = @Content(mediaType = "application/json"))
+  })
+  public ResponseEntity<SubjectResponseDTO> updateSubject(@PathVariable int id,
+      @RequestBody @Valid SubjectRequestDTO subjectRequestDTO) {
+    Subject subject = this.subjectService.updateSubject(id, subjectRequestDTO);
     return ResponseEntity.ok().body(SubjectResponseDTO.toDTO(subject));
   }
 
@@ -82,9 +97,9 @@ public class SubjectController {
       @ApiResponse(responseCode = "404", description = "Not Found: Department not found.", content = @Content(mediaType = "application/json")),
       @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred during the retrieval process.", content = @Content(mediaType = "application/json"))
   })
-  public ResponseEntity<List<Subject>> getSubjectsByDepartment(@PathVariable int departmentId) {
+  public ResponseEntity<List<SubjectResponseDTO>> getSubjectsByDepartment(@PathVariable int departmentId) {
     List<Subject> subjects = this.subjectService.getSubjectsByDepartment(departmentId);
-    return ResponseEntity.ok().body(subjects);
+    return ResponseEntity.ok().body(subjects.stream().map(SubjectResponseDTO::toDTO).toList());
   }
 
   @GetMapping("/teacher/{teacherId}")
