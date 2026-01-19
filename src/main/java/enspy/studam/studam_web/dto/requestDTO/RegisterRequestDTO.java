@@ -36,7 +36,5 @@ public class RegisterRequestDTO {
 
   List<Integer> departmentsIds;
 
-  List<Integer> subjectIds;
-
   Boolean active;
 }

@@ -30,7 +30,6 @@ import enspy.studam.studam_web.security.JwtService;
 import enspy.studam.studam_web.security.SecurityUtils;
 import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
-import enspy.studam.studam_web.services.lookup.SubjectLookupService;
 import enspy.studam.studam_web.websocket.WebSocketEventPublisher;
 import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
@@ -47,7 +46,6 @@ public class LoginService {
   private EmailService emailService;
   private final UserLookupService userLookupService;
   private final DepartmentLookupService departmentLookupService;
-  private final SubjectLookupService subjectLookupService;
   private final WebSocketEventPublisher webSocketEventPublisher;
 
   public void forgotPassword(ForgotPasswordRequestDTO requestDTO) {
@@ -109,12 +107,6 @@ public class LoginService {
       });
     }
 
-    if (registerRequestDTO.getSubjectIds() != null && !registerRequestDTO.getSubjectIds().isEmpty()) {
-      registerRequestDTO.getSubjectIds().forEach(subjectId -> {
-        subjectLookupService.getSubjectById(subjectId);
-      });
-    }
-
     if (registerRequestDTO.getRole() == UserRoleEnum.DEPARTMENT_MANAGER) {
       if (registerRequestDTO.getDepartmentsIds() == null || registerRequestDTO.getDepartmentsIds().size() != 1) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -125,16 +117,6 @@ public class LoginService {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
             "Department already has a manager");
       }
-    }
-
-    if (registerRequestDTO.getRole() == UserRoleEnum.TEACHER) {
-      if (registerRequestDTO.getSubjectIds() == null || registerRequestDTO.getSubjectIds().isEmpty()) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-            "Teacher must have at least one subject assigned");
-      }
-    } else if (registerRequestDTO.getSubjectIds() != null && !registerRequestDTO.getSubjectIds().isEmpty()) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-          "Only teachers can have subjects assigned");
     }
 
     User user = new User();
@@ -174,14 +156,6 @@ public class LoginService {
       } else {
         departmentLookupService.assignDepartmentsToUser(registerRequestDTO.getDepartmentsIds(), user);
       }
-    }
-
-    if (registerRequestDTO.getSubjectIds() != null && !registerRequestDTO.getSubjectIds().isEmpty()) {
-      for (Integer subjectId : registerRequestDTO.getSubjectIds()) {
-        Subject subject = subjectLookupService.getSubjectById(subjectId);
-        user.addSubject(subject);
-      }
-      user = this.userRepository.save(user);
     }
 
     webSocketEventPublisher.publish("user.created", java.util.Map.of(

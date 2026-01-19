@@ -19,7 +19,7 @@ import enspy.studam.studam_web.dto.requestDTO.LoginRequestDTO;
 import enspy.studam.studam_web.dto.requestDTO.RegisterRequestDTO;
 import enspy.studam.studam_web.dto.requestDTO.ResetPasswordRequestDTO;
 import enspy.studam.studam_web.dto.requestDTO.UserUpdateRequestDTO;
-import enspy.studam.studam_web.dto.responseDTO.SubjectResponseDTO;
+import enspy.studam.studam_web.dto.responseDTO.SubjectTeacherAssignmentDTO;
 import enspy.studam.studam_web.dto.responseDTO.TokenDTO;
 import enspy.studam.studam_web.dto.responseDTO.UserResponseDTO;
 import enspy.studam.studam_web.dto.responseDTO.UserDTO.TeacherResponseDTO;
@@ -192,11 +192,13 @@ public class LoginController {
       @ApiResponse(responseCode = "404", description = "Not Found: Subject or teacher not found.", content = @Content(mediaType = "application/json")),
       @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred during the assignment process.", content = @Content(mediaType = "application/json"))
   })
-  public ResponseEntity<Set<SubjectResponseDTO>> assignTeacherToSubject(@PathVariable int subjectId,
+  public ResponseEntity<List<SubjectTeacherAssignmentDTO>> assignTeacherToSubject(@PathVariable int subjectId,
       @PathVariable int teacherId) {
-    Set<SubjectResponseDTO> subject = this.userService.assignTeacherToSubject(subjectId, teacherId).stream()
-        .map(SubjectResponseDTO::toDTO).collect(Collectors.toSet());
-    return ResponseEntity.ok().body(subject);
+    User teacher = this.userLookupService.getUserById(teacherId);
+    List<SubjectTeacherAssignmentDTO> response = this.userService.assignTeacherToSubject(subjectId, teacherId).stream()
+        .map(subject -> SubjectTeacherAssignmentDTO.from(subject, teacher))
+        .collect(Collectors.toList());
+    return ResponseEntity.ok().body(response);
   }
 
   @PutMapping("{teacherId}/remove-subjet/{subjectId}")
