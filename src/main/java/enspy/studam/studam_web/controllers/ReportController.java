@@ -26,6 +26,7 @@ import enspy.studam.studam_web.models.Department;
 import enspy.studam.studam_web.models.User;
 import enspy.studam.studam_web.repositories.AttendanceSessionRepository;
 import enspy.studam.studam_web.repositories.UserRepository;
+import enspy.studam.studam_web.security.SecurityUtils;
 import enspy.studam.studam_web.services.lookup.StudentLookupService;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
 import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
@@ -44,11 +45,31 @@ public class ReportController {
 
   @GetMapping("/statistics")
   public ResponseEntity<StatisticsResponseDTO> getStatistics() {
+    User currentUser = SecurityUtils.getCurrentUser();
+    boolean isAdmin = hasRole(currentUser, UserRoleEnum.ADMIN);
+    boolean isManager = hasRole(currentUser, UserRoleEnum.DEPARTMENT_MANAGER);
+
     StatisticsResponseDTO statistics = new StatisticsResponseDTO();
-    statistics.setTotalDepartments(departmentLookupService.countDepartments());
-    statistics.setTotalStudents(studentLookupService.countStudents());
-    statistics.setTotalTeachers(userLookupService.countUsersByRole(UserRoleEnum.TEACHER));
-    statistics.setTotalUsers(userLookupService.countAllUsers());
+    if (isAdmin) {
+      statistics.setTotalDepartments(departmentLookupService.countDepartments());
+      statistics.setTotalStudents(studentLookupService.countStudents());
+      statistics.setTotalTeachers(userLookupService.countUsersByRole(UserRoleEnum.TEACHER));
+      statistics.setTotalUsers(userLookupService.countAllUsers());
+    } else if (isManager) {
+      Department department = departmentLookupService.getDepartmentByUserIfManager(currentUser);
+      statistics.setTotalDepartments(1);
+      statistics.setTotalStudents(department.getClasses()
+          .stream()
+          .mapToInt(c -> c.getStudents().size())
+          .sum());
+      statistics.setTotalTeachers(department.getTeachers().size());
+      statistics.setTotalUsers(department.getTeachers().size());
+    } else {
+      statistics.setTotalDepartments(currentUser.getDepartments().size());
+      statistics.setTotalStudents(0);
+      statistics.setTotalTeachers(1);
+      statistics.setTotalUsers(1);
+    }
 
     return ResponseEntity.ok(statistics);
   }
@@ -57,15 +78,35 @@ public class ReportController {
   public ResponseEntity<List<RecentActivityResponseDTO>> getRecentActivity(
       @RequestParam(defaultValue = "20") int limit,
       @RequestParam(required = false) Integer departmentId) {
+    User currentUser = SecurityUtils.getCurrentUser();
+    boolean isAdmin = hasRole(currentUser, UserRoleEnum.ADMIN);
+    boolean isManager = hasRole(currentUser, UserRoleEnum.DEPARTMENT_MANAGER);
+
     int pageSize = Math.max(1, Math.min(limit, 50));
     List<RecentActivityResponseDTO> activities = new ArrayList<>();
 
     Department departmentFilter = departmentId != null ? departmentLookupService.getDepartmentById(departmentId) : null;
+    if (!isAdmin) {
+      if (isManager) {
+        Department managed = departmentLookupService.getDepartmentByUserIfManager(currentUser);
+        if (departmentFilter != null && departmentFilter.getDepartmentId() != managed.getDepartmentId()) {
+          throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied for this department");
+        }
+        departmentFilter = managed;
+      } else {
+        departmentFilter = null;
+      }
+    }
 
     List<AttendanceSession> sessions = departmentFilter == null
         ? attendanceSessionRepository.findRecentSessions(PageRequest.of(0, pageSize))
         : attendanceSessionRepository.findRecentSessionsByDepartment(departmentFilter, PageRequest.of(0, pageSize));
     for (AttendanceSession session : sessions) {
+      if (!isAdmin && !isManager) {
+        if (session.getTeacher() == null || session.getTeacher().getId() != currentUser.getId()) {
+          continue;
+        }
+      }
       String subjectName = session.getSubject() != null ? session.getSubject().getName() : "Matiere";
       String teacherName = session.getTeacher() != null ? session.getTeacher().getName() : "Enseignant";
       activities.add(new RecentActivityResponseDTO(
@@ -75,15 +116,17 @@ public class ReportController {
           "attendance"));
     }
 
-    List<User> users = departmentFilter == null
-        ? userRepository.findRecentUsers(PageRequest.of(0, pageSize))
-        : userRepository.findRecentUsersByDepartment(departmentFilter, PageRequest.of(0, pageSize));
-    for (User user : users) {
-      activities.add(new RecentActivityResponseDTO(
-          "user-" + user.getId(),
-          "Nouvel utilisateur: " + user.getName(),
-          user.getCreatedDate(),
-          "user"));
+    if (isAdmin) {
+      List<User> users = departmentFilter == null
+          ? userRepository.findRecentUsers(PageRequest.of(0, pageSize))
+          : userRepository.findRecentUsersByDepartment(departmentFilter, PageRequest.of(0, pageSize));
+      for (User user : users) {
+        activities.add(new RecentActivityResponseDTO(
+            "user-" + user.getId(),
+            "Nouvel utilisateur: " + user.getName(),
+            user.getCreatedDate(),
+            "user"));
+      }
     }
 
     activities.sort(Comparator.comparing(RecentActivityResponseDTO::getTimestamp,
@@ -102,8 +145,41 @@ public class ReportController {
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
       @RequestParam(required = false) String status) {
 
+    if (startDate == null || endDate == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "startDate and endDate are required");
+    }
+
+    User currentUser = SecurityUtils.getCurrentUser();
+    boolean isAdmin = hasRole(currentUser, UserRoleEnum.ADMIN);
+    boolean isManager = hasRole(currentUser, UserRoleEnum.DEPARTMENT_MANAGER);
+
     Department department = departmentId != null ? departmentLookupService.getDepartmentById(departmentId) : null;
     User teacher = teacherId != null ? userLookupService.getUserById(teacherId) : null;
+
+    if (!isAdmin) {
+      if (isManager) {
+        Department managed = departmentLookupService.getDepartmentByUserIfManager(currentUser);
+        if (department != null && department.getDepartmentId() != managed.getDepartmentId()) {
+          throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied for this department");
+        }
+        department = managed;
+        if (teacher != null && (teacher.getDepartments() == null
+            || teacher.getDepartments().stream()
+                .noneMatch(dep -> dep.getDepartmentId() == managed.getDepartmentId()))) {
+          throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Teacher not in your department");
+        }
+      } else {
+        if (teacher != null && teacher.getId() != currentUser.getId()) {
+          throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied for this teacher");
+        }
+        if (department != null && (currentUser.getDepartments() == null
+            || currentUser.getDepartments().stream()
+                .noneMatch(dep -> dep.getDepartmentId() == department.getDepartmentId()))) {
+          throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied for this department");
+        }
+        teacher = currentUser;
+      }
+    }
 
     LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
     LocalDateTime endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX) : null;
@@ -141,5 +217,12 @@ public class ReportController {
     }
 
     return ResponseEntity.ok(results);
+  }
+
+  private boolean hasRole(User user, UserRoleEnum role) {
+    if (user == null || user.getRoles() == null) {
+      return false;
+    }
+    return user.getRoles().stream().anyMatch(r -> r.getRole() == role);
   }
 }
