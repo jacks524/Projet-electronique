@@ -114,7 +114,9 @@ public class User implements UserDetails {
     userResponseDTO.setEmail(this.email);
     userResponseDTO.setPhoneNumber(this.phoneNumber);
     userResponseDTO.setUsername(this.username);
+    userResponseDTO.setMatricule(this.matricule);
     userResponseDTO.setRoles(this.roles);
+    userResponseDTO.setActive(this.isActive);
     return userResponseDTO;
   }
 }
