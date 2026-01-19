@@ -87,12 +87,12 @@ public class StudentController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete a student", description = "Removes a student from the system.")
+    @Operation(summary = "Delete a student", description = "Deletes a student from the system.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Student deleted successfully."),
+            @ApiResponse(responseCode = "204", description = "Student successfully deleted."),
             @ApiResponse(responseCode = "404", description = "Student not found.")
     })
-    public ResponseEntity<String> deleteStudent(@PathVariable int id) {
+    public ResponseEntity<Void> deleteStudent(@PathVariable int id) {
         studentService.deleteStudent(id);
         return ResponseEntity.noContent().build();
     }

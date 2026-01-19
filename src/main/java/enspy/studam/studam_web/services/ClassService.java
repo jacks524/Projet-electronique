@@ -13,9 +13,7 @@ import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
 import enspy.studam.studam_web.services.lookup.SubjectLookupService;
 import lombok.AllArgsConstructor;
 import enspy.studam.studam_web.dto.responseDTO.ClassResponseDTO;
-import enspy.studam.studam_web.dto.responseDTO.StudentResponseDTO;
 import enspy.studam.studam_web.dto.requestDTO.ClassRequestDTO;
-import enspy.studam.studam_web.mappers.ClassMapper;
 import enspy.studam.studam_web.models.Department;
 import enspy.studam.studam_web.models.Subject;
 import enspy.studam.studam_web.models.Student;
@@ -153,14 +151,15 @@ public class ClassService {
     public void deleteClass(int id) {
         Class cls = this.classLookupService.getClassById(id);
 
+        // OPTION A: Delete students along with the class
         List<Student> students = studentRepository.findByClasses_ClassId(cls.getClassId());
-        for (Student student : students) {
-            student.setClasses(null);
-        }
+
+        // Delete all students of the class
         if (!students.isEmpty()) {
-            studentRepository.saveAll(students);
+            studentRepository.deleteAll(students);
         }
 
+        // Continue with timetable cleanup (attendances will be deleted via sessions)
         List<Timetable> timetables = timetableRepository.findByClazz(cls);
         for (Timetable timetable : timetables) {
             List<AttendanceSession> sessions = attendanceSessionRepository.findByTimetable(timetable);

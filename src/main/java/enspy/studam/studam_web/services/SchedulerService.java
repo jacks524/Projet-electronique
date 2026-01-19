@@ -90,4 +90,9 @@ public class SchedulerService {
 
     return schedule;
   }
+
+  public void deleteSchedule(int id) {
+    Schedule schedule = schedulerLookupService.getScheduleById(id);
+    schedulerRepository.delete(schedule);
+  }
 }
