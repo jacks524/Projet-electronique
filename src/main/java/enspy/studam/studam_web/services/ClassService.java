@@ -2,6 +2,11 @@ package enspy.studam.studam_web.services;
 
 import enspy.studam.studam_web.models.Class;
 import enspy.studam.studam_web.repositories.ClassRepository;
+import enspy.studam.studam_web.repositories.StudentRepository;
+import enspy.studam.studam_web.repositories.TimetableRepository;
+import enspy.studam.studam_web.repositories.SchedulerRepository;
+import enspy.studam.studam_web.repositories.AttendanceSessionRepository;
+import enspy.studam.studam_web.repositories.AttendanceRepository;
 import enspy.studam.studam_web.repositories.DepartmentRepository;
 import enspy.studam.studam_web.services.lookup.ClassLookupService;
 import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
@@ -13,6 +18,11 @@ import enspy.studam.studam_web.dto.requestDTO.ClassRequestDTO;
 import enspy.studam.studam_web.mappers.ClassMapper;
 import enspy.studam.studam_web.models.Department;
 import enspy.studam.studam_web.models.Subject;
+import enspy.studam.studam_web.models.Student;
+import enspy.studam.studam_web.models.Timetable;
+import enspy.studam.studam_web.models.AttendanceSession;
+import enspy.studam.studam_web.models.Attendance;
+import enspy.studam.studam_web.models.Schedule;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -35,13 +45,20 @@ public class ClassService {
     private SubjectService subjectService;
     private ClassLookupService classLookupService;
     private SubjectLookupService subjectLookupService;
+    private StudentRepository studentRepository;
+    private TimetableRepository timetableRepository;
+    private SchedulerRepository schedulerRepository;
+    private AttendanceSessionRepository attendanceSessionRepository;
+    private AttendanceRepository attendanceRepository;
 
     public ClassResponseDTO getClassById(int id) {
-        Class Class = classRepository.findById(id)
+        Class cls = classRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Class not found with id: " + id));
-        return ClassMapper.toDTO(Class);
+        ClassResponseDTO dto = ClassResponseDTO.toDto(cls);
+        dto.setStudentNumber((int) studentRepository.countByClasses_ClassId(cls.getClassId()));
+        return dto;
     }
 
     public ClassResponseDTO createClass(ClassRequestDTO request) {
@@ -65,7 +82,9 @@ public class ClassService {
         Class.setDescription(request.getDescription());
         Class.setStudentNumber(request.getStudentNumber() != 0 ? request.getStudentNumber() : 0);
         Class saved = classRepository.save(Class);
-        return ClassMapper.toDTO(saved);
+        ClassResponseDTO dto = ClassResponseDTO.toDto(saved);
+        dto.setStudentNumber((int) studentRepository.countByClasses_ClassId(saved.getClassId()));
+        return dto;
     }
 
     public ClassResponseDTO updateClass(int id, ClassRequestDTO request) {
@@ -89,14 +108,20 @@ public class ClassService {
         Class.setStudentNumber(request.getStudentNumber() != 0 ? request.getStudentNumber() : 0);
 
         Class updated = classRepository.save(Class);
-        return ClassMapper.toDTO(updated);
+        ClassResponseDTO dto = ClassResponseDTO.toDto(updated);
+        dto.setStudentNumber((int) studentRepository.countByClasses_ClassId(updated.getClassId()));
+        return dto;
     }
 
     public List<ClassResponseDTO> getClassesByDepartment(int departmentId) {
         Department department = this.departmentLookupService.getDepartmentById(departmentId);
         return classRepository.findAll().stream()
                 .filter(cls -> cls.getDepartment().equals(department))
-                .map(ClassMapper::toDTO)
+                .map(cls -> {
+                    ClassResponseDTO dto = ClassResponseDTO.toDto(cls);
+                    dto.setStudentNumber((int) studentRepository.countByClasses_ClassId(cls.getClassId()));
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -127,6 +152,37 @@ public class ClassService {
 
     public void deleteClass(int id) {
         Class cls = this.classLookupService.getClassById(id);
+
+        List<Student> students = studentRepository.findByClasses_ClassId(cls.getClassId());
+        for (Student student : students) {
+            student.setClasses(null);
+        }
+        if (!students.isEmpty()) {
+            studentRepository.saveAll(students);
+        }
+
+        List<Timetable> timetables = timetableRepository.findByClazz(cls);
+        for (Timetable timetable : timetables) {
+            List<AttendanceSession> sessions = attendanceSessionRepository.findByTimetable(timetable);
+            for (AttendanceSession session : sessions) {
+                List<Attendance> attendances = attendanceRepository.findByAttendanceSession(session);
+                if (!attendances.isEmpty()) {
+                    attendanceRepository.deleteAll(attendances);
+                }
+            }
+            if (!sessions.isEmpty()) {
+                attendanceSessionRepository.deleteAll(sessions);
+            }
+
+            List<Schedule> schedules = schedulerRepository.findByTimetable(timetable);
+            if (!schedules.isEmpty()) {
+                schedulerRepository.deleteAll(schedules);
+            }
+        }
+        if (!timetables.isEmpty()) {
+            timetableRepository.deleteAll(timetables);
+        }
+
         classRepository.delete(cls);
     }
 

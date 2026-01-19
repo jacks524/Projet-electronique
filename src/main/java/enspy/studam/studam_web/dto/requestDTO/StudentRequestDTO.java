@@ -27,6 +27,7 @@ public class StudentRequestDTO {
     @Size(min = 9, max = 12, message = "Phone number must be between 9 and 12 digits")
     private String phoneNumber;
 
-    @NotNull(message = "Class ID must not be null")
+    private Integer classId;
+
     private String className;
 }

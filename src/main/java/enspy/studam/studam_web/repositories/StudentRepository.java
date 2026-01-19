@@ -22,4 +22,6 @@ public interface StudentRepository extends JpaRepository<Student, Integer> {
     Optional<Student> findByMatricule(String matricule);
 
     boolean existsByMatricule(String matricule);
+
+  long countByClasses_ClassId(int classId);
 }

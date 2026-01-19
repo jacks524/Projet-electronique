@@ -10,6 +10,11 @@ public class ClassMapper {
         dto.setClassId(entity.getClassId());
         dto.setName(entity.getName());
         dto.setStudentNumber(entity.getStudentNumber());
+        dto.setCode(entity.getCode());
+        dto.setDescription(entity.getDescription());
+        if (entity.getDepartment() != null) {
+            dto.setDepartementResponseDTO(enspy.studam.studam_web.dto.responseDTO.departmentDTO.DepartementResponseDTO.toDTO(entity.getDepartment()));
+        }
         return dto;
     }
 

@@ -17,6 +17,10 @@ public class SubjectRequestDTO {
   @NotNull(message = "Code is required")
   private String code;
 
+  private Integer credits;
+
+  private Integer heuresCoursParSemaine;
+
   @NotNull(message = "Department ID is required")
   private int departmentId;
 

@@ -68,6 +68,14 @@ public class TimetableService {
     Class clazz = this.classLookupService.getClassById(classId);
     List<Schedule> classSchedules = this.schedulerLookupService.getSchedulesByClass(clazz);
 
+    if (classSchedules.isEmpty()) {
+      List<Timetable> timetables = timetableRepository.findByClazz(clazz);
+      if (timetables.isEmpty()) {
+        return null;
+      }
+      return ClassTimetableDTO.toDTO(timetables.get(0), List.of());
+    }
+
     return ClassTimetableDTO.toDTO(classSchedules);
   }
 

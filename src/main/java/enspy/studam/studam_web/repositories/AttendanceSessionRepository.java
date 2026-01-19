@@ -29,4 +29,9 @@ public interface AttendanceSessionRepository extends JpaRepository<AttendanceSes
 
   @Query("SELECT a FROM AttendanceSession a ORDER BY a.date DESC")
   List<AttendanceSession> findRecentSessions(Pageable pageable);
+
+  @Query("SELECT a FROM AttendanceSession a WHERE a.subject.department = :department ORDER BY a.date DESC")
+  List<AttendanceSession> findRecentSessionsByDepartment(Department department, Pageable pageable);
+
+  List<AttendanceSession> findByTimetable(enspy.studam.studam_web.models.Timetable timetable);
 }

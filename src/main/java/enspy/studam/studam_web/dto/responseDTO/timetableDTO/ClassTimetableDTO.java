@@ -56,6 +56,10 @@ public class ClassTimetableDTO {
       return null;
     }
     Timetable timetable = schedules.get(0).getTimetable();
+    return toDTO(timetable, schedules);
+  }
+
+  public static ClassTimetableDTO toDTO(Timetable timetable, List<Schedule> schedules) {
     ClassTimetableDTO dto = new ClassTimetableDTO();
     dto.setTimetableId(timetable.getTimetableId());
     dto.setSemester(timetable.getSemester());

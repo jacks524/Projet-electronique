@@ -49,6 +49,8 @@ public class SubjectService {
     subject.setName(subjectRequestDTO.getName());
     subject.setDescription(subjectRequestDTO.getDescription());
     subject.setCode(subjectRequestDTO.getCode());
+    subject.setCredits(subjectRequestDTO.getCredits() != null ? subjectRequestDTO.getCredits() : 0);
+    subject.setHeuresCoursParSemaine(subjectRequestDTO.getHeuresCoursParSemaine() != null ? subjectRequestDTO.getHeuresCoursParSemaine() : 0);
     subject.setDepartment(department);
     if (!classes.isEmpty()) {
       subject.setClasses(classes);
@@ -77,6 +79,8 @@ public class SubjectService {
     subject.setName(subjectRequestDTO.getName());
     subject.setDescription(subjectRequestDTO.getDescription());
     subject.setCode(subjectRequestDTO.getCode());
+    subject.setCredits(subjectRequestDTO.getCredits() != null ? subjectRequestDTO.getCredits() : 0);
+    subject.setHeuresCoursParSemaine(subjectRequestDTO.getHeuresCoursParSemaine() != null ? subjectRequestDTO.getHeuresCoursParSemaine() : 0);
     subject.setDepartment(department);
 
     if (subjectRequestDTO.getClasses() != null) {

@@ -55,12 +55,16 @@ public class ReportController {
 
   @GetMapping("/admin/recent-activity")
   public ResponseEntity<List<RecentActivityResponseDTO>> getRecentActivity(
-      @RequestParam(defaultValue = "20") int limit) {
+      @RequestParam(defaultValue = "20") int limit,
+      @RequestParam(required = false) Integer departmentId) {
     int pageSize = Math.max(1, Math.min(limit, 50));
     List<RecentActivityResponseDTO> activities = new ArrayList<>();
 
-    List<AttendanceSession> sessions = attendanceSessionRepository
-        .findRecentSessions(PageRequest.of(0, pageSize));
+    Department departmentFilter = departmentId != null ? departmentLookupService.getDepartmentById(departmentId) : null;
+
+    List<AttendanceSession> sessions = departmentFilter == null
+        ? attendanceSessionRepository.findRecentSessions(PageRequest.of(0, pageSize))
+        : attendanceSessionRepository.findRecentSessionsByDepartment(departmentFilter, PageRequest.of(0, pageSize));
     for (AttendanceSession session : sessions) {
       String subjectName = session.getSubject() != null ? session.getSubject().getName() : "Matiere";
       String teacherName = session.getTeacher() != null ? session.getTeacher().getName() : "Enseignant";
@@ -71,7 +75,9 @@ public class ReportController {
           "attendance"));
     }
 
-    List<User> users = userRepository.findRecentUsers(PageRequest.of(0, pageSize));
+    List<User> users = departmentFilter == null
+        ? userRepository.findRecentUsers(PageRequest.of(0, pageSize))
+        : userRepository.findRecentUsersByDepartment(departmentFilter, PageRequest.of(0, pageSize));
     for (User user : users) {
       activities.add(new RecentActivityResponseDTO(
           "user-" + user.getId(),

@@ -12,6 +12,7 @@ public class StudentResponseDTO {
     private String birthPlace;
     private String email;
     private String phoneNumber;
+    private Integer classId;
     private String className;
 
     public static StudentResponseDTO toDto(enspy.studam.studam_web.models.Student student) {
@@ -25,6 +26,7 @@ public class StudentResponseDTO {
         dto.setPhoneNumber(student.getPhoneNumber());
         if (student.getClasses() != null) {
             dto.setClassName(student.getClasses().getName());
+            dto.setClassId(student.getClasses().getClassId());
         }
         return dto;
     }

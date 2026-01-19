@@ -18,4 +18,6 @@ public interface TimetableRepository extends JpaRepository<Timetable, Integer> {
   @Query("SELECT t FROM Timetable t JOIN t.schedules s WHERE s.teacher = :teacher")
   List<Timetable> findTeacherTimetable(User teacher);
 
+  List<Timetable> findByClazz(enspy.studam.studam_web.models.Class clazz);
+
 }

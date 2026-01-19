@@ -52,4 +52,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
   @Query("SELECT u FROM User u WHERE u.createdDate IS NOT NULL ORDER BY u.createdDate DESC")
   List<User> findRecentUsers(Pageable pageable);
+
+  @Query("SELECT DISTINCT u FROM User u JOIN u.departments d WHERE d = :department AND u.createdDate IS NOT NULL ORDER BY u.createdDate DESC")
+  List<User> findRecentUsersByDepartment(Department department, Pageable pageable);
 }

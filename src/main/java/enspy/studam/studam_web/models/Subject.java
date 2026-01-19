@@ -30,6 +30,10 @@ public class Subject {
 
   private String code;
 
+  private int credits;
+
+  private int heuresCoursParSemaine;
+
   // Une matière appartient a un departement
   @ManyToOne
   @JoinColumn(name = "departement_id")

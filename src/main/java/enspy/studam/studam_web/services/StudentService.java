@@ -48,8 +48,33 @@ public class StudentService {
     @Autowired
     private ClassLookupService classLookupService;
 
+    /**
+     * Resolves a Class entity from StudentRequestDTO.
+     * Tries to resolve by classId first, then by className if classId is not
+     * provided.
+     * 
+     * @param dto StudentRequestDTO containing either classId or className
+     * @return The resolved Class entity
+     * @throws ResponseStatusException if class is not found or neither classId nor
+     *                                 className is provided
+     */
+    private Class resolveClass(StudentRequestDTO dto) {
+        if (dto.getClassId() != null) {
+            return classLookupService.getClassById(dto.getClassId());
+        }
+        if (dto.getClassName() != null && !dto.getClassName().isEmpty()) {
+            return classRepository.findByName(dto.getClassName())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Class not found with name: " + dto.getClassName()));
+        }
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Either classId or className must be provided");
+    }
+
     public StudentResponseDTO createStudent(StudentRequestDTO dto) {
-        Class classe = classLookupService.getClassByName(dto.getClassName().toUpperCase());
+        Class classe = resolveClass(dto);
 
         if (this.studentRepository.existsByMatricule(dto.getMatricule())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
@@ -95,7 +120,7 @@ public class StudentService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Student not found with id: " + id));
-        Class classe = classLookupService.getClassByName(dto.getClassName());
+        Class classe = resolveClass(dto);
 
         student.setMatricule(dto.getMatricule());
         student.setName(dto.getName());
