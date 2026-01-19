@@ -191,9 +191,10 @@ public class ReportController {
         if (teacher != null && teacher.getId() != currentUser.getId()) {
           throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied for this teacher");
         }
-        if (department != null && (currentUser.getDepartments() == null
+        Integer departmentIdValue = department != null ? department.getDepartmentId() : null;
+        if (departmentIdValue != null && (currentUser.getDepartments() == null
             || currentUser.getDepartments().stream()
-                .noneMatch(dep -> dep.getDepartmentId() == department.getDepartmentId()))) {
+                .noneMatch(dep -> dep.getDepartmentId() == departmentIdValue))) {
           throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied for this department");
         }
         teacher = currentUser;
