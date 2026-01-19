@@ -31,14 +31,25 @@ export default function AdminChiefsPage() {
     const loadChiefs = async () => {
         try {
             setLoading(true);
-            const chiefUsers = await userService.getUsersByRoleAndDepartment('DEPARTMENT_MANAGER', 0);
+            const usersPage = await userService.getAllWithPagination(0, 2000);
+            const users = Array.isArray(usersPage?.content) ? usersPage.content : [];
+
+            const chiefUsers = users
+                .filter(u => Array.isArray(u.roles) && u.roles.some(r => r.role?.toUpperCase() === 'DEPARTMENT_MANAGER'))
+                .map(u => ({
+                    id: u.id,
+                    name: u.name,
+                    email: u.email,
+                    matricule: u.matricule,
+                    active: Boolean(u.active),
+                    departmentNames: u.departmentsNames || u.departmentNames || [],
+                }));
 
             setChiefs(chiefUsers);
             const uniqueDepts = [...new Set(chiefUsers.flatMap(c => c.departmentNames || []))];
             setDepartments(uniqueDepts);
-
         } catch (error) {
-            toast.error("Impossible de charger la liste des chefs de département.");
+            toast.error("Impossible de charger la liste des chefs de departement.");
         } finally {
             setLoading(false);
         }
@@ -46,20 +57,24 @@ export default function AdminChiefsPage() {
 
     const handleToggleStatus = async (chiefId, currentStatus) => {
         try {
-            await userService.toggleStatus(chiefId, !currentStatus);
+            if (currentStatus) {
+                await userService.deactivate(chiefId);
+            } else {
+                await userService.activate(chiefId);
+            }
             await loadChiefs();
-            toast.success(`Chef ${!currentStatus ? 'activé' : 'désactivé'} avec succès`);
+            toast.success(`Chef ${!currentStatus ? 'active' : 'desactive'} avec succes`);
         } catch (error) {
             toast.error("Erreur lors du changement de statut");
         }
     };
 
     const handleDelete = async (chiefId, chiefName) => {
-        if (window.confirm(`Êtes-vous sûr de vouloir supprimer ${chiefName} ?`)) {
+        if (window.confirm(`Etes-vous sur de vouloir supprimer ${chiefName} ?`)) {
             try {
-                await userService.delete(chiefId);
+                await userService.remove(chiefId);
                 await loadChiefs();
-                toast.success('Chef de département supprimé avec succès');
+                toast.success('Chef de departement supprime avec succes');
             } catch (error) {
                 toast.error("Erreur lors de la suppression");
             }
@@ -93,7 +108,7 @@ export default function AdminChiefsPage() {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin h-12 w-12 mx-auto border-4 border-[#F26419] border-t-transparent rounded-full mb-4"></div>
+                    <div className="animate-spin h-12 w-12 mx-auto border-4 border-[#7c3aed] border-t-transparent rounded-full mb-4"></div>
                     <p className="text-gray-600 text-lg">Chargement des chefs de département...</p>
                 </div>
             </div>
@@ -103,7 +118,7 @@ export default function AdminChiefsPage() {
     return (
         <div className="min-h-screen bg-gray-100 py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* En-tête */}
+                {/* En-tÃªte */}
                 <div className="mb-6">
                     <div className="md:flex md:items-center md:justify-between">
                         <div className="flex-1">
@@ -115,7 +130,7 @@ export default function AdminChiefsPage() {
                         <div className="mt-4 md:mt-0">
                             <Link
                                 href="/admin/users/create"
-                                className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-[#F26419] to-[#FF7A47] hover:from-[#E55A1A] hover:to-[#F26419] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419] transition-all duration-200 transform hover:scale-[1.02] shadow-lg"
+                                className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-[#7c3aed] to-[#a855f7] hover:from-[#6d28d9] hover:to-[#7c3aed] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed] transition-all duration-200 transform hover:scale-[1.02] shadow-lg"
                             >
                                 <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/>
@@ -158,13 +173,13 @@ export default function AdminChiefsPage() {
 
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                         <div className="flex items-center">
-                            <div className="flex-shrink-0 bg-orange-100 rounded-lg p-3">
-                                <svg className="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="flex-shrink-0 bg-violet-100 rounded-lg p-3">
+                                <svg className="w-6 h-6 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                 </svg>
                             </div>
                             <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-500">Départements</p>
+                                <p className="text-sm font-medium text-gray-500">DÃ©partements</p>
                                 <p className="text-2xl font-bold text-gray-900">{departments.length}</p>
                             </div>
                         </div>
@@ -190,7 +205,7 @@ export default function AdminChiefsPage() {
                                     id="search"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                                     placeholder="Nom, email, matricule..."
                                 />
                             </div>
@@ -205,7 +220,7 @@ export default function AdminChiefsPage() {
                                 id="status"
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
-                                className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                                className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                             >
                                 <option value="all">Tous</option>
                                 <option value="active">Actifs</option>
@@ -213,7 +228,7 @@ export default function AdminChiefsPage() {
                             </select>
                         </div>
 
-                        {/* Filtre par département */}
+                        {/* Filtre par dÃ©partement */}
                         <div>
                             <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">
                                 Département
@@ -222,7 +237,7 @@ export default function AdminChiefsPage() {
                                 id="department"
                                 value={selectedDepartment}
                                 onChange={(e) => setSelectedDepartment(e.target.value)}
-                                className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                                className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                             >
                                 <option value="all">Tous</option>
                                 {departments.map((dept, index) => (
@@ -238,25 +253,25 @@ export default function AdminChiefsPage() {
                             <span className="text-sm text-gray-500">Trier par:</span>
                             <button
                                 onClick={() => setSortBy('name')}
-                                className={`px-3 py-1 text-sm rounded-md ${sortBy === 'name' ? 'bg-[#F26419] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                                className={`px-3 py-1 text-sm rounded-md ${sortBy === 'name' ? 'bg-[#7c3aed] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                             >
                                 Nom
                             </button>
                             <button
                                 onClick={() => setSortBy('email')}
-                                className={`px-3 py-1 text-sm rounded-md ${sortBy === 'email' ? 'bg-[#F26419] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                                className={`px-3 py-1 text-sm rounded-md ${sortBy === 'email' ? 'bg-[#7c3aed] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                             >
                                 Email
                             </button>
                             <button
                                 onClick={() => setSortBy('status')}
-                                className={`px-3 py-1 text-sm rounded-md ${sortBy === 'status' ? 'bg-[#F26419] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                                className={`px-3 py-1 text-sm rounded-md ${sortBy === 'status' ? 'bg-[#7c3aed] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                             >
                                 Statut
                             </button>
                         </div>
                         <span className="text-sm text-gray-500">
-                            {filteredAndSortedChiefs.length} résultat(s)
+                            {filteredAndSortedChiefs.length} rÃ©sultat(s)
                         </span>
                     </div>
                 </div>
@@ -300,7 +315,7 @@ export default function AdminChiefsPage() {
                                     <tr key={chief.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center">
-                                                <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-r from-[#1B396A] to-[#437DE0] rounded-full flex items-center justify-center text-white font-semibold">
+                                                <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-r from-[#312e81] to-[#6366f1] rounded-full flex items-center justify-center text-white font-semibold">
                                                     {chief.name.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div className="ml-4">
@@ -319,7 +334,7 @@ export default function AdminChiefsPage() {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <span className="text-sm text-gray-400">—</span>
+                                                <span className="text-sm text-gray-400">-</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-900">
@@ -342,7 +357,7 @@ export default function AdminChiefsPage() {
                                                 <Link
                                                     href={`/admin/users/${chief.id}`}
                                                     className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-md transition-colors"
-                                                    title="Voir les détails"
+                                                    title="Voir les dÃ©tails"
                                                 >
                                                     <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -352,7 +367,7 @@ export default function AdminChiefsPage() {
                                                 </Link>
                                                 <Link
                                                     href={`/admin/users/${chief.id}/edit`}
-                                                    className="inline-flex items-center px-3 py-1.5 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-md transition-colors"
+                                                    className="inline-flex items-center px-3 py-1.5 bg-violet-50 text-violet-700 hover:bg-violet-100 rounded-md transition-colors"
                                                     title="Modifier"
                                                 >
                                                     <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -367,9 +382,9 @@ export default function AdminChiefsPage() {
                                                             ? 'bg-red-50 text-red-700 hover:bg-red-100'
                                                             : 'bg-green-50 text-green-700 hover:bg-green-100'
                                                     }`}
-                                                    title={chief.active ? 'Désactiver' : 'Activer'}
+                                                    title={chief.active ? 'DÃ©sactiver' : 'Activer'}
                                                 >
-                                                    {chief.active ? 'Désactiver' : 'Activer'}
+                                                    {chief.active ? 'DÃ©sactiver' : 'Activer'}
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(chief.id, chief.name)}

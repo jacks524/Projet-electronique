@@ -168,7 +168,7 @@ export default function AttendanceHistoryPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-center h-64">
                         <div className="text-center">
-                            <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                             <p className="text-gray-600">Chargement de l'historique des présences...</p>
                         </div>
                     </div>
@@ -211,7 +211,7 @@ export default function AttendanceHistoryPage() {
                         <select
                             value={filters.subjectId}
                             onChange={(e) => handleFilterChange('subjectId', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors"
                         >
                             <option value="">Toutes les matières</option>
                             {subjects.map((subject) => (
@@ -230,7 +230,7 @@ export default function AttendanceHistoryPage() {
                         <select
                             value={filters.classId}
                             onChange={(e) => handleFilterChange('classId', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors"
                         >
                             <option value="">Toutes les classes</option>
                             {classes.map((classe) => (
@@ -249,7 +249,7 @@ export default function AttendanceHistoryPage() {
                         <select
                             value={filters.dateRange}
                             onChange={(e) => handleFilterChange('dateRange', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors"
                         >
                             <option value="all">Toutes les dates</option>
                             <option value="today">Aujourd'hui</option>
@@ -287,7 +287,7 @@ export default function AttendanceHistoryPage() {
                                 type="date"
                                 value={filters.startDate}
                                 onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors"
                             />
                         </div>
                         <div>
@@ -298,7 +298,7 @@ export default function AttendanceHistoryPage() {
                                 type="date"
                                 value={filters.endDate}
                                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors"
                             />
                         </div>
                     </div>
@@ -404,7 +404,7 @@ export default function AttendanceHistoryPage() {
                                             <div className="flex justify-end space-x-2">
                                                 <Link
                                                     href={`/teacher/attendance/history/${session.id}`}
-                                                    className="text-orange-600 hover:text-orange-900 px-3 py-1 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors"
+                                                    className="text-violet-600 hover:text-violet-900 px-3 py-1 rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors"
                                                 >
                                                     Voir / Corriger
                                                 </Link>
@@ -461,7 +461,7 @@ export default function AttendanceHistoryPage() {
                                                 onClick={() => paginate(number)}
                                                 className={`px-3 py-1 text-sm border rounded-lg transition-colors ${
                                                     currentPage === number
-                                                        ? 'bg-orange-600 text-white border-orange-600'
+                                                        ? 'bg-violet-600 text-white border-violet-600'
                                                         : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                                                 }`}
                                             >

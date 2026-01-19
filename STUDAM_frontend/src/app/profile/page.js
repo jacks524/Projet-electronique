@@ -62,7 +62,7 @@ export default function ProfilePage() {
                   id="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors"
+                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors"
                   placeholder="Entrez votre nom complet"
                   required
               />
@@ -78,7 +78,7 @@ export default function ProfilePage() {
                   id="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors"
+                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors"
                   placeholder="Entrez votre adresse email"
                   required
               />
@@ -94,7 +94,7 @@ export default function ProfilePage() {
                   id="username"
                   value={formData.username}
                   onChange={handleInputChange}
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors"
+                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors"
                   placeholder="Entrez votre nom d'utilisateur"
               />
             </div>
@@ -109,7 +109,7 @@ export default function ProfilePage() {
                   id="matricule"
                   value={formData.matricule}
                   onChange={handleInputChange}
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors"
+                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors"
                   placeholder="Entrez votre matricule"
               />
             </div>
@@ -124,7 +124,7 @@ export default function ProfilePage() {
                   id="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleInputChange}
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors"
+                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors"
                   placeholder="Entrez votre numéro de téléphone"
               />
             </div>
@@ -139,7 +139,7 @@ export default function ProfilePage() {
                   rows={4}
                   value={formData.bio}
                   onChange={handleInputChange}
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors resize-none"
+                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors resize-none"
                   placeholder="Quelques mots à propos de vous..."
               />
             </div>
@@ -149,7 +149,7 @@ export default function ProfilePage() {
             <button
                 type="submit"
                 disabled={loading}
-                className="group relative flex justify-center py-3 px-6 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-[#F26419] to-[#FF7A47] hover:from-[#E55A1A] hover:to-[#F26419] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
+                className="group relative flex justify-center py-3 px-6 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-[#7c3aed] to-[#a855f7] hover:from-[#6d28d9] hover:to-[#7c3aed] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
             >
               {loading ? (
                   <div className="flex items-center">
@@ -241,7 +241,7 @@ export default function ProfilePage() {
                     onChange={handlePasswordInputChange}
                     className={`appearance-none relative block w-full px-3 py-3 pr-10 border ${
                         errors.oldPassword ? 'border-red-500' : 'border-gray-300'
-                    } placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors`}
+                    } placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors`}
                     required
                 />
                 <button
@@ -277,7 +277,7 @@ export default function ProfilePage() {
                     onChange={handlePasswordInputChange}
                     className={`appearance-none relative block w-full px-3 py-3 pr-10 border ${
                         errors.newPassword ? 'border-red-500' : 'border-gray-300'
-                    } placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors`}
+                    } placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors`}
                     required
                 />
                 <button
@@ -313,7 +313,7 @@ export default function ProfilePage() {
                     onChange={handlePasswordInputChange}
                     className={`appearance-none relative block w-full px-3 py-3 pr-10 border ${
                         errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                    } placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors`}
+                    } placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors`}
                     required
                 />
                 <button
@@ -357,7 +357,7 @@ export default function ProfilePage() {
             <button
                 type="submit"
                 disabled={loading}
-                className="group relative flex justify-center py-3 px-6 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-[#F26419] to-[#FF7A47] hover:from-[#E55A1A] hover:to-[#F26419] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
+                className="group relative flex justify-center py-3 px-6 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-[#7c3aed] to-[#a855f7] hover:from-[#6d28d9] hover:to-[#7c3aed] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
             >
               {loading ? (
                   <div className="flex items-center">
@@ -440,9 +440,9 @@ export default function ProfilePage() {
             <h3 className="text-lg font-medium text-gray-900 mb-6">Activité récente</h3>
             <div className="space-y-4">
               {mockActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-start space-x-4 p-4 bg-white rounded-lg border border-gray-200 hover:border-[#F26419] transition-colors">
+                  <div key={activity.id} className="flex items-start space-x-4 p-4 bg-white rounded-lg border border-gray-200 hover:border-[#7c3aed] transition-colors">
                     <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-gradient-to-r from-[#F26419] to-[#FF7A47] rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-gradient-to-r from-[#7c3aed] to-[#a855f7] rounded-full flex items-center justify-center">
                         {getIcon(activity.icon)}
                       </div>
                     </div>
@@ -475,7 +475,7 @@ export default function ProfilePage() {
 
   if (authLoading && !user) {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#1B396A] to-[#2A5490] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-gradient-to-br from-[#312e81] to-[#4338ca] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="animate-spin h-12 w-12 mx-auto border-4 border-white border-t-transparent rounded-full mb-4"></div>
             <p className="text-white text-lg">Chargement du profil...</p>
@@ -487,12 +487,12 @@ export default function ProfilePage() {
   // User not found state
   if (!user) {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#1B396A] to-[#2A5490] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-gradient-to-br from-[#312e81] to-[#4338ca] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <p className="text-white text-lg mb-4">Aucun utilisateur connecté</p>
             <Link
                 href="/auth/login"
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-[#1B396A] bg-white hover:bg-gray-100 transition-colors"
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-[#312e81] bg-white hover:bg-gray-100 transition-colors"
             >
               Se connecter
             </Link>
@@ -506,9 +506,9 @@ export default function ProfilePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white shadow-xl rounded-xl overflow-hidden">
             {/* En-tête de profil */}
-            <div className="bg-gradient-to-r from-[#1B396A] to-[#437DE0] px-6 py-8 sm:px-8 lg:px-10">
+            <div className="bg-gradient-to-r from-[#312e81] to-[#6366f1] px-6 py-8 sm:px-8 lg:px-10">
               <div className="flex flex-col sm:flex-row items-center">
-                <div className="flex-shrink-0 h-24 w-24 bg-white rounded-full flex items-center justify-center text-[#1B396A] text-3xl font-bold mb-4 sm:mb-0 shadow-lg">
+                <div className="flex-shrink-0 h-24 w-24 bg-white rounded-full flex items-center justify-center text-[#312e81] text-3xl font-bold mb-4 sm:mb-0 shadow-lg">
                   {(user.name || user.nom) ? (user.name || user.nom).split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
                 </div>
                 <div className="sm:ml-6 text-center sm:text-left">
@@ -543,7 +543,7 @@ export default function ProfilePage() {
                 <button
                     className={`relative px-6 py-4 font-medium text-sm border-b-2 transition-all duration-200 ${
                         activeTab === 'info'
-                            ? 'border-[#F26419] text-[#F26419] bg-white'
+                            ? 'border-[#7c3aed] text-[#7c3aed] bg-white'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-white'
                     }`}
                     onClick={() => setActiveTab('info')}
@@ -556,7 +556,7 @@ export default function ProfilePage() {
                 <button
                     className={`relative px-6 py-4 font-medium text-sm border-b-2 transition-all duration-200 ${
                         activeTab === 'password'
-                            ? 'border-[#F26419] text-[#F26419] bg-white'
+                            ? 'border-[#7c3aed] text-[#7c3aed] bg-white'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-white'
                     }`}
                     onClick={() => setActiveTab('password')}
@@ -569,7 +569,7 @@ export default function ProfilePage() {
                 <button
                     className={`relative px-6 py-4 font-medium text-sm border-b-2 transition-all duration-200 ${
                         activeTab === 'activity'
-                            ? 'border-[#F26419] text-[#F26419] bg-white'
+                            ? 'border-[#7c3aed] text-[#7c3aed] bg-white'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-white'
                     }`}
                     onClick={() => setActiveTab('activity')}

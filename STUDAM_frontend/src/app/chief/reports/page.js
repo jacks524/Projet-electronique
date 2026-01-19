@@ -111,7 +111,7 @@ export default function ReportsPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed]"></div>
             </div>
         );
     }
@@ -120,7 +120,7 @@ export default function ReportsPage() {
         <div className="space-y-6">
             {/* Header */}
             <div className="bg-white shadow rounded-lg p-6">
-                <h1 className="text-2xl font-bold text-[#1B396A]">
+                <h1 className="text-2xl font-bold text-[#312e81]">
                     Rapports et Statistiques
                 </h1>
                 <p className="text-gray-600 mt-2">
@@ -199,7 +199,7 @@ export default function ReportsPage() {
                 <div className="bg-white shadow rounded-lg p-6">
                     <div className="flex items-center">
                         <div className="flex-shrink-0">
-                            <svg className="h-8 w-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="h-8 w-8 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                         </div>
@@ -233,7 +233,7 @@ export default function ReportsPage() {
                                 </span>
                             </div>
 
-                            <h3 className="text-lg font-semibold text-[#1B396A] mb-2 group-hover:text-[#F26419] transition-colors">
+                            <h3 className="text-lg font-semibold text-[#312e81] mb-2 group-hover:text-[#7c3aed] transition-colors">
                                 {report.title}
                             </h3>
 
@@ -241,7 +241,7 @@ export default function ReportsPage() {
                                 {report.description}
                             </p>
 
-                            <div className="flex items-center text-sm text-[#F26419] font-medium">
+                            <div className="flex items-center text-sm text-[#7c3aed] font-medium">
                                 Consulter le rapport
                                 <svg className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
@@ -254,7 +254,7 @@ export default function ReportsPage() {
 
             {/* Quick Actions */}
             <div className="bg-white shadow rounded-lg p-6">
-                <h2 className="text-lg font-semibold text-[#1B396A] mb-4">Actions rapides</h2>
+                <h2 className="text-lg font-semibold text-[#312e81] mb-4">Actions rapides</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <button className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                         <svg className="w-5 h-5 mr-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

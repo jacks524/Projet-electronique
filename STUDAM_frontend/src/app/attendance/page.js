@@ -122,7 +122,7 @@ export default function AttendancePage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gray-100">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#F26419]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#7c3aed]"></div>
             </div>
         );
     }
@@ -131,11 +131,11 @@ export default function AttendancePage() {
         <div className="min-h-screen bg-gray-100 py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold text-[#1B396A]">Gestion des Présences</h1>
+                    <h1 className="text-3xl font-bold text-[#312e81]">Gestion des Présences</h1>
                     <nav className="flex" aria-label="Breadcrumb">
                         <ol className="inline-flex items-center space-x-1 md:space-x-3">
                             <li className="inline-flex items-center">
-                                <Link href="/dashboard" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-[#F26419]">
+                                <Link href="/dashboard" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-[#7c3aed]">
                                     <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
                                     </svg>
@@ -170,7 +170,7 @@ export default function AttendancePage() {
                 {selectedClassId ? (
                     <div className="bg-white shadow-md rounded-lg overflow-hidden">
                         <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                            <h3 className="text-lg leading-6 font-medium text-[#1B396A]">
+                            <h3 className="text-lg leading-6 font-medium text-[#312e81]">
                                 Feuille de présence
                             </h3>
                             <p className="mt-1 max-w-2xl text-sm text-gray-500">
@@ -191,7 +191,7 @@ export default function AttendancePage() {
                         <div className="px-4 py-4 sm:px-6 border-t border-gray-200 flex justify-end">
                             <button
                                 onClick={handleSaveAttendance}
-                                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#F26419] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419]"
+                                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#7c3aed] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed]"
                             >
                                 Enregistrer les présences
                             </button>

@@ -10,6 +10,17 @@ const getByTeacher = async (teacherId) => {
     }
 };
 
+
+const getByDepartment = async (departmentId) => {
+    try {
+        const { data } = await apiClient.get(`/subject/by-department/${departmentId}`);
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        if (error.response?.status === 404) return [];
+        throw new Error("Impossible de charger les matieres du departement.");
+    }
+};
+
 const getById = async (subjectId) => {
     try {
         const { data } = await apiClient.get(`/subject/${subjectId}`);
@@ -21,6 +32,7 @@ const getById = async (subjectId) => {
 
 const subjectService = {
     getByTeacher,
+    getByDepartment,
     getById,
 };
 

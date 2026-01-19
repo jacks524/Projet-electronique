@@ -68,7 +68,7 @@ export default function StudentsByClasses() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed] mx-auto"></div>
                     <p className="mt-4 text-gray-600">Chargement des classes...</p>
                 </div>
             </div>
@@ -80,7 +80,7 @@ export default function StudentsByClasses() {
             {/* En-tête */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#1B396A]">Étudiants par Classes</h1>
+                    <h1 className="text-3xl font-bold text-[#312e81]">Étudiants par Classes</h1>
                     <p className="text-gray-600 mt-1">Gérez les étudiants organisés par classe</p>
                 </div>
                 <Link href="/chief/students">
@@ -104,7 +104,7 @@ export default function StudentsByClasses() {
                             id="department"
                             value={selectedDepartment}
                             onChange={(e) => setSelectedDepartment(e.target.value)}
-                            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm rounded-md"
+                            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm rounded-md"
                         >
                             <option value="">Tous les départements</option>
                             {departments.map((dept) => (
@@ -134,10 +134,10 @@ export default function StudentsByClasses() {
                             href={`/chief/students/classes/${classe.id}`}
                             className="block"
                         >
-                            <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6 cursor-pointer border-2 border-transparent hover:border-[#F26419]">
+                            <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6 cursor-pointer border-2 border-transparent hover:border-[#7c3aed]">
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
-                                        <h3 className="text-xl font-bold text-[#1B396A] mb-2">
+                                        <h3 className="text-xl font-bold text-[#312e81] mb-2">
                                             {classe.name}
                                         </h3>
                                         <p className="text-sm text-gray-600 mb-3">
@@ -151,7 +151,7 @@ export default function StudentsByClasses() {
                                         </div>
                                     </div>
                                     <div className="ml-4">
-                                        <div className="w-16 h-16 bg-gradient-to-br from-[#F26419] to-[#FF7A47] rounded-full flex items-center justify-center">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-[#7c3aed] to-[#a855f7] rounded-full flex items-center justify-center">
                                             <span className="text-2xl font-bold text-white">
                                                 {classe.studentCount}
                                             </span>
@@ -161,7 +161,7 @@ export default function StudentsByClasses() {
                                 </div>
 
                                 <div className="mt-4 pt-4 border-t border-gray-200 flex justify-end">
-                                    <span className="text-sm text-[#F26419] font-medium flex items-center">
+                                    <span className="text-sm text-[#7c3aed] font-medium flex items-center">
                                         Voir les étudiants
                                         <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/>

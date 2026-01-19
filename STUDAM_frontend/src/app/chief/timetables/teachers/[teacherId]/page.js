@@ -14,15 +14,37 @@ export default function TeacherTimetablePage() {
     const teacherId = params.teacherId;
 
     const [teacher, setTeacher] = useState(null);
-    const [timetables, setTimetables] = useState([]);
+    const [schedules, setSchedules] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const daysOfWeek = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-    const timeSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00'];
+    const timeSlots = ['08:00 - 10:00', '10:00 - 12:00', '14:00 - 16:00', '16:00 - 18:00'];
+
+    const dayMap = {
+        MONDAY: 'Lundi',
+        TUESDAY: 'Mardi',
+        WEDNESDAY: 'Mercredi',
+        THURSDAY: 'Jeudi',
+        FRIDAY: 'Vendredi',
+        SATURDAY: 'Samedi',
+        SUNDAY: 'Dimanche'
+    };
 
     useEffect(() => {
         loadData();
     }, [teacherId]);
+
+    const formatTime = (timeStr) => {
+        if (!timeStr) return '';
+        return timeStr.substring(0, 5);
+    };
+
+    const parseTimeToMinutes = (timeStr) => {
+        if (!timeStr) return 0;
+        const parts = timeStr.split(':').map(Number);
+        if (parts.length < 2) return 0;
+        return parts[0] * 60 + parts[1];
+    };
 
     const loadData = async () => {
         try {
@@ -33,9 +55,28 @@ export default function TeacherTimetablePage() {
             ]);
 
             setTeacher(teacherData);
-            setTimetables(timetableData);
+
+            const timetableSchedules = Array.isArray(timetableData?.schedules) ? timetableData.schedules : [];
+            const mappedSchedules = timetableSchedules.map((schedule) => {
+                const start = formatTime(schedule.startHour);
+                const end = formatTime(schedule.endHour);
+                return {
+                    jour: dayMap[schedule.day] || schedule.day,
+                    horaire: `${start} - ${end}`,
+                    matiere: {
+                        libelle: schedule.subject?.name,
+                        code: schedule.subject?.code,
+                        classe: {
+                            id: schedule.classe?.classId,
+                            nom: schedule.classe?.name
+                        }
+                    }
+                };
+            });
+
+            setSchedules(mappedSchedules);
         } catch (error) {
-            toast.error("Erreur lors du chargement des données");
+            toast.error("Erreur lors du chargement des donnees");
             console.error(error);
         } finally {
             setLoading(false);
@@ -43,7 +84,7 @@ export default function TeacherTimetablePage() {
     };
 
     const findSchedule = (day, time) => {
-        return timetables.find(
+        return schedules.find(
             schedule => schedule.jour === day && schedule.horaire === time
         );
     };
@@ -52,10 +93,20 @@ export default function TeacherTimetablePage() {
         window.print();
     };
 
+    const totalHours = schedules.reduce((total, item) => {
+        const [start, end] = item.horaire.split(' - ');
+        const startTime = parseTimeToMinutes(start);
+        const endTime = parseTimeToMinutes(end);
+        const hours = Math.max(0, (endTime - startTime) / 60);
+        return total + hours;
+    }, 0);
+
+    const classesCount = new Set(schedules.map((t) => t.matiere?.classe?.id).filter(Boolean)).size;
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed]"></div>
             </div>
         );
     }
@@ -63,18 +114,17 @@ export default function TeacherTimetablePage() {
     if (!teacher) {
         return (
             <div className="text-center py-12">
-                <p className="text-red-600">Enseignant non trouvé</p>
+                <p className="text-red-600">Enseignant non trouve</p>
             </div>
         );
     }
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="bg-white shadow rounded-lg p-6">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-2xl font-bold text-[#1B396A]">
+                        <h1 className="text-2xl font-bold text-[#312e81]">
                             Emploi du temps
                         </h1>
                         <p className="text-gray-600 mt-2">
@@ -103,7 +153,6 @@ export default function TeacherTimetablePage() {
                 </div>
             </div>
 
-            {/* Timetable Grid */}
             <div className="bg-white shadow rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
@@ -133,18 +182,13 @@ export default function TeacherTimetablePage() {
                                             className="px-1 py-1 text-sm"
                                         >
                                             {schedule ? (
-                                                <div className="p-3 rounded-md bg-orange-100 border border-orange-200 h-full min-h-[80px]">
-                                                    <div className="font-medium text-[#1B396A]">
+                                                <div className="p-3 rounded-md bg-violet-100 border border-violet-200 h-full min-h-[80px]">
+                                                    <div className="font-medium text-[#312e81]">
                                                         {schedule.matiere?.libelle}
                                                     </div>
                                                     <div className="text-xs text-gray-600 mt-1">
                                                         {schedule.matiere?.classe?.nom}
                                                     </div>
-                                                    {schedule.notes && (
-                                                        <div className="text-xs text-gray-500 mt-1 italic">
-                                                            {schedule.notes}
-                                                        </div>
-                                                    )}
                                                 </div>
                                             ) : (
                                                 <div className="p-3 rounded-md bg-gray-50 border border-gray-100 h-full min-h-[80px] flex items-center justify-center">
@@ -161,7 +205,6 @@ export default function TeacherTimetablePage() {
                 </div>
             </div>
 
-            {/* Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white shadow rounded-lg p-6">
                     <div className="flex items-center">
@@ -177,7 +220,7 @@ export default function TeacherTimetablePage() {
                                 </dt>
                                 <dd className="flex items-baseline">
                                     <div className="text-2xl font-semibold text-gray-900">
-                                        {timetables.length}
+                                        {schedules.length}
                                     </div>
                                 </dd>
                             </dl>
@@ -199,7 +242,7 @@ export default function TeacherTimetablePage() {
                                 </dt>
                                 <dd className="flex items-baseline">
                                     <div className="text-2xl font-semibold text-gray-900">
-                                        {timetables.length * 2}h
+                                        {totalHours}h
                                     </div>
                                 </dd>
                             </dl>
@@ -217,11 +260,11 @@ export default function TeacherTimetablePage() {
                         <div className="ml-5 w-0 flex-1">
                             <dl>
                                 <dt className="text-sm font-medium text-gray-500 truncate">
-                                    Classes différentes
+                                    Classes differentes
                                 </dt>
                                 <dd className="flex items-baseline">
                                     <div className="text-2xl font-semibold text-gray-900">
-                                        {new Set(timetables.map(t => t.matiere?.classe?.id)).size}
+                                        {classesCount}
                                     </div>
                                 </dd>
                             </dl>

@@ -211,7 +211,7 @@ export default function TimetablePage() {
             <div className="min-h-screen bg-gray-100 py-6">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#F26419]"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#7c3aed]"></div>
                     </div>
                 </div>
             </div>
@@ -225,14 +225,14 @@ export default function TimetablePage() {
                 <div className="mb-8">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-[#1B396A]">Emploi du Temps</h1>
+                            <h1 className="text-3xl font-bold text-[#312e81]">Emploi du Temps</h1>
                             <p className="mt-2 text-gray-600">
                                 Planification des cours et des horaires
                             </p>
                         </div>
                         <Link
                             href="/dashboard"
-                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419]"
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed]"
                         >
                             <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -256,7 +256,7 @@ export default function TimetablePage() {
                                 max="52"
                                 value={selectedWeek}
                                 onChange={(e) => setSelectedWeek(parseInt(e.target.value))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419]"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed]"
                             />
                         </div>
                         <div className="flex-1">
@@ -267,7 +267,7 @@ export default function TimetablePage() {
                                 id="class"
                                 value={selectedClass}
                                 onChange={(e) => setSelectedClass(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419]"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed]"
                             >
                                 <option value="">Toutes les classes</option>
                                 {classes.map((classe) => (
@@ -319,8 +319,8 @@ export default function TimetablePage() {
                                         return (
                                             <td key={day.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 {course ? (
-                                                    <div className="bg-[#F26419] bg-opacity-10 border-l-4 border-[#F26419] p-3 rounded">
-                                                        <div className="text-sm font-medium text-[#1B396A]">
+                                                    <div className="bg-[#7c3aed] bg-opacity-10 border-l-4 border-[#7c3aed] p-3 rounded">
+                                                        <div className="text-sm font-medium text-[#312e81]">
                                                             {course.matiere}
                                                         </div>
                                                         <div className="text-xs text-gray-600 mt-1">
@@ -356,12 +356,12 @@ export default function TimetablePage() {
                     >
                         <div className="flex items-center">
                             <div className="flex-shrink-0">
-                                <svg className="h-8 w-8 text-[#F26419]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="h-8 w-8 text-[#7c3aed]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                             </div>
                             <div className="ml-4">
-                                <h3 className="text-lg font-medium text-[#1B396A]">Prendre les présences</h3>
+                                <h3 className="text-lg font-medium text-[#312e81]">Prendre les présences</h3>
                                 <p className="text-sm text-gray-500">Marquer les présences pour les cours</p>
                             </div>
                         </div>
@@ -373,12 +373,12 @@ export default function TimetablePage() {
                     >
                         <div className="flex items-center">
                             <div className="flex-shrink-0">
-                                <svg className="h-8 w-8 text-[#1B396A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="h-8 w-8 text-[#312e81]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                                 </svg>
                             </div>
                             <div className="ml-4">
-                                <h3 className="text-lg font-medium text-[#1B396A]">Voir les matières</h3>
+                                <h3 className="text-lg font-medium text-[#312e81]">Voir les matières</h3>
                                 <p className="text-sm text-gray-500">Consulter toutes les matières</p>
                             </div>
                         </div>
@@ -395,7 +395,7 @@ export default function TimetablePage() {
                                 </svg>
                             </div>
                             <div className="ml-4">
-                                <h3 className="text-lg font-medium text-[#1B396A]">Voir les classes</h3>
+                                <h3 className="text-lg font-medium text-[#312e81]">Voir les classes</h3>
                                 <p className="text-sm text-gray-500">Consulter toutes les classes</p>
                             </div>
                         </div>

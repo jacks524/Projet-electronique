@@ -106,7 +106,7 @@ export default function TeacherCoursesPage() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed] mx-auto"></div>
                     <p className="mt-4 text-gray-600">Chargement...</p>
                 </div>
             </div>
@@ -118,7 +118,7 @@ export default function TeacherCoursesPage() {
             {/* En-tête */}
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#1B396A]">Emploi du temps</h1>
+                    <h1 className="text-3xl font-bold text-[#312e81]">Emploi du temps</h1>
                     <p className="text-gray-600 mt-1">{teacher?.name} - {teacher?.department.name}</p>
                 </div>
                 <Link href={`/chief/teachers/${teacherId}`}>
@@ -179,8 +179,8 @@ export default function TeacherCoursesPage() {
 
                 <div className="bg-white shadow rounded-lg p-6">
                     <div className="flex items-center">
-                        <div className="flex-shrink-0 bg-orange-100 rounded-md p-3">
-                            <svg className="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex-shrink-0 bg-violet-100 rounded-md p-3">
+                            <svg className="h-6 w-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                             </svg>
                         </div>
@@ -201,7 +201,7 @@ export default function TeacherCoursesPage() {
                         onClick={() => setSelectedDay('all')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
                             selectedDay === 'all'
-                                ? 'bg-[#F26419] text-white'
+                                ? 'bg-[#7c3aed] text-white'
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                     >
@@ -213,7 +213,7 @@ export default function TeacherCoursesPage() {
                             onClick={() => setSelectedDay(day)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
                                 selectedDay === day
-                                    ? 'bg-[#F26419] text-white'
+                                    ? 'bg-[#7c3aed] text-white'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                         >
@@ -233,14 +233,14 @@ export default function TeacherCoursesPage() {
 
                             return (
                                 <div key={day} className="p-6">
-                                    <h3 className="text-lg font-semibold text-[#1B396A] mb-4">{day}</h3>
+                                    <h3 className="text-lg font-semibold text-[#312e81] mb-4">{day}</h3>
                                     <div className="space-y-3">
                                         {dayCourses.map((course) => (
-                                            <div key={course.id} className="border border-gray-200 rounded-lg p-4 hover:border-[#F26419] transition-colors">
+                                            <div key={course.id} className="border border-gray-200 rounded-lg p-4 hover:border-[#7c3aed] transition-colors">
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1">
                                                         <div className="flex items-center space-x-3">
-                                                            <span className="px-3 py-1 bg-[#F26419] text-white rounded-full text-sm font-medium">
+                                                            <span className="px-3 py-1 bg-[#7c3aed] text-white rounded-full text-sm font-medium">
                                                                 {course.startTime} - {course.endTime}
                                                             </span>
                                                             <h4 className="font-semibold text-gray-900">{course.subject.libelle}</h4>
@@ -263,7 +263,7 @@ export default function TeacherCoursesPage() {
                                                         </div>
                                                     </div>
                                                     <Link href={`/chief/subjects/${course.subject.id}`}>
-                                                        <button className="text-[#F26419] hover:text-[#E55A1A]">
+                                                        <button className="text-[#7c3aed] hover:text-[#6d28d9]">
                                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/>
                                                             </svg>
@@ -303,11 +303,11 @@ export default function TeacherCoursesPage() {
                         ) : (
                             <div className="space-y-3">
                                 {filteredTimetable.map((course) => (
-                                    <div key={course.id} className="border border-gray-200 rounded-lg p-4 hover:border-[#F26419] transition-colors">
+                                    <div key={course.id} className="border border-gray-200 rounded-lg p-4 hover:border-[#7c3aed] transition-colors">
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
                                                 <div className="flex items-center space-x-3">
-                                                    <span className="px-3 py-1 bg-[#F26419] text-white rounded-full text-sm font-medium">
+                                                    <span className="px-3 py-1 bg-[#7c3aed] text-white rounded-full text-sm font-medium">
                                                         {course.startTime} - {course.endTime}
                                                     </span>
                                                     <h4 className="font-semibold text-gray-900">{course.subject.libelle}</h4>
@@ -330,7 +330,7 @@ export default function TeacherCoursesPage() {
                                                 </div>
                                             </div>
                                             <Link href={`/chief/subjects/${course.subject.id}`}>
-                                                <button className="text-[#F26419] hover:text-[#E55A1A]">
+                                                <button className="text-[#7c3aed] hover:text-[#6d28d9]">
                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/>
                                                     </svg>

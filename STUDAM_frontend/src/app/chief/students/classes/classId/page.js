@@ -166,7 +166,7 @@ export default function ClassStudentsPage() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed] mx-auto"></div>
                     <p className="mt-4 text-gray-600">Chargement...</p>
                 </div>
             </div>
@@ -178,7 +178,7 @@ export default function ClassStudentsPage() {
             {/* En-tête */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#1B396A]">
+                    <h1 className="text-3xl font-bold text-[#312e81]">
                         Classe {classe?.name}
                     </h1>
                     <p className="text-gray-600 mt-1">
@@ -209,7 +209,7 @@ export default function ClassStudentsPage() {
                             placeholder="Rechercher un étudiant..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                         />
                     </div>
                 </div>
@@ -265,7 +265,7 @@ export default function ClassStudentsPage() {
                                 <tr key={student.id} className={student.status === 'inactive' ? 'bg-gray-50' : ''}>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
-                                            <div className="flex-shrink-0 h-10 w-10 bg-[#F26419] rounded-full flex items-center justify-center">
+                                            <div className="flex-shrink-0 h-10 w-10 bg-[#7c3aed] rounded-full flex items-center justify-center">
                                                     <span className="text-white font-medium text-sm">
                                                         {student.nom.split(' ').map(n => n[0]).join('')}
                                                     </span>
@@ -303,7 +303,7 @@ export default function ClassStudentsPage() {
                                         <div className="flex space-x-2">
                                             <button
                                                 onClick={() => handleEditStudent(student)}
-                                                className="text-[#1B396A] hover:text-[#F26419]"
+                                                className="text-[#312e81] hover:text-[#7c3aed]"
                                             >
                                                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>

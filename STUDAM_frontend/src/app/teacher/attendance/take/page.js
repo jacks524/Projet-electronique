@@ -150,7 +150,7 @@ export default function TakeAttendancePage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-center h-64">
                         <div className="text-center">
-                            <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                             <p className="text-gray-600">Chargement de vos cours...</p>
                         </div>
                     </div>
@@ -185,15 +185,15 @@ export default function TakeAttendancePage() {
             {/* Indicateur de progression */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center justify-between max-w-2xl mx-auto">
-                    <div className={`flex items-center ${currentStep >= 1 ? 'text-orange-600' : 'text-gray-400'}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? 'bg-orange-100 border border-orange-300' : 'bg-gray-100 border border-gray-300'}`}>
+                    <div className={`flex items-center ${currentStep >= 1 ? 'text-violet-600' : 'text-gray-400'}`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? 'bg-violet-100 border border-violet-300' : 'bg-gray-100 border border-gray-300'}`}>
                             1
                         </div>
                         <span className="ml-2 font-medium">Sélection du cours</span>
                     </div>
                     <div className="flex-1 h-1 bg-gray-200 mx-4"></div>
-                    <div className={`flex items-center ${currentStep >= 2 ? 'text-orange-600' : 'text-gray-400'}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? 'bg-orange-100 border border-orange-300' : 'bg-gray-100 border border-gray-300'}`}>
+                    <div className={`flex items-center ${currentStep >= 2 ? 'text-violet-600' : 'text-gray-400'}`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? 'bg-violet-100 border border-violet-300' : 'bg-gray-100 border border-gray-300'}`}>
                             2
                         </div>
                         <span className="ml-2 font-medium">Prise de présence</span>
@@ -226,7 +226,7 @@ export default function TakeAttendancePage() {
                                 </p>
                                 <Link
                                     href="/teacher/timetable"
-                                    className="inline-flex items-center mt-4 px-4 py-2 text-sm font-medium text-orange-600 hover:text-orange-500"
+                                    className="inline-flex items-center mt-4 px-4 py-2 text-sm font-medium text-violet-600 hover:text-violet-500"
                                 >
                                     Voir mon emploi du temps complet →
                                 </Link>
@@ -236,7 +236,7 @@ export default function TakeAttendancePage() {
                                 {todaySchedules.map((schedule) => (
                                     <div
                                         key={schedule.id}
-                                        className="border border-gray-200 rounded-lg p-6 hover:shadow-md hover:border-orange-300 transition-all cursor-pointer bg-white"
+                                        className="border border-gray-200 rounded-lg p-6 hover:shadow-md hover:border-violet-300 transition-all cursor-pointer bg-white"
                                         onClick={() => handleSelectCourse(schedule)}
                                     >
                                         <div className="flex items-start justify-between mb-4">
@@ -266,14 +266,14 @@ export default function TakeAttendancePage() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-4">
-                                                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div className="w-12 h-12 bg-violet-100 rounded-lg flex items-center justify-center flex-shrink-0 ml-4">
+                                                <svg className="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                 </svg>
                                             </div>
                                         </div>
                                         <div className="mt-4 text-center">
-                                            <button className="w-full py-2 px-4 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors font-medium">
+                                            <button className="w-full py-2 px-4 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors font-medium">
                                                 Prendre les présences
                                             </button>
                                         </div>
@@ -445,7 +445,7 @@ export default function TakeAttendancePage() {
                                 <button
                                     onClick={handleSubmitAttendance}
                                     disabled={submitting}
-                                    className="px-6 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white rounded-lg text-sm font-medium transition-colors flex items-center"
+                                    className="px-6 py-3 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white rounded-lg text-sm font-medium transition-colors flex items-center"
                                 >
                                     {submitting ? (
                                         <>

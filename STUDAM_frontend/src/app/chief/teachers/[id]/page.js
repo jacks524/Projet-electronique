@@ -114,7 +114,7 @@ export default function TeacherDetailPage() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed] mx-auto"></div>
                     <p className="mt-4 text-gray-600">Chargement...</p>
                 </div>
             </div>
@@ -126,7 +126,7 @@ export default function TeacherDetailPage() {
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <p className="text-red-600">Enseignant non trouvé</p>
-                    <Link href="/chief/teachers" className="mt-4 text-[#F26419] hover:underline">
+                    <Link href="/chief/teachers" className="mt-4 text-[#7c3aed] hover:underline">
                         Retour à la liste
                     </Link>
                 </div>
@@ -143,7 +143,7 @@ export default function TeacherDetailPage() {
             {/* En-tête */}
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#1B396A]">{teacher.name}</h1>
+                    <h1 className="text-3xl font-bold text-[#312e81]">{teacher.name}</h1>
                     <p className="text-gray-600 mt-1">{teacher.department.name}</p>
                 </div>
                 <div className="flex space-x-2">
@@ -177,10 +177,10 @@ export default function TeacherDetailPage() {
 
             {/* Carte profil */}
             <div className="bg-white shadow rounded-lg overflow-hidden">
-                <div className="bg-gradient-to-r from-[#1B396A] to-[#2A5490] px-6 py-8">
+                <div className="bg-gradient-to-r from-[#312e81] to-[#4338ca] px-6 py-8">
                     <div className="flex items-center space-x-6">
                         <div className="h-24 w-24 bg-white rounded-full flex items-center justify-center">
-                            <span className="text-4xl font-bold text-[#F26419]">
+                            <span className="text-4xl font-bold text-[#7c3aed]">
                                 {teacher.name.split(' ').map(n => n[0]).join('')}
                             </span>
                         </div>
@@ -203,21 +203,21 @@ export default function TeacherDetailPage() {
                 {/* Statistiques */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 px-6 py-4 bg-gray-50 border-b">
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-[#1B396A]">{subjects.length}</div>
+                        <div className="text-2xl font-bold text-[#312e81]">{subjects.length}</div>
                         <div className="text-sm text-gray-600">Matières</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-[#1B396A]">{classes.length}</div>
+                        <div className="text-2xl font-bold text-[#312e81]">{classes.length}</div>
                         <div className="text-sm text-gray-600">Classes</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-[#1B396A]">
+                        <div className="text-2xl font-bold text-[#312e81]">
                             {classes.reduce((sum, c) => sum + c.studentCount, 0)}
                         </div>
                         <div className="text-sm text-gray-600">Étudiants</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-[#F26419]">{progressPercentage}%</div>
+                        <div className="text-2xl font-bold text-[#7c3aed]">{progressPercentage}%</div>
                         <div className="text-sm text-gray-600">Progression</div>
                     </div>
                 </div>
@@ -229,7 +229,7 @@ export default function TeacherDetailPage() {
                             onClick={() => setActiveTab('info')}
                             className={`py-4 px-6 border-b-2 font-medium text-sm ${
                                 activeTab === 'info'
-                                    ? 'border-[#F26419] text-[#F26419]'
+                                    ? 'border-[#7c3aed] text-[#7c3aed]'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                         >
@@ -239,7 +239,7 @@ export default function TeacherDetailPage() {
                             onClick={() => setActiveTab('subjects')}
                             className={`py-4 px-6 border-b-2 font-medium text-sm ${
                                 activeTab === 'subjects'
-                                    ? 'border-[#F26419] text-[#F26419]'
+                                    ? 'border-[#7c3aed] text-[#7c3aed]'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                         >
@@ -249,7 +249,7 @@ export default function TeacherDetailPage() {
                             onClick={() => setActiveTab('classes')}
                             className={`py-4 px-6 border-b-2 font-medium text-sm ${
                                 activeTab === 'classes'
-                                    ? 'border-[#F26419] text-[#F26419]'
+                                    ? 'border-[#7c3aed] text-[#7c3aed]'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                         >
@@ -316,7 +316,7 @@ export default function TeacherDetailPage() {
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {subjects.map((subject) => (
-                                        <div key={subject.id} className="border border-gray-200 rounded-lg p-4 hover:border-[#F26419] transition-colors">
+                                        <div key={subject.id} className="border border-gray-200 rounded-lg p-4 hover:border-[#7c3aed] transition-colors">
                                             <div className="flex items-start justify-between">
                                                 <div className="flex-1">
                                                     <h4 className="font-medium text-gray-900">{subject.libelle}</h4>
@@ -328,7 +328,7 @@ export default function TeacherDetailPage() {
                                                     </div>
                                                 </div>
                                                 <Link href={`/chief/subjects/${subject.id}`}>
-                                                    <button className="text-[#F26419] hover:text-[#E55A1A]">
+                                                    <button className="text-[#7c3aed] hover:text-[#6d28d9]">
                                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/>
                                                         </svg>
@@ -350,9 +350,9 @@ export default function TeacherDetailPage() {
                             ) : (
                                 <div className="space-y-3">
                                     {classes.map((classe) => (
-                                        <div key={classe.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-[#F26419] transition-colors">
+                                        <div key={classe.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-[#7c3aed] transition-colors">
                                             <div className="flex items-center space-x-3">
-                                                <div className="w-10 h-10 bg-gradient-to-br from-[#F26419] to-[#FF7A47] rounded-full flex items-center justify-center">
+                                                <div className="w-10 h-10 bg-gradient-to-br from-[#7c3aed] to-[#a855f7] rounded-full flex items-center justify-center">
                                                     <span className="text-white font-bold text-sm">{classe.name[0]}</span>
                                                 </div>
                                                 <div>
@@ -361,7 +361,7 @@ export default function TeacherDetailPage() {
                                                 </div>
                                             </div>
                                             <Link href={`/chief/classes/${classe.id}`}>
-                                                <button className="text-sm text-[#F26419] hover:text-[#E55A1A] font-medium">
+                                                <button className="text-sm text-[#7c3aed] hover:text-[#6d28d9] font-medium">
                                                     Voir détails →
                                                 </button>
                                             </Link>

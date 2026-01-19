@@ -141,7 +141,7 @@ export default function AttendanceSessionDetailPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-center h-64">
                         <div className="text-center">
-                            <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                             <p className="text-gray-600">Chargement des détails de la session...</p>
                         </div>
                     </div>
@@ -162,7 +162,7 @@ export default function AttendanceSessionDetailPage() {
                         <p className="text-gray-500 mb-6">La session demandée n'existe pas ou vous n'y avez pas accès.</p>
                         <Link
                             href="/teacher/attendance/history"
-                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 transition-colors"
+                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 transition-colors"
                         >
                             Retour à l'historique
                         </Link>
@@ -288,7 +288,7 @@ export default function AttendanceSessionDetailPage() {
                                 <button
                                     onClick={handleSaveChanges}
                                     disabled={saving}
-                                    className="px-4 py-1 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 rounded-lg transition-colors flex items-center"
+                                    className="px-4 py-1 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 rounded-lg transition-colors flex items-center"
                                 >
                                     {saving ? (
                                         <>
@@ -387,7 +387,7 @@ export default function AttendanceSessionDetailPage() {
                                             value={currentNotes}
                                             onChange={(e) => handleNotesChange(attendance.id, e.target.value)}
                                             placeholder="Ajouter une note..."
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors"
                                         />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

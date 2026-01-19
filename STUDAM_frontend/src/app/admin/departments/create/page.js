@@ -132,7 +132,7 @@ export default function CreateDepartment() {
     if (authLoading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-500"></div>
             </div>
         );
     }
@@ -144,22 +144,22 @@ export default function CreateDepartment() {
                 {/* En-tête moderne */}
                 <div className="mb-8">
                     <nav className="flex items-center space-x-2 text-sm font-medium mb-6">
-                        <Link href="/admin/dashboard" className="text-slate-500 hover:text-orange-600 transition-colors duration-200 flex items-center">
+                        <Link href="/admin/dashboard" className="text-slate-500 hover:text-violet-600 transition-colors duration-200 flex items-center">
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                             </svg>
                             Dashboard
                         </Link>
                         <span className="text-slate-400">•</span>
-                        <Link href="/admin/departments" className="text-slate-500 hover:text-orange-600 transition-colors duration-200">
+                        <Link href="/admin/departments" className="text-slate-500 hover:text-violet-600 transition-colors duration-200">
                             Départements
                         </Link>
                         <span className="text-slate-400">•</span>
-                        <span className="text-orange-600 font-semibold">Nouveau</span>
+                        <span className="text-violet-600 font-semibold">Nouveau</span>
                     </nav>
 
                     <div className="text-center">
-                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl mb-4 shadow-lg">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-2xl mb-4 shadow-lg">
                             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                             </svg>
@@ -210,12 +210,12 @@ export default function CreateDepartment() {
                                         className={`w-full px-4 py-3 bg-slate-50 border-2 rounded-xl text-slate-900 placeholder-slate-400 transition-all duration-200 focus:outline-none focus:bg-white ${
                                             errors.name
                                                 ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-                                                : 'border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200'
+                                                : 'border-slate-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-200'
                                         }`}
                                         placeholder="Ex: Sciences Informatiques et Technologies"
                                     />
                                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                        <svg className="w-5 h-5 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-5 h-5 text-slate-400 group-focus-within:text-violet-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                         </svg>
                                     </div>
@@ -245,13 +245,13 @@ export default function CreateDepartment() {
                                         className={`w-full px-4 py-3 bg-slate-50 border-2 rounded-xl text-slate-900 placeholder-slate-400 uppercase font-mono transition-all duration-200 focus:outline-none focus:bg-white ${
                                             errors.code
                                                 ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-                                                : 'border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200'
+                                                : 'border-slate-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-200'
                                         }`}
                                         placeholder="SCITECH"
                                         maxLength="8"
                                     />
                                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                        <svg className="w-5 h-5 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-5 h-5 text-slate-400 group-focus-within:text-violet-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                                         </svg>
                                     </div>
@@ -287,12 +287,12 @@ export default function CreateDepartment() {
                                         className={`w-full px-4 py-3 bg-slate-50 border-2 rounded-xl text-slate-900 placeholder-slate-400 transition-all duration-200 focus:outline-none focus:bg-white resize-none ${
                                             errors.description
                                                 ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-                                                : 'border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200'
+                                                : 'border-slate-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-200'
                                         }`}
                                         placeholder="Décrivez la mission, les objectifs et les domaines d'expertise de ce département. Cette description aidera à identifier clairement le rôle et les responsabilités du département au sein de l'établissement..."
                                     />
                                     <div className="absolute top-3 right-3">
-                                        <svg className="w-5 h-5 text-slate-400 group-focus-within:text-orange-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-5 h-5 text-slate-400 group-focus-within:text-violet-500 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
                                         </svg>
                                     </div>
@@ -331,7 +331,7 @@ export default function CreateDepartment() {
                                                 <li
                                                     key={chief.id}
                                                     onClick={() => handleSelectChief(chief)}
-                                                    className="px-4 py-2 hover:bg-orange-100 cursor-pointer"
+                                                    className="px-4 py-2 hover:bg-violet-100 cursor-pointer"
                                                 >
                                                     {chief.name} ({chief.email})
                                                 </li>
@@ -357,7 +357,7 @@ export default function CreateDepartment() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg flex items-center justify-center space-x-2"
+                                className="flex-1 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg flex items-center justify-center space-x-2"
                             >
                                 {loading ? (
                                     <>

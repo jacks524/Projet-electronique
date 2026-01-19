@@ -31,16 +31,23 @@ export default function AdminDepartments() {
         try {
             setLoading(true);
             const dataFromApi = await departmentService.getAll();
-            const formattedData = dataFromApi.map(dept => ({
-                id: dept.departmentId,
-                nom: dept.name,
-                code: dept.code,
-                description: dept.description,
-		chef: dept.departmentManager,
-		totalEnseignants: dept.stats.totalTeachers,
-		totalEtudiants: dept.stats.totalStudents,
-                statut: 'active',
-            }));
+            const formattedData = dataFromApi.map(dept => {
+                const stats = dept.stats || {};
+                const chief = Array.isArray(dept.departmentManager)
+                    ? dept.departmentManager[0]
+                    : dept.departmentManager;
+
+                return {
+                    id: dept.departmentId,
+                    nom: dept.name,
+                    code: dept.code,
+                    description: dept.description,
+                    chef: chief || null,
+                    totalEnseignants: stats.totalTeachers || 0,
+                    totalEtudiants: stats.totalStudents || 0,
+                    statut: 'active',
+                };
+            });
             setDepartments(formattedData);
         } catch (error) {
             toast.error(error.message || 'Erreur lors du chargement des départements');
@@ -77,7 +84,7 @@ export default function AdminDepartments() {
         return (
             <div className="flex items-center justify-center min-h-96">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed] mx-auto"></div>
                     <p>Chargement des départements...</p>
                 </div>
             </div>
@@ -87,7 +94,7 @@ export default function AdminDepartments() {
 
     return (
         <div className="space-y-6">
-            {/* En-tête */}
+            {/* En-tÃªte */}
             <div className="md:flex md:items-center md:justify-between">
                 <div className="flex-1 min-w-0">
                     <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
@@ -100,7 +107,7 @@ export default function AdminDepartments() {
                 <div className="mt-4 flex md:mt-0 md:ml-4">
                     <Link
                         href="/admin/departments/create"
-                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#F26419] hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#7c3aed] hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500"
                     >
                         <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -127,7 +134,7 @@ export default function AdminDepartments() {
                                     <input
                                         id="search"
                                         name="search"
-                                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                                         placeholder="Rechercher un département..."
                                         type="search"
                                         value={searchTerm}
@@ -143,7 +150,7 @@ export default function AdminDepartments() {
                 </div>
             </div>
 
-            {/* Liste des départements */}
+            {/* Liste des dÃ©partements */}
             <div className="bg-white shadow overflow-hidden sm:rounded-md">
                 <ul className="divide-y divide-gray-200">
                     {filteredDepartments.map((department) => (
@@ -188,13 +195,13 @@ export default function AdminDepartments() {
                                     <div className="flex items-center space-x-2">
                                         <Link
                                             href={`/admin/departments/${department.id}`}
-                                            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419]"
+                                            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed]"
                                         >
                                             Voir détails
                                         </Link>
                                         <Link
                                             href={`/admin/departments/${department.id}/edit`}
-                                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#F26419] hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#7c3aed] hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500"
                                         >
                                             Modifier
                                         </Link>
@@ -227,7 +234,7 @@ export default function AdminDepartments() {
                     <div className="mt-6">
                         <Link
                             href="/admin/departments/create"
-                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#F26419] hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#7c3aed] hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500"
                         >
                             <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>

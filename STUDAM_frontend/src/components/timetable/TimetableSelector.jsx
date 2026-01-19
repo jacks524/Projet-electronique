@@ -16,7 +16,7 @@ const TimetableSelector = ({ classes = [], selectedClassId, onClassChange }) => 
           <select
             id="class-selector"
             name="class-selector"
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm rounded-md"
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm rounded-md"
             value={selectedClassId}
             onChange={(e) => onClassChange(e.target.value)}
           >

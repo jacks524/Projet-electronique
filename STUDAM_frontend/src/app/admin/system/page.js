@@ -203,7 +203,7 @@ export default function SystemSettings() {
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`${
                                     activeTab === tab.id
-                                        ? 'border-[#F26419] text-[#F26419]'
+                                        ? 'border-[#7c3aed] text-[#7c3aed]'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
                             >
@@ -237,7 +237,7 @@ export default function SystemSettings() {
                                         id="siteName"
                                         value={settings.siteName}
                                         onChange={handleChange}
-                                        className="mt-1 focus:ring-[#F26419] focus:border-[#F26419] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                        className="mt-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                     />
                                 </div>
 
@@ -250,7 +250,7 @@ export default function SystemSettings() {
                                         name="timezone"
                                         value={settings.timezone}
                                         onChange={handleChange}
-                                        className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                                        className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                                     >
                                         <option value="Africa/Dakar">Africa/Dakar</option>
                                         <option value="Africa/Abidjan">Africa/Abidjan</option>
@@ -269,7 +269,7 @@ export default function SystemSettings() {
                                         id="siteDescription"
                                         value={settings.siteDescription}
                                         onChange={handleChange}
-                                        className="mt-1 focus:ring-[#F26419] focus:border-[#F26419] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                        className="mt-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                     />
                                 </div>
 
@@ -282,7 +282,7 @@ export default function SystemSettings() {
                                         name="language"
                                         value={settings.language}
                                         onChange={handleChange}
-                                        className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                                        className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                                     >
                                         <option value="fr">Français</option>
                                         <option value="en">English</option>
@@ -299,7 +299,7 @@ export default function SystemSettings() {
                                         name="dateFormat"
                                         value={settings.dateFormat}
                                         onChange={handleChange}
-                                        className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                                        className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                                     >
                                         <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                                         <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -331,7 +331,7 @@ export default function SystemSettings() {
                                         id="sessionTimeout"
                                         value={settings.sessionTimeout}
                                         onChange={handleChange}
-                                        className="mt-1 focus:ring-[#F26419] focus:border-[#F26419] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                        className="mt-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                     />
                                 </div>
 
@@ -345,7 +345,7 @@ export default function SystemSettings() {
                                         id="maxLoginAttempts"
                                         value={settings.maxLoginAttempts}
                                         onChange={handleChange}
-                                        className="mt-1 focus:ring-[#F26419] focus:border-[#F26419] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                        className="mt-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                     />
                                 </div>
 
@@ -358,7 +358,7 @@ export default function SystemSettings() {
                                                 type="checkbox"
                                                 checked={settings.autoLogout}
                                                 onChange={handleChange}
-                                                className="h-4 w-4 text-[#F26419] focus:ring-[#F26419] border-gray-300 rounded"
+                                                className="h-4 w-4 text-[#7c3aed] focus:ring-[#7c3aed] border-gray-300 rounded"
                                             />
                                             <label htmlFor="autoLogout" className="ml-2 block text-sm text-gray-900">
                                                 Déconnexion automatique
@@ -372,7 +372,7 @@ export default function SystemSettings() {
                                                 type="checkbox"
                                                 checked={settings.forceHttps}
                                                 onChange={handleChange}
-                                                className="h-4 w-4 text-[#F26419] focus:ring-[#F26419] border-gray-300 rounded"
+                                                className="h-4 w-4 text-[#7c3aed] focus:ring-[#7c3aed] border-gray-300 rounded"
                                             />
                                             <label htmlFor="forceHttps" className="ml-2 block text-sm text-gray-900">
                                                 Forcer HTTPS
@@ -386,7 +386,7 @@ export default function SystemSettings() {
                                                 type="checkbox"
                                                 checked={settings.enableTwoFactor}
                                                 onChange={handleChange}
-                                                className="h-4 w-4 text-[#F26419] focus:ring-[#F26419] border-gray-300 rounded"
+                                                className="h-4 w-4 text-[#7c3aed] focus:ring-[#7c3aed] border-gray-300 rounded"
                                             />
                                             <label htmlFor="enableTwoFactor" className="ml-2 block text-sm text-gray-900">
                                                 Authentification à deux facteurs
@@ -417,7 +417,7 @@ export default function SystemSettings() {
                                             type="checkbox"
                                             checked={settings.emailEnabled}
                                             onChange={handleChange}
-                                            className="h-4 w-4 text-[#F26419] focus:ring-[#F26419] border-gray-300 rounded"
+                                            className="h-4 w-4 text-[#7c3aed] focus:ring-[#7c3aed] border-gray-300 rounded"
                                         />
                                         <label htmlFor="emailEnabled" className="ml-2 block text-sm text-gray-900">
                                             Activer les emails
@@ -438,7 +438,7 @@ export default function SystemSettings() {
                                                 value={settings.smtpHost}
                                                 onChange={handleChange}
                                                 placeholder="smtp.gmail.com"
-                                                className="mt-1 focus:ring-[#F26419] focus:border-[#F26419] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                                className="mt-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                             />
                                         </div>
 
@@ -452,7 +452,7 @@ export default function SystemSettings() {
                                                 id="smtpPort"
                                                 value={settings.smtpPort}
                                                 onChange={handleChange}
-                                                className="mt-1 focus:ring-[#F26419] focus:border-[#F26419] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                                className="mt-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                             />
                                         </div>
 
@@ -466,7 +466,7 @@ export default function SystemSettings() {
                                                 id="fromEmail"
                                                 value={settings.fromEmail}
                                                 onChange={handleChange}
-                                                className="mt-1 focus:ring-[#F26419] focus:border-[#F26419] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                                className="mt-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                             />
                                         </div>
 
@@ -480,7 +480,7 @@ export default function SystemSettings() {
                                                 id="fromName"
                                                 value={settings.fromName}
                                                 onChange={handleChange}
-                                                className="mt-1 focus:ring-[#F26419] focus:border-[#F26419] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                                className="mt-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                             />
                                         </div>
                                     </>
@@ -507,7 +507,7 @@ export default function SystemSettings() {
                                         type="checkbox"
                                         checked={settings.enableNotifications}
                                         onChange={handleChange}
-                                        className="h-4 w-4 text-[#F26419] focus:ring-[#F26419] border-gray-300 rounded"
+                                        className="h-4 w-4 text-[#7c3aed] focus:ring-[#7c3aed] border-gray-300 rounded"
                                     />
                                     <label htmlFor="enableNotifications" className="ml-2 block text-sm text-gray-900">
                                         Activer les notifications
@@ -523,7 +523,7 @@ export default function SystemSettings() {
                                                 type="checkbox"
                                                 checked={settings.emailNotifications}
                                                 onChange={handleChange}
-                                                className="h-4 w-4 text-[#F26419] focus:ring-[#F26419] border-gray-300 rounded"
+                                                className="h-4 w-4 text-[#7c3aed] focus:ring-[#7c3aed] border-gray-300 rounded"
                                             />
                                             <label htmlFor="emailNotifications" className="ml-2 block text-sm text-gray-900">
                                                 Notifications par email
@@ -537,7 +537,7 @@ export default function SystemSettings() {
                                                 type="checkbox"
                                                 checked={settings.smsNotifications}
                                                 onChange={handleChange}
-                                                className="h-4 w-4 text-[#F26419] focus:ring-[#F26419] border-gray-300 rounded"
+                                                className="h-4 w-4 text-[#7c3aed] focus:ring-[#7c3aed] border-gray-300 rounded"
                                             />
                                             <label htmlFor="smsNotifications" className="ml-2 block text-sm text-gray-900">
                                                 Notifications SMS
@@ -551,7 +551,7 @@ export default function SystemSettings() {
                                                 type="checkbox"
                                                 checked={settings.pushNotifications}
                                                 onChange={handleChange}
-                                                className="h-4 w-4 text-[#F26419] focus:ring-[#F26419] border-gray-300 rounded"
+                                                className="h-4 w-4 text-[#7c3aed] focus:ring-[#7c3aed] border-gray-300 rounded"
                                             />
                                             <label htmlFor="pushNotifications" className="ml-2 block text-sm text-gray-900">
                                                 Notifications push
@@ -582,7 +582,7 @@ export default function SystemSettings() {
                                             type="checkbox"
                                             checked={settings.autoBackup}
                                             onChange={handleChange}
-                                            className="h-4 w-4 text-[#F26419] focus:ring-[#F26419] border-gray-300 rounded"
+                                            className="h-4 w-4 text-[#7c3aed] focus:ring-[#7c3aed] border-gray-300 rounded"
                                         />
                                         <label htmlFor="autoBackup" className="ml-2 block text-sm text-gray-900">
                                             Activer les sauvegardes automatiques
@@ -601,7 +601,7 @@ export default function SystemSettings() {
                                                 name="backupFrequency"
                                                 value={settings.backupFrequency}
                                                 onChange={handleChange}
-                                                className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                                                className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                                             >
                                                 <option value="hourly">Toutes les heures</option>
                                                 <option value="daily">Quotidienne</option>
@@ -620,7 +620,7 @@ export default function SystemSettings() {
                                                 id="backupRetention"
                                                 value={settings.backupRetention}
                                                 onChange={handleChange}
-                                                className="mt-1 focus:ring-[#F26419] focus:border-[#F26419] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                                className="mt-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                             />
                                         </div>
                                     </>
@@ -648,7 +648,7 @@ export default function SystemSettings() {
                                             type="checkbox"
                                             checked={settings.maintenanceMode}
                                             onChange={handleChange}
-                                            className="h-4 w-4 text-[#F26419] focus:ring-[#F26419] border-gray-300 rounded"
+                                            className="h-4 w-4 text-[#7c3aed] focus:ring-[#7c3aed] border-gray-300 rounded"
                                         />
                                         <label htmlFor="maintenanceMode" className="ml-2 block text-sm text-gray-900">
                                             Activer le mode maintenance
@@ -673,7 +673,7 @@ export default function SystemSettings() {
                                         rows={3}
                                         value={settings.maintenanceMessage}
                                         onChange={handleChange}
-                                        className="mt-1 focus:ring-[#F26419] focus:border-[#F26419] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                        className="mt-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                                         placeholder="Message affiché aux utilisateurs..."
                                     />
                                 </div>
@@ -686,7 +686,7 @@ export default function SystemSettings() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#F26419] hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50"
+                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#7c3aed] hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:opacity-50"
                         >
                             {loading ? (
                                 <>
@@ -712,7 +712,7 @@ export default function SystemSettings() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <h4 className="text-sm font-medium text-gray-900">Version STUDAM</h4>
-                        <p className="text-2xl font-bold text-[#F26419]">v2.1.0</p>
+                        <p className="text-2xl font-bold text-[#7c3aed]">v2.1.0</p>
                     </div>
                     <div className="bg-gray-50 p-4 rounded-lg">
                         <h4 className="text-sm font-medium text-gray-900">Dernière mise à jour</h4>

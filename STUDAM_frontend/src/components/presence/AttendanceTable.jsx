@@ -140,7 +140,7 @@ const AttendanceTable = ({ students = [], attendance = [], onAttendanceChange })
                   <Button
                     type="Button"
                     onClick={() => handleOpenNotes(student.id)}
-                    className="text-[#1B396A] hover:text-[#F26419] flex items-center justify-center w-full"
+                    className="text-[#312e81] hover:text-[#7c3aed] flex items-center justify-center w-full"
                   >
                     {getAttendanceNotes(student.id) ? (
                       <span className="flex items-center">

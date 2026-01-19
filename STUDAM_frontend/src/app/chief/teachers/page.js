@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuthContext } from '../../../context/authContext';
 import departmentService from '../../../services/departmentService';
 import userService from '../../../services/userService';
+import classService from '../../../services/classService';
 import Button from '../../../components/ui/Button';
 import toast from 'react-hot-toast';
 
@@ -14,10 +15,11 @@ export default function TeachersPage() {
     const { user, isAuthenticated, loading: authLoading } = useAuthContext();
     const [loading, setLoading] = useState(true);
     const [teachers, setTeachers] = useState([]);
-    const [departments, setDepartments] = useState([]);
+    const [classes, setClasses] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState('name');
-    const [selectedDepartment, setSelectedDepartment] = useState('');
+    const [selectedClass, setSelectedClass] = useState('');
+    const [teacherClassesMap, setTeacherClassesMap] = useState({});
 
     useEffect(() => {
         if (authLoading) return;
@@ -41,7 +43,7 @@ export default function TeachersPage() {
             setLoading(true);
 
             if (!user?.departmentNames || user.departmentNames.length === 0) {
-                toast.error("Aucun département assigné");
+                toast.error("Aucun departement assigne");
                 return;
             }
 
@@ -51,19 +53,39 @@ export default function TeachersPage() {
             );
 
             if (!targetDepartment) {
-                throw new Error("Département non trouvé");
+                throw new Error("Departement non trouve");
             }
 
-            const teachersData = await userService.getUsersByRoleAndDepartment(
-                'TEACHER',
-                targetDepartment.departmentId
+            const [teachersData, classesData] = await Promise.all([
+                userService.getUsersByRoleAndDepartment('TEACHER', targetDepartment.departmentId),
+                classService.getByDepartment(targetDepartment.departmentId)
+            ]);
+
+            const mappedClasses = classesData.map(classe => ({
+                id: classe.classId,
+                nom: classe.name,
+                code: classe.code,
+                departement: {
+                    id: classe.departementResponseDTO?.departmentId || targetDepartment.departmentId,
+                    nom: classe.departementResponseDTO?.name || targetDepartment.name
+                }
+            }));
+
+            const classAssignments = await Promise.all(
+                teachersData.map(async (teacher) => {
+                    const teacherClasses = await classService.getByTeacher(teacher.id);
+                    return [teacher.id, teacherClasses.map(c => c.classId)];
+                })
             );
 
-            setDepartments(allDepartments);
+            const nextMap = Object.fromEntries(classAssignments);
+
             setTeachers(teachersData);
+            setClasses(mappedClasses);
+            setTeacherClassesMap(nextMap);
 
         } catch (error) {
-            toast.error("Erreur lors du chargement des données");
+            toast.error("Erreur lors du chargement des donnees");
             console.error(error);
         } finally {
             setLoading(false);
@@ -75,10 +97,10 @@ export default function TeachersPage() {
             teacher.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             teacher.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const matchesDepartment = !selectedDepartment ||
-            teacher.departmentId?.toString() === selectedDepartment;
+        const assignedClasses = teacherClassesMap[teacher.id] || [];
+        const matchesClass = !selectedClass || assignedClasses.includes(parseInt(selectedClass));
 
-        return matchesSearch && matchesDepartment;
+        return matchesSearch && matchesClass;
     });
 
     const sortedTeachers = [...filteredTeachers].sort((a, b) => {
@@ -99,10 +121,10 @@ export default function TeachersPage() {
 
             if (teacher.active) {
                 await userService.deactivate(teacherId);
-                toast.success("Enseignant désactivé");
+                toast.success("Enseignant desactive");
             } else {
                 await userService.activate(teacherId);
-                toast.success("Enseignant activé");
+                toast.success("Enseignant active");
             }
 
             loadAllData();
@@ -115,22 +137,21 @@ export default function TeachersPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed]"></div>
             </div>
         );
     }
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="bg-white shadow rounded-lg p-6">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-[#1B396A]">
+                        <h1 className="text-2xl font-bold text-[#312e81]">
                             Gestion des enseignants
                         </h1>
                         <p className="text-gray-600 mt-2">
-                            {teachers.length} enseignant(s) • Département: {user?.departmentNames?.[0]}
+                            {teachers.length} enseignant(s) - Departement: {user?.departmentNames?.[0]}
                         </p>
                     </div>
                     <Link href="/chief/teachers/create">
@@ -144,13 +165,12 @@ export default function TeachersPage() {
                 </div>
             </div>
 
-            {/* Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-white shadow rounded-lg p-6">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Total enseignants</p>
-                            <p className="text-3xl font-bold text-[#1B396A] mt-2">{teachers.length}</p>
+                            <p className="text-3xl font-bold text-[#312e81] mt-2">{teachers.length}</p>
                         </div>
                         <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                             <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -195,8 +215,8 @@ export default function TeachersPage() {
                 <div className="bg-white shadow rounded-lg p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-600">Départements</p>
-                            <p className="text-3xl font-bold text-purple-600 mt-2">{departments.length}</p>
+                            <p className="text-sm text-gray-600">Classes</p>
+                            <p className="text-3xl font-bold text-purple-600 mt-2">{classes.length}</p>
                         </div>
                         <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
                             <svg className="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -207,7 +227,6 @@ export default function TeachersPage() {
                 </div>
             </div>
 
-            {/* Search and Filters */}
             <div className="bg-white shadow rounded-lg p-4">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                     <div className="relative flex-1 max-w-md">
@@ -221,20 +240,20 @@ export default function TeachersPage() {
                             placeholder="Rechercher un enseignant..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                         />
                     </div>
 
                     <div className="flex space-x-2">
                         <select
-                            value={selectedDepartment}
-                            onChange={(e) => setSelectedDepartment(e.target.value)}
-                            className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                            value={selectedClass}
+                            onChange={(e) => setSelectedClass(e.target.value)}
+                            className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                         >
-                            <option value="">Tous les départements</option>
-                            {departments.map(dept => (
-                                <option key={dept.id} value={dept.id}>
-                                    {dept.name}
+                            <option value="">Toutes les classes</option>
+                            {classes.map(classe => (
+                                <option key={classe.id} value={classe.id}>
+                                    {classe.nom}
                                 </option>
                             ))}
                         </select>
@@ -242,7 +261,7 @@ export default function TeachersPage() {
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
-                            className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                            className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                         >
                             <option value="name">Nom</option>
                             <option value="email">Email</option>
@@ -251,96 +270,46 @@ export default function TeachersPage() {
                 </div>
             </div>
 
-            {/* Teachers Grid */}
             {sortedTeachers.length === 0 ? (
                 <div className="bg-white shadow rounded-lg p-12 text-center">
                     <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun enseignant trouvé</h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                        {searchTerm ? "Essayez avec d'autres mots-clés" : "Commencez par ajouter un enseignant"}
-                    </p>
-                    {!searchTerm && (
-                        <div className="mt-6">
-                            <Link href="/chief/teachers/create">
-                                <Button>
-                                    <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                                    </svg>
-                                    Ajouter un enseignant
-                                </Button>
-                            </Link>
-                        </div>
-                    )}
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun enseignant trouve</h3>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {sortedTeachers.map((teacher) => (
                         <div key={teacher.id} className="bg-white shadow rounded-lg p-6 hover:shadow-xl transition-shadow duration-200">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center">
-                                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#F26419] to-[#FF7A47] flex items-center justify-center text-white font-semibold text-lg">
-                                        {teacher.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                                    </div>
-                                    <div className="ml-4">
-                                        <h3 className="text-lg font-semibold text-[#1B396A]">
-                                            {teacher.name}
-                                        </h3>
-                                        <p className="text-sm text-gray-600">{teacher.email}</p>
-                                    </div>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-[#312e81]">{teacher.name}</h3>
+                                    <p className="text-sm text-gray-500">{teacher.email}</p>
                                 </div>
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    teacher.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                }`}>
+                                <button
+                                    onClick={() => handleToggleStatus(teacher.id)}
+                                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                        teacher.active
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-red-100 text-red-800'
+                                    }`}
+                                >
                                     {teacher.active ? 'Actif' : 'Inactif'}
-                                </span>
+                                </button>
                             </div>
-
-                            {teacher.phoneNumber && (
-                                <p className="text-sm text-gray-600 mb-2">
-                                    📞 {teacher.phoneNumber}
-                                </p>
-                            )}
-
-                            {/* Actions */}
-                            <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
-                                <div className="flex space-x-2">
-                                    <Link href={`/chief/teachers/${teacher.id}`}>
-                                        <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Voir détails">
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        </button>
-                                    </Link>
-                                    <Link href={`/chief/teachers/${teacher.id}/edit`}>
-                                        <button className="p-2 text-[#1B396A] hover:bg-gray-100 rounded-lg transition-colors" title="Modifier">
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
-                                        </button>
-                                    </Link>
-                                    <button
-                                        onClick={() => handleToggleStatus(teacher.id)}
-                                        className={`p-2 rounded-lg transition-colors ${
-                                            teacher.active
-                                                ? 'text-red-600 hover:bg-red-50'
-                                                : 'text-green-600 hover:bg-green-50'
-                                        }`}
-                                        title={teacher.active ? "Désactiver" : "Activer"}
-                                    >
-                                        {teacher.active ? (
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                            </svg>
-                                        ) : (
-                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                        )}
-                                    </button>
-                                </div>
+                            <div className="mt-4 flex justify-between items-center">
+                                <Link
+                                    href={`/chief/teachers/${teacher.id}`}
+                                    className="text-sm text-[#7c3aed] hover:text-opacity-80"
+                                >
+                                    Voir details
+                                </Link>
+                                <Link
+                                    href={`/chief/teachers/${teacher.id}/edit`}
+                                    className="text-sm text-gray-500 hover:text-gray-700"
+                                >
+                                    Modifier
+                                </Link>
                             </div>
                         </div>
                     ))}

@@ -121,7 +121,7 @@ export default function AttendanceReportPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed]"></div>
             </div>
         );
     }
@@ -132,7 +132,7 @@ export default function AttendanceReportPage() {
             <div className="bg-white shadow rounded-lg p-6">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-2xl font-bold text-[#1B396A]">
+                        <h1 className="text-2xl font-bold text-[#312e81]">
                             Rapport de présences
                         </h1>
                         <p className="text-gray-600 mt-2">
@@ -161,7 +161,7 @@ export default function AttendanceReportPage() {
 
             {/* Period Filter */}
             <div className="bg-white shadow rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-[#1B396A] mb-4">Période</h3>
+                <h3 className="text-lg font-semibold text-[#312e81] mb-4">Période</h3>
                 <div className="flex flex-wrap gap-2 mb-4">
                     {[
                         { value: 'today', label: "Aujourd'hui" },
@@ -175,7 +175,7 @@ export default function AttendanceReportPage() {
                             onClick={() => handlePeriodChange(period.value)}
                             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                                 selectedPeriod === period.value
-                                    ? 'bg-[#F26419] text-white'
+                                    ? 'bg-[#7c3aed] text-white'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                         >
@@ -194,7 +194,7 @@ export default function AttendanceReportPage() {
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419]"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
                             />
                         </div>
                         <div>
@@ -205,7 +205,7 @@ export default function AttendanceReportPage() {
                                 type="date"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419]"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
                             />
                         </div>
                     </div>
@@ -218,7 +218,7 @@ export default function AttendanceReportPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Taux global</p>
-                            <p className="text-3xl font-bold text-[#1B396A] mt-2">{overallRate}%</p>
+                            <p className="text-3xl font-bold text-[#312e81] mt-2">{overallRate}%</p>
                         </div>
                         <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                             <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -274,7 +274,7 @@ export default function AttendanceReportPage() {
             {/* Attendance by Class */}
             <div className="bg-white shadow rounded-lg overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-[#1B396A]">
+                    <h3 className="text-lg font-semibold text-[#312e81]">
                         Détails par classe
                     </h3>
                 </div>
@@ -372,7 +372,7 @@ export default function AttendanceReportPage() {
 
             {/* Visual Chart Placeholder */}
             <div className="bg-white shadow rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-[#1B396A] mb-4">
+                <h3 className="text-lg font-semibold text-[#312e81] mb-4">
                     Évolution de la présence
                 </h3>
                 <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
@@ -388,7 +388,7 @@ export default function AttendanceReportPage() {
 
             {/* Recommendations */}
             <div className="bg-white shadow rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-[#1B396A] mb-4">
+                <h3 className="text-lg font-semibold text-[#312e81] mb-4">
                     Recommandations
                 </h3>
                 <ul className="space-y-3">

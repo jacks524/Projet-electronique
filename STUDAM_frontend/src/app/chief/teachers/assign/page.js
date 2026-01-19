@@ -126,7 +126,7 @@ export default function AssignTeacherPage() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed] mx-auto"></div>
                     <p className="mt-4 text-gray-600">Chargement...</p>
                 </div>
             </div>
@@ -140,7 +140,7 @@ export default function AssignTeacherPage() {
             {/* En-tête */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#1B396A]">Assigner un enseignant</h1>
+                    <h1 className="text-3xl font-bold text-[#312e81]">Assigner un enseignant</h1>
                     <p className="text-gray-600 mt-1">Assignez un enseignant à un ou plusieurs départements</p>
                 </div>
                 <Link href="/chief/teachers">
@@ -166,7 +166,7 @@ export default function AssignTeacherPage() {
                             name="teacher"
                             value={selectedTeacher}
                             onChange={handleTeacherChange}
-                            className={`block w-full px-3 py-2 border ${errors.teacher ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                            className={`block w-full px-3 py-2 border ${errors.teacher ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                         >
                             <option value="">Choisir un enseignant</option>
                             {teachers.map((teacher) => (
@@ -185,7 +185,7 @@ export default function AssignTeacherPage() {
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                             <div className="flex items-start">
                                 <div className="flex-shrink-0">
-                                    <div className="h-12 w-12 bg-[#1B396A] rounded-full flex items-center justify-center">
+                                    <div className="h-12 w-12 bg-[#312e81] rounded-full flex items-center justify-center">
                                         <span className="text-white font-bold">
                                             {selectedTeacherData.name.split(' ').map(n => n[0]).join('')}
                                         </span>
@@ -216,7 +216,7 @@ export default function AssignTeacherPage() {
                                     onClick={() => handleDepartmentToggle(department.id)}
                                     className={`relative border-2 rounded-lg p-4 cursor-pointer transition-all ${
                                         selectedDepartments.includes(department.id)
-                                            ? 'border-[#F26419] bg-orange-50'
+                                            ? 'border-[#7c3aed] bg-violet-50'
                                             : 'border-gray-200 hover:border-gray-300'
                                     }`}
                                 >
@@ -226,7 +226,7 @@ export default function AssignTeacherPage() {
                                                 type="checkbox"
                                                 checked={selectedDepartments.includes(department.id)}
                                                 onChange={() => {}}
-                                                className="h-4 w-4 text-[#F26419] focus:ring-[#F26419] border-gray-300 rounded"
+                                                className="h-4 w-4 text-[#7c3aed] focus:ring-[#7c3aed] border-gray-300 rounded"
                                             />
                                         </div>
                                         <div className="ml-3 flex-1">
@@ -242,7 +242,7 @@ export default function AssignTeacherPage() {
                                     </div>
                                     {selectedDepartments.includes(department.id) && (
                                         <div className="absolute top-2 right-2">
-                                            <svg className="h-5 w-5 text-[#F26419]" fill="currentColor" viewBox="0 0 20 20">
+                                            <svg className="h-5 w-5 text-[#7c3aed]" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
                                             </svg>
                                         </div>

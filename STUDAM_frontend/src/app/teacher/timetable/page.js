@@ -224,7 +224,7 @@ export default function TeacherTimetablePage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-center h-64">
                         <div className="text-center">
-                            <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                             <p className="text-gray-600">Chargement de votre emploi du temps...</p>
                         </div>
                     </div>
@@ -269,7 +269,7 @@ export default function TeacherTimetablePage() {
                                 <select
                                     value={selectedDay}
                                     onChange={(e) => setSelectedDay(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors"
                                 >
                                     <option value="all">Tous les jours</option>
                                     {daysOfWeek.map(day => (
@@ -287,7 +287,7 @@ export default function TeacherTimetablePage() {
                                     max="52"
                                     value={selectedWeek}
                                     onChange={(e) => setSelectedWeek(parseInt(e.target.value))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors"
                                 />
                             </div>
                         </div>
@@ -298,7 +298,7 @@ export default function TeacherTimetablePage() {
                 <div className="space-y-4">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                         <div className="text-center">
-                            <p className="text-2xl font-bold text-orange-600">{schedules.length}</p>
+                            <p className="text-2xl font-bold text-violet-600">{schedules.length}</p>
                             <p className="text-sm text-gray-600">Cours cette semaine</p>
                         </div>
                     </div>
@@ -314,7 +314,7 @@ export default function TeacherTimetablePage() {
             {/* Cours du jour */}
             {selectedDay === 'all' && todaySchedule.length > 0 && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 bg-orange-50">
+                    <div className="px-6 py-4 border-b border-gray-200 bg-violet-50">
                         <h2 className="text-lg font-semibold text-gray-900">
                             📅 Cours aujourd'hui ({new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })})
                         </h2>
@@ -322,12 +322,12 @@ export default function TeacherTimetablePage() {
                     <div className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {todaySchedule.map((schedule, index) => (
-                                <div key={index} className="border border-orange-200 rounded-lg p-4 bg-orange-50">
+                                <div key={index} className="border border-violet-200 rounded-lg p-4 bg-violet-50">
                                     <div className="flex justify-between items-start mb-2">
                                         <h3 className="font-semibold text-gray-900">
                                             {schedule.subject?.name || schedule.matiere?.libelle}
                                         </h3>
-                                        <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                                        <span className="text-sm bg-violet-100 text-violet-800 px-2 py-1 rounded">
                                             {schedule.time || schedule.horaire}
                                         </span>
                                     </div>
@@ -340,13 +340,13 @@ export default function TeacherTimetablePage() {
                                     <div className="mt-3 flex space-x-2">
                                         <Link
                                             href={`/teacher/attendance?course=${schedule.subject?.id || schedule.matiere?.id}&class=${schedule.class?.id || schedule.classe?.id}`}
-                                            className="flex-1 text-center px-3 py-1.5 text-xs font-medium text-white bg-orange-600 hover:bg-orange-700 rounded transition-colors"
+                                            className="flex-1 text-center px-3 py-1.5 text-xs font-medium text-white bg-violet-600 hover:bg-violet-700 rounded transition-colors"
                                         >
                                             Présences
                                         </Link>
                                         <Link
                                             href={`/teacher/courses/${schedule.subject?.id || schedule.matiere?.id}`}
-                                            className="flex-1 text-center px-3 py-1.5 text-xs font-medium text-orange-600 bg-orange-100 hover:bg-orange-200 rounded transition-colors"
+                                            className="flex-1 text-center px-3 py-1.5 text-xs font-medium text-violet-600 bg-violet-100 hover:bg-violet-200 rounded transition-colors"
                                         >
                                             Détails
                                         </Link>
@@ -446,7 +446,7 @@ export default function TeacherTimetablePage() {
                                         return (
                                             <td key={day} className="px-3 py-3">
                                                 {schedule ? (
-                                                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 hover:shadow-md transition-all cursor-pointer h-full min-h-[100px]">
+                                                    <div className="bg-violet-50 border border-violet-200 rounded-lg p-3 hover:shadow-md transition-all cursor-pointer h-full min-h-[100px]">
                                                         <div className="font-semibold text-gray-900 text-sm mb-1">
                                                             {schedule.subject?.name || schedule.matiere?.libelle}
                                                         </div>
@@ -459,7 +459,7 @@ export default function TeacherTimetablePage() {
                                                         <div className="flex space-x-1 mt-2">
                                                             <Link
                                                                 href={`/teacher/attendance?course=${schedule.subject?.id || schedule.matiere?.id}&class=${schedule.class?.id || schedule.classe?.id}`}
-                                                                className="flex-1 text-center px-2 py-1 text-xs font-medium text-white bg-orange-600 hover:bg-orange-700 rounded transition-colors"
+                                                                className="flex-1 text-center px-2 py-1 text-xs font-medium text-white bg-violet-600 hover:bg-violet-700 rounded transition-colors"
                                                             >
                                                                 Présences
                                                             </Link>

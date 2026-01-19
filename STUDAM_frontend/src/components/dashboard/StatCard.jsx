@@ -14,7 +14,7 @@ const StatCard = ({ title, count, icon }) => {
                 {title}
               </dt>
               <dd className="flex items-baseline">
-                <div className="text-2xl font-semibold text-[#1B396A]">
+                <div className="text-2xl font-semibold text-[#312e81]">
                   {count}
                 </div>
               </dd>

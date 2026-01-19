@@ -24,7 +24,8 @@ export default function CreateUser() {
         password: '',
         password_confirmation: '',
         role: 'TEACHER',
-        departmentId: '',
+        departmentIds: [],
+        status: 'active',
         matricule: '',
     });
     const [errors, setErrors] = useState({});
@@ -50,7 +51,7 @@ export default function CreateUser() {
                 const depts = await departmentService.getAll();
                 setDepartments(depts.map(d => ({ id: d.departmentId, nom: d.name, code: d.code })));
             } catch (error) {
-                toast.error("Impossible de charger les départements.");
+                toast.error("Impossible de charger les departements.");
             } finally {
                 setLoadingDepartments(false);
             }
@@ -62,10 +63,15 @@ export default function CreateUser() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+
+        setFormData(prev => {
+            const next = { ...prev, [name]: value };
+            if (name === 'role' && value === 'DEPARTMENT_MANAGER' && Array.isArray(prev.departmentIds)) {
+                next.departmentIds = prev.departmentIds.slice(0, 1);
+            }
+            return next;
+        });
+
         if (name === 'name' || name === 'email') {
             const nameValue = name === 'name' ? value : formData.name;
             const emailValue = name === 'email' ? value : formData.email;
@@ -84,6 +90,25 @@ export default function CreateUser() {
             setErrors(prev => ({
                 ...prev,
                 [name]: ''
+            }));
+        }
+    };
+
+    const handleDepartmentChange = (e) => {
+        const selectedIds = Array.from(e.target.selectedOptions).map(option => option.value);
+
+        setFormData(prev => {
+            const next = { ...prev, departmentIds: selectedIds };
+            if (prev.role === 'DEPARTMENT_MANAGER' && selectedIds.length > 1) {
+                next.departmentIds = selectedIds.slice(0, 1);
+            }
+            return next;
+        });
+
+        if (errors.departmentIds) {
+            setErrors(prev => ({
+                ...prev,
+                departmentIds: ''
             }));
         }
     };
@@ -149,19 +174,54 @@ export default function CreateUser() {
             newErrors.matricule = "Le matricule est requis";
         }
 
-        // Validation rôle
+                // Validation role
         if (!formData.role) {
-            newErrors.role = "Le rôle est requis";
+            newErrors.role = "Le role est requis";
         }
 
-        // Validation département pour les enseignants et chefs de département
-        //if ((formData.role === 'TEACHER' || formData.role === 'DEPARTMENT_MANAGER') && !formData.departmentId) {
-            //newErrors.departmentId = "Le département est requis pour ce rôle";
-        //}
+        const departmentIds = Array.isArray(formData.departmentIds) ? formData.departmentIds : [];
+
+        if ((formData.role === 'TEACHER' || formData.role === 'DEPARTMENT_MANAGER') && departmentIds.length === 0) {
+            newErrors.departmentIds = "Le departement est requis pour ce role";
+        }
+
+        if (formData.role === 'DEPARTMENT_MANAGER' && departmentIds.length !== 1) {
+            newErrors.departmentIds = "Le chef doit appartenir a un seul departement";
+        }
 
         return newErrors;
     };
+    const parseFieldErrors = (message) => {
+        const lower = String(message || "").toLowerCase();
+        const fieldErrors = {};
+        const messages = [];
 
+        if (lower.includes("matricule")) {
+            fieldErrors.matricule = "Ce matricule est deja utilise";
+            messages.push(fieldErrors.matricule);
+        }
+        if (lower.includes("telephone") || lower.includes("phone")) {
+            fieldErrors.phoneNumber = "Ce numero de telephone est deja utilise";
+            messages.push(fieldErrors.phoneNumber);
+        }
+        if (lower.includes("email")) {
+            fieldErrors.email = "Cet email est deja utilise";
+            messages.push(fieldErrors.email);
+        }
+        if (lower.includes("username") || lower.includes("login") || lower.includes("nom d'utilisateur") || lower.includes("nom dutilisateur")) {
+            fieldErrors.username = "Ce nom d'utilisateur est deja utilise";
+            messages.push(fieldErrors.username);
+        }
+        if (lower.includes("departement") && lower.includes("chef")) {
+            fieldErrors.departmentIds = "Ce departement a deja un chef";
+            messages.push(fieldErrors.departmentIds);
+        }
+
+        return {
+            fieldErrors,
+            toastMessage: messages.length ? messages.join(" ") : message,
+        };
+    };
     const handleSubmit = async (e) => {
         e.preventDefault();
         const newErrors = validateForm();
@@ -174,11 +234,38 @@ export default function CreateUser() {
         setErrors({});
 
         try {
-            await userService.register(formData);
-            toast.success(`Utilisateur "${formData.name}" créé avec succès !`);
+            const departmentIds = Array.isArray(formData.departmentIds) ? formData.departmentIds : [];
+
+            if (formData.role === 'DEPARTMENT_MANAGER' && departmentIds.length === 1) {
+                const existingChiefs = await userService.getUsersByRoleAndDepartment(
+                    'DEPARTMENT_MANAGER',
+                    departmentIds[0]
+                );
+
+                if (existingChiefs.length > 0) {
+                    setErrors(prev => ({
+                        ...prev,
+                        departmentIds: "Ce departement a déjà un chef."
+                    }));
+                    toast.error("Ce departement a déjà un chef.");
+                    setLoading(false);
+                    return;
+                }
+            }
+
+            await userService.register({
+                ...formData,
+                departmentIds,
+            });
+            toast.success(`Utilisateur "${formData.name}" cree avec succes !`);
             router.push('/admin/users');
         } catch (error) {
-            toast.error(error.message);
+            const message = error?.message || "La creation a echoue.";
+            const { fieldErrors, toastMessage } = parseFieldErrors(message);
+            if (Object.keys(fieldErrors).length > 0) {
+                setErrors(prev => ({ ...prev, ...fieldErrors }));
+            }
+            toast.error(toastMessage);
         } finally {
             setLoading(false);
         }
@@ -188,20 +275,32 @@ export default function CreateUser() {
         {
             value: 'TEACHER',
             label: 'Enseignant',
-            description: 'Peut gérer ses cours et prendre les présences',
-            icon: '🎓'
+            description: 'Peut gerer ses cours et prendre les presences',
+            icon: (
+                <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            )
         },
         {
             value: 'DEPARTMENT_MANAGER',
-            label: 'Chef de Département',
-            description: 'Peut gérer un département et ses enseignants',
-            icon: '👨‍💼'
+            label: 'Chef de departement',
+            description: 'Supervise un departement et ses enseignants',
+            icon: (
+                <svg className="w-6 h-6 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18M4 21V4a1 1 0 011-1h14a1 1 0 011 1v17" />
+                </svg>
+            )
         },
         {
-            value:'ADMIN',
+            value: 'ADMIN',
             label: 'Administrateur',
-            description: 'Accès complet au système',
-            icon: '⚙️'
+            description: 'Acces complet au systeme',
+            icon: (
+                <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            )
         }
     ];
 
@@ -213,7 +312,7 @@ export default function CreateUser() {
                     <nav className="flex" aria-label="Breadcrumb">
                         <ol className="flex items-center space-x-4">
                             <li>
-                                <Link href="/admin/dashboard" className="text-gray-500 hover:text-[#F26419] transition-colors duration-200">
+                                <Link href="/admin/dashboard" className="text-gray-500 hover:text-[#7c3aed] transition-colors duration-200">
                                     <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
                                     </svg>
@@ -223,7 +322,7 @@ export default function CreateUser() {
                                 <svg className="h-4 w-4 text-gray-400 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
-                                <Link href="/admin/users" className="text-gray-500 hover:text-[#F26419] transition-colors duration-200">
+                                <Link href="/admin/users" className="text-gray-500 hover:text-[#7c3aed] transition-colors duration-200">
                                     Utilisateurs
                                 </Link>
                             </li>
@@ -231,7 +330,7 @@ export default function CreateUser() {
                                 <svg className="h-4 w-4 text-gray-400 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
-                                <span className="text-[#F26419] font-medium">Créer</span>
+                                <span className="text-[#7c3aed] font-medium">Créer</span>
                             </li>
                         </ol>
                     </nav>
@@ -239,7 +338,7 @@ export default function CreateUser() {
                         Créer un nouvel utilisateur
                     </h1>
                     <p className="mt-1 text-sm text-gray-500">
-                        Ajoutez un nouvel administrateur, chef de département ou enseignant au système.
+                        Ajoutez un nouvel administrateur, chef de Département ou enseignant au système.
                     </p>
                 </div>
             </div>
@@ -284,7 +383,7 @@ export default function CreateUser() {
                                             id="name"
                                             value={formData.name}
                                             onChange={handleChange}
-                                            className={`block w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 focus:ring-[#F26419] focus:border-transparent transition-all duration-200 ${
+                                            className={`block w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent transition-all duration-200 ${
                                                 errors.name ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                                             }`}
                                             placeholder="Dr. Aminata Sow Fall"
@@ -317,7 +416,7 @@ export default function CreateUser() {
                                             id="email"
                                             value={formData.email}
                                             onChange={handleChange}
-                                            className={`block w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 focus:ring-[#F26419] focus:border-transparent transition-all duration-200 ${
+                                            className={`block w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent transition-all duration-200 ${
                                                 errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                                             }`}
                                             placeholder="aminata.sow@studam.edu"
@@ -350,17 +449,17 @@ export default function CreateUser() {
                                             id="username"
                                             value={formData.username}
                                             onChange={handleChange}
-                                            className={`block w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 focus:ring-[#F26419] focus:border-transparent transition-all duration-200 ${
+                                            className={`block w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent transition-all duration-200 ${
                                                 errors.username ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                                             }`}
-                                            placeholder="Généré automatiquement"
+                                            placeholder="Générer automatiquement"
                                         />
                                     </div>
                                     <p className="text-xs text-gray-500 flex items-center space-x-1">
                                         <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
                                         </svg>
-                                        <span>Généré automatiquement mais peut être modifié</span>
+                                        <span>Générer automatiquement mais peut être modifié</span>
                                     </p>
                                     {errors.username && (
                                         <p className="text-sm text-red-600 flex items-center space-x-1">
@@ -389,7 +488,7 @@ export default function CreateUser() {
                                             id="phoneNumber"
                                             value={formData.phoneNumber}
                                             onChange={handleChange}
-                                            className={`block w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 focus:ring-[#F26419] focus:border-transparent transition-all duration-200 ${
+                                            className={`block w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent transition-all duration-200 ${
                                                 errors.phoneNumber ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                                             }`}
                                             placeholder="+221 77 123 45 67"
@@ -422,7 +521,7 @@ export default function CreateUser() {
                                             id="matricule"
                                             value={formData.matricule}
                                             onChange={handleChange}
-                                            className={`block w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 focus:ring-[#F26419] focus:border-transparent transition-all duration-200 ${
+                                            className={`block w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent transition-all duration-200 ${
                                                 errors.matricule ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                                             }`}
                                             placeholder="MAT-2024-001"
@@ -451,7 +550,7 @@ export default function CreateUser() {
                                     </div>
                                     <div>
                                         <h2 className="text-lg font-semibold text-gray-900">Rôle et permissions</h2>
-                                        <p className="text-sm text-gray-500">Définissez le rôle et les accès de l&apos;utilisateur</p>
+                                        <p className="text-sm text-gray-500">Définissez le rôle et les accès de l'utilisateur</p>
                                     </div>
                                 </div>
                             </div>
@@ -477,7 +576,7 @@ export default function CreateUser() {
                                                 htmlFor={option.value}
                                                 className={`cursor-pointer block p-4 border-2 rounded-xl transition-all duration-200 hover:shadow-md ${
                                                     formData.role === option.value
-                                                        ? 'border-[#F26419] bg-orange-50 shadow-md'
+                                                        ? 'border-[#7c3aed] bg-violet-50 shadow-md'
                                                         : 'border-gray-200 hover:border-gray-300'
                                                 }`}
                                             >
@@ -487,7 +586,7 @@ export default function CreateUser() {
                                                         <div className="flex items-center">
                                                             <span className="font-medium text-gray-900">{option.label}</span>
                                                             {formData.role === option.value && (
-                                                                <svg className="ml-2 h-5 w-5 text-[#F26419]" fill="currentColor" viewBox="0 0 20 20">
+                                                                <svg className="ml-2 h-5 w-5 text-[#7c3aed]" fill="currentColor" viewBox="0 0 20 20">
                                                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
                                                                 </svg>
                                                             )}
@@ -513,54 +612,50 @@ export default function CreateUser() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Département (conditionnel) */}
                                 {(formData.role === 'TEACHER' || formData.role === 'DEPARTMENT_MANAGER') && (
-                                    <div className="space-y-2">
-                                        <label htmlFor="departmentId" className="block text-sm font-medium text-gray-700">
-                                            Département
-                                        </label>
-                                        <div className="relative">
-                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                </svg>
-                                            </div>
-                                            <select
-                                                id="departmentId"
-                                                name="departmentId"
-                                                value={formData.departmentId}
-                                                onChange={handleChange}
-                                                disabled={loadingDepartments}
-                                                className={`block w-full pl-10 pr-8 py-3 border rounded-xl focus:ring-2 focus:ring-[#F26419] focus:border-transparent transition-all duration-200 ${
-                                                    errors.departmentId ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
-                                                } ${loadingDepartments ? 'bg-gray-50 cursor-not-allowed' : ''}`}
-                                            >
-                                                <option value="">
-                                                    {loadingDepartments ? 'Chargement...' : 'Sélectionner un département'}
-                                                </option>
-                                                {departments.map((dept) => (
-                                                    <option key={dept.id} value={dept.id}>
-                                                        {dept.nom} ({dept.code})
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            {loadingDepartments && (
-                                                <div className="absolute inset-y-0 right-8 flex items-center">
-                                                    <svg className="animate-spin h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                    </svg>
-                                                </div>
-                                            )}
+                                <div className="space-y-2">
+                                    <label htmlFor="departmentIds" className="block text-sm font-medium text-gray-700">
+                                        Departements
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute top-3 left-3 pointer-events-none">
+                                            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                            </svg>
                                         </div>
-                                        {errors.departmentId && (
-                                            <p className="text-sm text-red-600 flex items-center space-x-1">
-                                                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
-                                                </svg>
-                                                <span>{errors.departmentId}</span>
-                                            </p>
-                                        )}
+                                        <select
+                                            id="departmentIds"
+                                            name="departmentIds"
+                                            multiple
+                                            size={Math.min(6, Math.max(3, departments.length))}
+                                            value={formData.departmentIds}
+                                            onChange={handleDepartmentChange}
+                                            disabled={loadingDepartments}
+                                            className={`block w-full pl-10 pr-3 py-3 border rounded-xl focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent transition-all duration-200 ${
+                                                errors.departmentIds ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+                                            } ${loadingDepartments ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                                        >
+                                            {departments.map((dept) => (
+                                                <option key={dept.id} value={dept.id}>
+                                                    {dept.nom} ({dept.code})
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
-                                )}
+                                    <p className="text-xs text-gray-500">
+                                        {formData.role === 'DEPARTMENT_MANAGER'
+                                            ? 'Chef de departement: selectionnez un seul departement.'
+                                            : 'Vous pouvez selectionner plusieurs departements.'}
+                                    </p>
+                                    {errors.departmentIds && (
+                                        <p className="text-sm text-red-600 flex items-center space-x-1">
+                                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                                            </svg>
+                                            <span>{errors.departmentIds}</span>
+                                        </p>
+                                    )}
+                                </div>
+                            )}
 
                                 {/* Statut */}
                                 <div className="space-y-2">
@@ -579,7 +674,7 @@ export default function CreateUser() {
                                             name="status"
                                             value={formData.status}
                                             onChange={handleChange}
-                                            className="block w-full pl-8 pr-8 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#F26419] focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                                            className="block w-full pl-8 pr-8 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent transition-all duration-200 hover:border-gray-400"
                                         >
                                             <option value="active">Actif</option>
                                             <option value="pending">En attente</option>
@@ -624,10 +719,10 @@ export default function CreateUser() {
                                             id="password"
                                             value={formData.password}
                                             onChange={handleChange}
-                                            className={`block w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-[#F26419] focus:border-transparent transition-all duration-200 ${
+                                            className={`block w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent transition-all duration-200 ${
                                                 errors.password ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                                             }`}
-                                            placeholder="••••••••"
+                                            placeholder="Saisir un mot de passe temporaire"
                                         />
                                         <button
                                             type="button"
@@ -673,10 +768,10 @@ export default function CreateUser() {
                                             id="password_confirmation"
                                             value={formData.password_confirmation}
                                             onChange={handleChange}
-                                            className={`block w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-[#F26419] focus:border-transparent transition-all duration-200 ${
+                                            className={`block w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent transition-all duration-200 ${
                                                 errors.password_confirmation ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
                                             }`}
-                                            placeholder="••••••••"
+                                            placeholder="Confirmer le mot de passe"
                                         />
                                         <button
                                             type="button"
@@ -717,7 +812,7 @@ export default function CreateUser() {
                                     <div>
                                         <h4 className="text-sm font-medium text-blue-800 mb-1">Information importante</h4>
                                         <p className="text-sm text-blue-700">
-                                            L&apos;utilisateur recevra ses identifiants par email et devra changer son mot de passe lors de sa première connexion.
+                                            L'utilisateur recevra ses identifiants par email et devra changer son mot de passe lors de sa première connexion.
                                         </p>
                                     </div>
                                 </div>
@@ -726,45 +821,51 @@ export default function CreateUser() {
                     </div>
 
                     {/* Actions avec design moderne */}
-                    <div className="bg-gray-50 px-8 py-6 border-t border-gray-200">
-                        <div className="flex justify-end space-x-4">
-                            <Link
-                                href="/admin/users"
-                                className="inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200"
-                            >
-                                <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                                Annuler
-                            </Link>
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="inline-flex items-center px-8 py-3 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-[#F26419] to-orange-500 hover:from-orange-600 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
-                            >
-                                {loading ? (
-                                    <>
-                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Création en cours...
-                                    </>
-                                ) : (
-                                    <>
-                                        <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                        </svg>
-                                        Créer l&apos;utilisateur
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
+<div className="bg-gray-50 px-8 py-6 border-t border-gray-200">
+  <div className="flex justify-end space-x-4">
+    <Link
+      href="/admin/users"
+      className="inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200"
+    >
+      <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      </svg>
+      Annuler
+    </Link>
+
+    <button
+      type="submit"
+      disabled={loading}
+      className="inline-flex items-center px-8 py-3 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-[#7c3aed] to-violet-500 hover:from-violet-600 hover:to-violet-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+    >
+      {loading ? (
+        <>
+          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+          Création en cours...
+        </>
+      ) : (
+        <>
+          <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Créer l&apos;utilisateur
+        </>
+      )}
+    </button>
+  </div>
+</div>
+
                 </form>
             </div>
 
-            <div className="mt-8 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+              <div className="mt-8 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-8 py-6 border-b border-gray-200">
                     <div className="flex items-center space-x-3">
                         <div className="h-8 w-8 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -827,4 +928,3 @@ export default function CreateUser() {
         </div>
     );
 }
-

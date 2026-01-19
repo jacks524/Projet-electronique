@@ -130,7 +130,7 @@ export default function EditClassPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed]"></div>
             </div>
         );
     }
@@ -141,7 +141,7 @@ export default function EditClassPage() {
             <div className="bg-white shadow rounded-lg p-6">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-[#1B396A]">
+                        <h1 className="text-2xl font-bold text-[#312e81]">
                             Modifier la classe
                         </h1>
                         <p className="text-gray-600 mt-2">
@@ -173,7 +173,7 @@ export default function EditClassPage() {
                             name="name"
                             value={formData.name}
                             onChange={handleChange}
-                            className={`w-full px-4 py-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-transparent`}
+                            className={`w-full px-4 py-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent`}
                             placeholder="Ex: Génie Informatique 3ème année"
                         />
                         {errors.name && (
@@ -192,7 +192,7 @@ export default function EditClassPage() {
                             name="code"
                             value={formData.code}
                             onChange={handleChange}
-                            className={`w-full px-4 py-2 border ${errors.code ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-transparent`}
+                            className={`w-full px-4 py-2 border ${errors.code ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent`}
                             placeholder="Ex: GI3"
                             maxLength={10}
                         />
@@ -215,7 +215,7 @@ export default function EditClassPage() {
                             name="capacity"
                             value={formData.capacity}
                             onChange={handleChange}
-                            className={`w-full px-4 py-2 border ${errors.capacity ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-transparent`}
+                            className={`w-full px-4 py-2 border ${errors.capacity ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent`}
                             placeholder="Ex: 40"
                             min="1"
                         />
@@ -238,7 +238,7 @@ export default function EditClassPage() {
                             value={formData.description}
                             onChange={handleChange}
                             rows="4"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent"
                             placeholder="Description de la classe, spécialités, remarques..."
                         />
                         <p className="mt-1 text-sm text-gray-500">
@@ -296,7 +296,7 @@ export default function EditClassPage() {
 
             {/* History/Activity Log */}
             <div className="bg-white shadow rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-[#1B396A] mb-4">
+                <h3 className="text-lg font-semibold text-[#312e81] mb-4">
                     Historique des modifications
                 </h3>
                 <div className="space-y-3">

@@ -96,7 +96,7 @@ export default function ManageDepartmentChief() {
         return (
             <div className="flex items-center justify-center min-h-96">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed] mx-auto"></div>
                     <p className="mt-4 text-gray-600">Chargement...</p>
                 </div>
             </div>
@@ -174,7 +174,7 @@ export default function ManageDepartmentChief() {
                             {availableChiefs.map((candidate) => (
                                 <div key={candidate.id} className={`border rounded-lg p-4 cursor-pointer transition-all ${
                                     selectedChiefId === candidate.id.toString()
-                                        ? 'border-[#F26419] bg-orange-50'
+                                        ? 'border-[#7c3aed] bg-violet-50'
                                         : 'border-gray-200 hover:border-gray-300'
                                 }`} onClick={() => setSelectedChiefId(candidate.id.toString())}>
                                     <label className="cursor-pointer">
@@ -191,7 +191,7 @@ export default function ManageDepartmentChief() {
                                         <div className="flex items-start justify-between">
                                             <div className="flex items-start">
                                                 <div className="flex-shrink-0">
-                                                    <div className="w-12 h-12 bg-gradient-to-br from-[#1B396A] to-[#2563eb] rounded-full flex items-center justify-center text-white font-bold">
+                                                    <div className="w-12 h-12 bg-gradient-to-br from-[#312e81] to-[#6366f1] rounded-full flex items-center justify-center text-white font-bold">
                                                         {candidate.name.charAt(0)}
                                                     </div>
                                                 </div>
@@ -244,14 +244,14 @@ export default function ManageDepartmentChief() {
                 <div className="flex justify-end space-x-3">
                     <Link
                         href={`/admin/departments/${departmentId}/chief`}
-                        className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419]"
+                        className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed]"
                     >
                         Annuler
                     </Link>
                     <button
                         type="submit"
                         disabled={!selectedChiefId || submitting}
-                        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#F26419] hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#7c3aed] hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {submitting ? (
                             <>

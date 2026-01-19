@@ -90,7 +90,7 @@ const StudentModal = ({
       <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
         <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg leading-6 font-medium text-[#1B396A]">
+            <h3 className="text-lg leading-6 font-medium text-[#312e81]">
               {student ? 'Modifier un étudiant' : 'Ajouter un étudiant'}
             </h3>
             <button
@@ -116,7 +116,7 @@ const StudentModal = ({
                 type="text"
                 name="matricule"
                 id="matricule"
-                className={`mt-1 block w-full border ${errors.matricule ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                className={`mt-1 block w-full border ${errors.matricule ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                 value={formData.matricule}
                 onChange={handleChange}
                 required
@@ -132,7 +132,7 @@ const StudentModal = ({
                 type="text"
                 name="nom"
                 id="nom"
-                className={`mt-1 block w-full border ${errors.nom ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                className={`mt-1 block w-full border ${errors.nom ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                 value={formData.nom}
                 onChange={handleChange}
                 required
@@ -148,7 +148,7 @@ const StudentModal = ({
                 type="email"
                 name="email"
                 id="email"
-                className={`mt-1 block w-full border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                className={`mt-1 block w-full border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -164,7 +164,7 @@ const StudentModal = ({
                 type="tel"
                 name="phone"
                 id="phone"
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                 value={formData.phone}
                 onChange={handleChange}
               />
@@ -177,7 +177,7 @@ const StudentModal = ({
               <select
                 id="classe"
                 name="classe"
-                className={`mt-1 block w-full bg-white border ${errors.classe ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                className={`mt-1 block w-full bg-white border ${errors.classe ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                 value={formData.classe?.id || ''}
                 onChange={handleChange}
                 required
@@ -200,7 +200,7 @@ const StudentModal = ({
                 type="date"
                 name="dateNaissance"
                 id="dateNaissance"
-                className={`mt-1 block w-full border ${errors.dateNaissance ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                className={`mt-1 block w-full border ${errors.dateNaissance ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                 value={formData.dateNaissance}
                 onChange={handleChange}
                 required
@@ -216,7 +216,7 @@ const StudentModal = ({
                 type="text"
                 name="lieuNaissance"
                 id="lieuNaissance"
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                 value={formData.lieuNaissance}
                 onChange={handleChange}
               />
@@ -226,14 +226,14 @@ const StudentModal = ({
           <div className="mt-5 sm:mt-6 sm:flex sm:flex-row-reverse">
             <button
               type="submit"
-              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#F26419] text-base font-medium text-white hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419] sm:ml-3 sm:w-auto sm:text-sm"
+              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#7c3aed] text-base font-medium text-white hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed] sm:ml-3 sm:w-auto sm:text-sm"
             >
               {student ? 'Enregistrer les modifications' : 'Ajouter'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1B396A] sm:mt-0 sm:w-auto sm:text-sm"
+              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#312e81] sm:mt-0 sm:w-auto sm:text-sm"
             >
               Annuler
             </button>

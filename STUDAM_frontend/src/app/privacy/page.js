@@ -141,7 +141,7 @@ export default function PrivacyPage() {
                             </ul>
                             <p className="text-gray-700 mb-4">
                                 Pour exercer ces droits, contactez notre équipe à :
-                                <a href="mailto:privacy@studam.edu" className="text-[#F26419] hover:text-[#E55A17] font-medium">
+                                <a href="mailto:privacy@studam.edu" className="text-[#7c3aed] hover:text-[#6d28d9] font-medium">
                                     privacy@studam.edu
                                 </a>
                             </p>
@@ -207,7 +207,7 @@ export default function PrivacyPage() {
                             <div className="bg-gray-50 p-4 rounded-lg">
                                 <p className="text-gray-700">
                                     <strong>Délégué à la Protection des Données - STUDAM</strong><br />
-                                    Email : <a href="mailto:privacy@studam.edu" className="text-[#F26419] hover:text-[#E55A17]">privacy@studam.edu</a><br />
+                                    Email : <a href="mailto:privacy@studam.edu" className="text-[#7c3aed] hover:text-[#6d28d9]">privacy@studam.edu</a><br />
                                     Adresse : Yaoundé, Cameroun<br />
                                     Téléphone : +237 6XX XX XX XX
                                 </p>
@@ -227,13 +227,13 @@ export default function PrivacyPage() {
                             <div className="flex space-x-4">
                                 <Link
                                     href="/terms"
-                                    className="text-sm text-[#F26419] hover:text-[#E55A17] font-medium"
+                                    className="text-sm text-[#7c3aed] hover:text-[#6d28d9] font-medium"
                                 >
                                     Conditions d&apos;utilisation
                                 </Link>
                                 <Link
                                     href="/auth/login"
-                                    className="text-sm text-[#1B396A] hover:text-[#2447B8] font-medium"
+                                    className="text-sm text-[#312e81] hover:text-[#4338ca] font-medium"
                                 >
                                     Se connecter
                                 </Link>

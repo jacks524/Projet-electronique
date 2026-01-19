@@ -75,7 +75,7 @@ const PasswordChange = ({ onChangePassword }) => {
                 onChange={handleChange}
                 className={`appearance-none block w-full px-3 py-2 border ${
                   errors.currentPassword ? 'border-red-500' : 'border-gray-300'
-                } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
               />
               {errors.currentPassword && (
                 <p className="mt-1 text-sm text-red-500">{errors.currentPassword}</p>
@@ -97,7 +97,7 @@ const PasswordChange = ({ onChangePassword }) => {
                 onChange={handleChange}
                 className={`appearance-none block w-full px-3 py-2 border ${
                   errors.newPassword ? 'border-red-500' : 'border-gray-300'
-                } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
               />
               {errors.newPassword && (
                 <p className="mt-1 text-sm text-red-500">{errors.newPassword}</p>
@@ -119,7 +119,7 @@ const PasswordChange = ({ onChangePassword }) => {
                 onChange={handleChange}
                 className={`appearance-none block w-full px-3 py-2 border ${
                   errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
               />
               {errors.confirmPassword && (
                 <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
@@ -154,7 +154,7 @@ const PasswordChange = ({ onChangePassword }) => {
           
           <button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#F26419] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419]"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#7c3aed] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed]"
           >
             Changer le mot de passe
           </button>

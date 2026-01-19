@@ -12,7 +12,7 @@ export default function FeaturesPage() {
         emerald: "from-emerald-500 to-teal-500",
         fuchsia: "from-fuchsia-600 to-pink-600",
         blue: "from-blue-600 to-cyan-600",
-        amber: "from-amber-500 to-orange-500"
+        amber: "from-amber-500 to-fuchsia-500"
     };
 
     const mainFeatures = [

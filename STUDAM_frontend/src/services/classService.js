@@ -1,9 +1,17 @@
 import apiClient from '../lib/apiClient';
 
-const getByDepartment = async (departmentData) => {
+const getByDepartment = async (departmentInput) => {
     try {
-        const { data } = await apiClient.post(`/class/by-department`, departmentData);
-        return data;
+        const departmentId = typeof departmentInput === 'number'
+            ? departmentInput
+            : departmentInput?.departmentId;
+
+        if (!departmentId) {
+            throw new Error("Identifiant de departement manquant.");
+        }
+
+        const { data } = await apiClient.post(`/class/by-department/${departmentId}`);
+        return Array.isArray(data) ? data : [];
     } catch (error) {
         if (error.response?.status === 404) return [];
         console.error("Erreur API [getClassesByDepartment]:", error);
@@ -14,16 +22,27 @@ const getByDepartment = async (departmentData) => {
 const getByTeacher = async (teacherId) => {
     try {
         const { data } = await apiClient.get(`/class/teacher/${teacherId}`);
-        return data;
+        return Array.isArray(data) ? data : [];
     } catch (error) {
         if (error.response?.status === 404) return [];
         throw new Error("Impossible de charger les classes de l'enseignant.");
     }
 };
 
+const getById = async (classId) => {
+    try {
+        const { data } = await apiClient.get(`/class/${classId}`);
+        return data;
+    } catch (error) {
+        console.error("Erreur API [getClassById]:", error);
+        throw new Error("Impossible de charger la classe.");
+    }
+};
+
 const classService = {
     getByDepartment,
     getByTeacher,
+    getById,
 };
 
 export default classService;

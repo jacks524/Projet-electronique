@@ -91,7 +91,7 @@ export default function SubjectDetailPage() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed] mx-auto"></div>
                     <p className="mt-4 text-gray-600">Chargement...</p>
                 </div>
             </div>
@@ -103,7 +103,7 @@ export default function SubjectDetailPage() {
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <p className="text-red-600">Matière non trouvée</p>
-                    <Link href="/chief/subjects" className="mt-4 text-[#F26419] hover:underline">
+                    <Link href="/chief/subjects" className="mt-4 text-[#7c3aed] hover:underline">
                         Retour à la liste
                     </Link>
                 </div>
@@ -120,7 +120,7 @@ export default function SubjectDetailPage() {
             {/* En-tête */}
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#1B396A]">{subject.libelle}</h1>
+                    <h1 className="text-3xl font-bold text-[#312e81]">{subject.libelle}</h1>
                     <p className="text-gray-600 mt-1">Code: {subject.code}</p>
                 </div>
                 <div className="flex space-x-2">
@@ -207,8 +207,8 @@ export default function SubjectDetailPage() {
 
                 <div className="bg-white shadow rounded-lg p-6">
                     <div className="flex items-center">
-                        <div className="flex-shrink-0 bg-orange-100 rounded-md p-3">
-                            <svg className="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex-shrink-0 bg-violet-100 rounded-md p-3">
+                            <svg className="h-6 w-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                         </div>
@@ -273,9 +273,9 @@ export default function SubjectDetailPage() {
                         ) : (
                             <div className="space-y-3">
                                 {classes.map((classe) => (
-                                    <div key={classe.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-[#F26419] transition-colors">
+                                    <div key={classe.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-[#7c3aed] transition-colors">
                                         <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-[#F26419] to-[#FF7A47] rounded-full flex items-center justify-center">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-[#7c3aed] to-[#a855f7] rounded-full flex items-center justify-center">
                                                 <span className="text-white font-bold text-sm">{classe.name[0]}</span>
                                             </div>
                                             <div>
@@ -284,7 +284,7 @@ export default function SubjectDetailPage() {
                                             </div>
                                         </div>
                                         <Link href={`/chief/classes/${classe.id}`}>
-                                            <button className="text-sm text-[#F26419] hover:text-[#E55A1A] font-medium">
+                                            <button className="text-sm text-[#7c3aed] hover:text-[#6d28d9] font-medium">
                                                 Voir détails →
                                             </button>
                                         </Link>
@@ -308,7 +308,7 @@ export default function SubjectDetailPage() {
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-2">
                                     <div
-                                        className="bg-gradient-to-r from-[#F26419] to-[#FF7A47] h-2 rounded-full transition-all duration-500"
+                                        className="bg-gradient-to-r from-[#7c3aed] to-[#a855f7] h-2 rounded-full transition-all duration-500"
                                         style={{ width: `${progressPercentage}%` }}
                                     ></div>
                                 </div>
@@ -326,7 +326,7 @@ export default function SubjectDetailPage() {
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions rapides</h3>
                         <div className="space-y-3">
                             <Link href={`/chief/subjects/${subjectId}/edit`} className="block">
-                                <button className="w-full px-4 py-2 bg-[#1B396A] text-white rounded-lg hover:bg-opacity-90 transition-colors text-sm font-medium">
+                                <button className="w-full px-4 py-2 bg-[#312e81] text-white rounded-lg hover:bg-opacity-90 transition-colors text-sm font-medium">
                                     <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                                     </svg>
@@ -335,7 +335,7 @@ export default function SubjectDetailPage() {
                             </Link>
 
                             <Link href={`/chief/timetables?subject=${subjectId}`} className="block">
-                                <button className="w-full px-4 py-2 bg-white border-2 border-[#F26419] text-[#F26419] rounded-lg hover:bg-[#F26419] hover:text-white transition-colors text-sm font-medium">
+                                <button className="w-full px-4 py-2 bg-white border-2 border-[#7c3aed] text-[#7c3aed] rounded-lg hover:bg-[#7c3aed] hover:text-white transition-colors text-sm font-medium">
                                     <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                     </svg>

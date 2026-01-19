@@ -67,7 +67,7 @@ export default function TeacherAttendanceHub() {
             </div>
             <h3 className="font-semibold text-gray-900 text-lg mb-2">{title}</h3>
             <p className="text-gray-600 text-sm mb-4">{description}</p>
-            <Link href={href} className="inline-flex items-center justify-center w-full px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-orange-600 hover:bg-orange-700 transition-colors">
+            <Link href={href} className="inline-flex items-center justify-center w-full px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-violet-600 hover:bg-violet-700 transition-colors">
                 {buttonText}
             </Link>
         </div>
@@ -79,7 +79,7 @@ export default function TeacherAttendanceHub() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-center h-64">
                         <div className="text-center">
-                            <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                             <p className="text-gray-600">Chargement de votre hub de présence...</p>
                         </div>
                     </div>
@@ -219,7 +219,7 @@ export default function TeacherAttendanceHub() {
                     <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
                         <Link
                             href="/teacher/attendance/history"
-                            className="text-sm text-orange-600 hover:text-orange-500 font-medium"
+                            className="text-sm text-violet-600 hover:text-violet-500 font-medium"
                         >
                             Voir l'historique complet →
                         </Link>

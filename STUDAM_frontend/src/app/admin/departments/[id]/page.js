@@ -36,7 +36,10 @@ export default function DepartmentDetails() {
             setLoading(true);
             const deptData = await departmentService.getById(departmentId);
 
-            const teachersData = await userService.getUsersByRoleAndDepartment('TEACHER', departmentId);
+            const [teachersData, chiefsData] = await Promise.all([
+                userService.getUsersByRoleAndDepartment('TEACHER', departmentId),
+                userService.getUsersByRoleAndDepartment('DEPARTMENT_MANAGER', departmentId),
+            ]);
 
             setDepartment({
                 id: deptData.departmentId,
@@ -49,6 +52,8 @@ export default function DepartmentDetails() {
 
             if (deptData.departmentManager) {
                 setChief(deptData.departmentManager);
+            } else if (chiefsData.length > 0) {
+                setChief(chiefsData[0]);
             }
 
             setTeachers(teachersData);
@@ -74,7 +79,7 @@ export default function DepartmentDetails() {
         return (
             <div className="flex items-center justify-center min-h-96">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed] mx-auto"></div>
                     <p className="mt-4 text-gray-600">Chargement des détails...</p>
                 </div>
             </div>
@@ -106,7 +111,7 @@ export default function DepartmentDetails() {
                 <div className="mt-6">
                     <Link
                         href="/admin/departments"
-                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#F26419] hover:bg-orange-600"
+                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#7c3aed] hover:bg-violet-600"
                     >
                         Retour aux départements
                     </Link>
@@ -224,7 +229,7 @@ export default function DepartmentDetails() {
           </Link>
             <Link
                 href={`/admin/departments/${department.id}/manage-chief`}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#F26419] hover:bg-orange-600"
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#7c3aed] hover:bg-violet-600"
             >
             <svg
               className="-ml-1 mr-2 h-5 w-5"
@@ -352,7 +357,7 @@ export default function DepartmentDetails() {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-orange-500 rounded-md flex items-center justify-center">
+                <div className="w-8 h-8 bg-violet-500 rounded-md flex items-center justify-center">
                   <svg
                     className="w-5 h-5 text-white"
                     fill="none"
@@ -407,8 +412,8 @@ export default function DepartmentDetails() {
                   Enseignants du département
                 </h3>
                 <Link
-                  href="/admin/users/teachers"
-                  className="text-[#F26419] hover:text-orange-600 text-sm font-medium"
+                  href="/admin/users"
+                  className="text-[#7c3aed] hover:text-violet-600 text-sm font-medium"
                 >
                   Voir tous →
                 </Link>
@@ -421,7 +426,7 @@ export default function DepartmentDetails() {
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                   >
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-br from-[#F26419] to-[#FF7A47] rounded-full flex items-center justify-center text-white font-medium">
+                      <div className="w-10 h-10 bg-gradient-to-br from-[#7c3aed] to-[#a855f7] rounded-full flex items-center justify-center text-white font-medium">
                         {teacher.name.charAt(0)}
                       </div>
                       <div className="ml-3">
@@ -457,7 +462,7 @@ export default function DepartmentDetails() {
               {chief ? (
                 <div className="space-y-3">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-br from-[#1B396A] to-[#2563eb] rounded-full flex items-center justify-center text-white font-medium">
+                    <div className="w-12 h-12 bg-gradient-to-br from-[#312e81] to-[#6366f1] rounded-full flex items-center justify-center text-white font-medium">
                       {chief.name.charAt(0)}
                     </div>
                     <div className="ml-3">
@@ -535,7 +540,7 @@ export default function DepartmentDetails() {
                   </p>
                   <Link
                     href={`/admin/departments/${department.id}/manage-chief`}
-                    className="mt-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#F26419] hover:bg-orange-600"
+                    className="mt-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#7c3aed] hover:bg-violet-600"
                   >
                     Assigner un chef
                   </Link>
@@ -647,8 +652,8 @@ export default function DepartmentDetails() {
                 </Link>
 
                 <Link
-                  href="/admin/users/teachers/assign-department"
-                  className="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#F26419] hover:bg-orange-600"
+                  href="/admin/users/create"
+                  className="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#7c3aed] hover:bg-violet-600"
                 >
                   <svg
                     className="-ml-1 mr-2 h-4 w-4"

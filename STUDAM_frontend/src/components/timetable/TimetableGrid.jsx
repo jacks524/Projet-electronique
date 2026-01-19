@@ -34,12 +34,12 @@ const TimetableGrid = ({ daysOfWeek, timeSlots, schedules, onCellClick }) => {
                 return (
                   <td 
                     key={`${day}-${time}`} 
-                    className={`px-1 py-1 text-sm ${schedule ? 'cursor-pointer hover:bg-orange-50' : 'cursor-pointer hover:bg-gray-50'}`}
+                    className={`px-1 py-1 text-sm ${schedule ? 'cursor-pointer hover:bg-violet-50' : 'cursor-pointer hover:bg-gray-50'}`}
                     onClick={() => onCellClick(day, time, schedule)}
                   >
                     {schedule ? (
-                      <div className="p-2 rounded-md bg-orange-100 border border-orange-200 h-full min-h-[80px] overflow-hidden">
-                        <div className="font-medium text-[#1B396A]">{schedule.matiere?.libelle}</div>
+                      <div className="p-2 rounded-md bg-violet-100 border border-violet-200 h-full min-h-[80px] overflow-hidden">
+                        <div className="font-medium text-[#312e81]">{schedule.matiere?.libelle}</div>
                         <div className="text-xs text-gray-500">Code: {schedule.matiere?.code}</div>
                         <div className="text-xs text-gray-500">Prof: {schedule.matiere?.enseignant?.nom}</div>
                       </div>

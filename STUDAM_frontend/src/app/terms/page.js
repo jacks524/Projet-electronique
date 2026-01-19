@@ -82,7 +82,7 @@ export default function TermsPage() {
                             </h2>
                             <p className="text-gray-700 mb-4">
                                 Nous nous engageons à protéger vos données personnelles conformément à notre
-                                <Link href="/privacy" className="text-[#F26419] hover:text-[#E55A17] font-medium">
+                                <Link href="/privacy" className="text-[#7c3aed] hover:text-[#6d28d9] font-medium">
                                     politique de confidentialité
                                 </Link>.
                                 Les données biométriques sont utilisées uniquement pour l&apos;authentification
@@ -137,13 +137,13 @@ export default function TermsPage() {
                             <div className="flex space-x-4">
                                 <Link
                                     href="/privacy"
-                                    className="text-sm text-[#F26419] hover:text-[#E55A17] font-medium"
+                                    className="text-sm text-[#7c3aed] hover:text-[#6d28d9] font-medium"
                                 >
                                     Politique de confidentialité
                                 </Link>
                                 <Link
                                     href="/auth/login"
-                                    className="text-sm text-[#1B396A] hover:text-[#2447B8] font-medium"
+                                    className="text-sm text-[#312e81] hover:text-[#4338ca] font-medium"
                                 >
                                     Se connecter
                                 </Link>

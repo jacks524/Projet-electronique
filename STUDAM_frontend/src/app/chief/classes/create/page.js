@@ -128,7 +128,7 @@ export default function CreateClassPage() {
             <div className="bg-white shadow rounded-lg p-6">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-[#1B396A]">
+                        <h1 className="text-2xl font-bold text-[#312e81]">
                             Créer une nouvelle classe
                         </h1>
                         <p className="text-gray-600 mt-2">
@@ -160,7 +160,7 @@ export default function CreateClassPage() {
                             name="name"
                             value={formData.name}
                             onChange={handleChange}
-                            className={`w-full px-4 py-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-transparent`}
+                            className={`w-full px-4 py-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent`}
                             placeholder="Ex: Génie Informatique 3ème année"
                         />
                         {errors.name && (
@@ -179,7 +179,7 @@ export default function CreateClassPage() {
                             name="code"
                             value={formData.code}
                             onChange={handleChange}
-                            className={`w-full px-4 py-2 border ${errors.code ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-transparent`}
+                            className={`w-full px-4 py-2 border ${errors.code ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent`}
                             placeholder="Ex: GI3"
                             maxLength={10}
                         />
@@ -202,7 +202,7 @@ export default function CreateClassPage() {
                             name="capacity"
                             value={formData.capacity}
                             onChange={handleChange}
-                            className={`w-full px-4 py-2 border ${errors.capacity ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-transparent`}
+                            className={`w-full px-4 py-2 border ${errors.capacity ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent`}
                             placeholder="Ex: 40"
                             min="1"
                         />
@@ -225,7 +225,7 @@ export default function CreateClassPage() {
                             value={formData.description}
                             onChange={handleChange}
                             rows="4"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent"
                             placeholder="Description de la classe, spécialités, remarques..."
                         />
                         <p className="mt-1 text-sm text-gray-500">
@@ -286,26 +286,26 @@ export default function CreateClassPage() {
 
             {/* Next Steps */}
             <div className="bg-white shadow rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-[#1B396A] mb-4">
+                <h3 className="text-lg font-semibold text-[#312e81] mb-4">
                     Prochaines étapes après la création
                 </h3>
                 <ul className="space-y-3">
                     <li className="flex items-start">
-                        <span className="flex items-center justify-center w-6 h-6 bg-[#F26419] text-white rounded-full text-sm font-bold mr-3 mt-0.5">1</span>
+                        <span className="flex items-center justify-center w-6 h-6 bg-[#7c3aed] text-white rounded-full text-sm font-bold mr-3 mt-0.5">1</span>
                         <div>
                             <p className="font-medium text-gray-900">Ajouter des étudiants</p>
                             <p className="text-sm text-gray-600">Importez la liste des étudiants via un fichier Excel</p>
                         </div>
                     </li>
                     <li className="flex items-start">
-                        <span className="flex items-center justify-center w-6 h-6 bg-[#F26419] text-white rounded-full text-sm font-bold mr-3 mt-0.5">2</span>
+                        <span className="flex items-center justify-center w-6 h-6 bg-[#7c3aed] text-white rounded-full text-sm font-bold mr-3 mt-0.5">2</span>
                         <div>
                             <p className="font-medium text-gray-900">Configurer l'emploi du temps</p>
                             <p className="text-sm text-gray-600">Définissez les créneaux horaires et les matières</p>
                         </div>
                     </li>
                     <li className="flex items-start">
-                        <span className="flex items-center justify-center w-6 h-6 bg-[#F26419] text-white rounded-full text-sm font-bold mr-3 mt-0.5">3</span>
+                        <span className="flex items-center justify-center w-6 h-6 bg-[#7c3aed] text-white rounded-full text-sm font-bold mr-3 mt-0.5">3</span>
                         <div>
                             <p className="font-medium text-gray-900">Assigner les enseignants</p>
                             <p className="text-sm text-gray-600">Attribuez les enseignants aux différentes matières</p>

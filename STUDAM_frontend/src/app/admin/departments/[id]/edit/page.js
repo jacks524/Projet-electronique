@@ -151,7 +151,7 @@ export default function EditDepartment() {
         return (
             <div className="flex items-center justify-center min-h-96">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed] mx-auto"></div>
                     <p className="mt-4 text-gray-600">Chargement des données...</p>
                 </div>
             </div>
@@ -167,7 +167,7 @@ export default function EditDepartment() {
                         <nav className="flex mb-6" aria-label="Breadcrumb">
                             <ol className="flex items-center space-x-2">
                                 <li>
-                                    <Link href="/admin/dashboard" className="text-gray-500 hover:text-[#F26419] transition-all duration-200 hover:scale-105">
+                                    <Link href="/admin/dashboard" className="text-gray-500 hover:text-[#7c3aed] transition-all duration-200 hover:scale-105">
                                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
                                         </svg>
@@ -177,7 +177,7 @@ export default function EditDepartment() {
                                     <svg className="w-4 h-4 text-gray-400 mx-2" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"/>
                                     </svg>
-                                    <Link href="/admin/departments" className="text-gray-500 hover:text-[#F26419] transition-all duration-200 font-medium">
+                                    <Link href="/admin/departments" className="text-gray-500 hover:text-[#7c3aed] transition-all duration-200 font-medium">
                                         Départements
                                     </Link>
                                 </li>
@@ -185,7 +185,7 @@ export default function EditDepartment() {
                                     <svg className="w-4 h-4 text-gray-400 mx-2" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"/>
                                     </svg>
-                                    <Link href={`/admin/departments/${departmentId}`} className="text-gray-500 hover:text-[#F26419] transition-all duration-200 font-medium">
+                                    <Link href={`/admin/departments/${departmentId}`} className="text-gray-500 hover:text-[#7c3aed] transition-all duration-200 font-medium">
                                         {formData.name}
                                     </Link>
                                 </li>
@@ -193,13 +193,13 @@ export default function EditDepartment() {
                                     <svg className="w-4 h-4 text-gray-400 mx-2" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"/>
                                     </svg>
-                                    <span className="text-[#F26419] font-semibold">Modifier</span>
+                                    <span className="text-[#7c3aed] font-semibold">Modifier</span>
                                 </li>
                             </ol>
                         </nav>
                         <div className="mt-4">
                             <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-                                <div className="w-10 h-10 bg-gradient-to-r from-[#F26419] to-orange-500 rounded-lg flex items-center justify-center mr-4">
+                                <div className="w-10 h-10 bg-gradient-to-r from-[#7c3aed] to-violet-500 rounded-lg flex items-center justify-center mr-4">
                                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                     </svg>
@@ -207,7 +207,7 @@ export default function EditDepartment() {
                                 Modifier le département
                             </h1>
                             <p className="mt-2 text-lg text-gray-600">
-                                Modifiez les informations du département <span className="font-semibold text-[#F26419]">{formData.name}</span>
+                                Modifiez les informations du département <span className="font-semibold text-[#7c3aed]">{formData.name}</span>
                             </p>
                         </div>
                     </div>
@@ -269,7 +269,7 @@ export default function EditDepartment() {
                                                 className={`block w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 
                                                         ${errors.name
                                                     ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-500'
-                                                    : 'border-gray-200 bg-gray-50 focus:border-[#F26419] focus:ring-[#F26419] focus:bg-white'
+                                                    : 'border-gray-200 bg-gray-50 focus:border-[#7c3aed] focus:ring-[#7c3aed] focus:bg-white'
                                                 } 
                                                         text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-opacity-20`}
                                                 placeholder="Ex: Informatique et Technologies"
@@ -305,7 +305,7 @@ export default function EditDepartment() {
                                                 className={`block w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 uppercase font-mono
                                                         ${errors.code
                                                     ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-500'
-                                                    : 'border-gray-200 bg-gray-50 focus:border-[#F26419] focus:ring-[#F26419] focus:bg-white'
+                                                    : 'border-gray-200 bg-gray-50 focus:border-[#7c3aed] focus:ring-[#7c3aed] focus:bg-white'
                                                 } 
                                                         text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-opacity-20`}
                                                 placeholder="INFO"
@@ -341,7 +341,7 @@ export default function EditDepartment() {
                                                 className={`block w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 resize-none
                                                     ${errors.description
                                                     ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-500'
-                                                    : 'border-gray-200 bg-gray-50 focus:border-[#F26419] focus:ring-[#F26419] focus:bg-white'
+                                                    : 'border-gray-200 bg-gray-50 focus:border-[#7c3aed] focus:ring-[#7c3aed] focus:bg-white'
                                                 } 
                                                     text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-opacity-20`}
                                                 placeholder="Décrivez la mission, les objectifs et les domaines d'expertise de ce département..."
@@ -396,7 +396,7 @@ export default function EditDepartment() {
                                                     }
                                                 }}
                                                 placeholder="Rechercher par nom..."
-                                                className="block w-full px-4 py-3 border-2 border-gray-200 bg-gray-50 rounded-xl transition-all duration-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:ring-opacity-20 focus:border-[#F26419] focus:bg-white appearance-none"
+                                                className="block w-full px-4 py-3 border-2 border-gray-200 bg-gray-50 rounded-xl transition-all duration-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:ring-opacity-20 focus:border-[#7c3aed] focus:bg-white appearance-none"
                                             />
 
                                             <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -410,7 +410,7 @@ export default function EditDepartment() {
                                                         <li
                                                             key={chief.id}
                                                             onClick={() => handleSelectChief(chief)}
-                                                            className="px-4 py-3 cursor-pointer hover:bg-orange-50"
+                                                            className="px-4 py-3 cursor-pointer hover:bg-violet-50"
                                                         >
                                                             <p className="font-medium text-gray-900">{chief.name}</p>
                                                             <p className="text-sm text-gray-500">{chief.email}</p>
@@ -440,13 +440,13 @@ export default function EditDepartment() {
                                         className={`block w-full px-6 py-4 border-2 rounded-2xl transition-all duration-300 text-gray-900 placeholder-gray-400 shadow-lg hover:shadow-xl focus:shadow-2xl transform hover:-translate-y-1 focus:-translate-y-1
                                                             ${errors.email
                                             ? 'border-red-300 bg-red-50/50 focus:border-red-500 focus:ring-red-500'
-                                            : 'border-gray-200 bg-white/80 focus:border-[#F26419] focus:ring-[#F26419] hover:border-gray-300'
+                                            : 'border-gray-200 bg-white/80 focus:border-[#7c3aed] focus:ring-[#7c3aed] hover:border-gray-300'
                                         } 
                                                             focus:outline-none focus:ring-4 focus:ring-opacity-20`}
                                         placeholder="info@studam.edu"
                                     />
                                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                                        <svg className={`w-5 h-5 ${errors.email ? 'text-red-400' : 'text-gray-300 group-hover:text-[#F26419] group-focus-within:text-[#F26419]'} transition-colors duration-200`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className={`w-5 h-5 ${errors.email ? 'text-red-400' : 'text-gray-300 group-hover:text-[#7c3aed] group-focus-within:text-[#7c3aed]'} transition-colors duration-200`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
                                         </svg>
                                     </div>
@@ -473,11 +473,11 @@ export default function EditDepartment() {
                                         id="telephone"
                                         value={formData.telephone}
                                         onChange={handleChange}
-                                        className="block w-full px-6 py-4 border-2 border-gray-200 bg-white/80 rounded-2xl transition-all duration-300 text-gray-900 placeholder-gray-400 shadow-lg hover:shadow-xl focus:shadow-2xl transform hover:-translate-y-1 focus:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-[#F26419] focus:ring-opacity-20 focus:border-[#F26419] hover:border-gray-300"
+                                        className="block w-full px-6 py-4 border-2 border-gray-200 bg-white/80 rounded-2xl transition-all duration-300 text-gray-900 placeholder-gray-400 shadow-lg hover:shadow-xl focus:shadow-2xl transform hover:-translate-y-1 focus:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-[#7c3aed] focus:ring-opacity-20 focus:border-[#7c3aed] hover:border-gray-300"
                                         placeholder="+237 679865432"
                                     />
                                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                                        <svg className="w-5 h-5 text-gray-300 group-hover:text-[#F26419] group-focus-within:text-[#F26419] transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-5 h-5 text-gray-300 group-hover:text-[#7c3aed] group-focus-within:text-[#7c3aed] transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
                                         </svg>
                                     </div>
@@ -496,11 +496,11 @@ export default function EditDepartment() {
                                         id="adresse"
                                         value={formData.adresse}
                                         onChange={handleChange}
-                                        className="block w-full px-6 py-4 border-2 border-gray-200 bg-white/80 rounded-2xl transition-all duration-300 text-gray-900 placeholder-gray-400 shadow-lg hover:shadow-xl focus:shadow-2xl transform hover:-translate-y-1 focus:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-[#F26419] focus:ring-opacity-20 focus:border-[#F26419] hover:border-gray-300"
+                                        className="block w-full px-6 py-4 border-2 border-gray-200 bg-white/80 rounded-2xl transition-all duration-300 text-gray-900 placeholder-gray-400 shadow-lg hover:shadow-xl focus:shadow-2xl transform hover:-translate-y-1 focus:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-[#7c3aed] focus:ring-opacity-20 focus:border-[#7c3aed] hover:border-gray-300"
                                         placeholder="Bâtiment A, 2ème étage, Campus Principal"
                                     />
                                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                                        <svg className="w-5 h-5 text-gray-300 group-hover:text-[#F26419] group-focus-within:text-[#F26419] transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-5 h-5 text-gray-300 group-hover:text-[#7c3aed] group-focus-within:text-[#7c3aed] transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                         </svg>
@@ -515,14 +515,14 @@ export default function EditDepartment() {
                     <div className="px-4 py-4 sm:px-6 flex justify-end space-x-3">
                         <Link
                             href={`/admin/departments/${departmentId}`}
-                            className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419]"
+                            className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed]"
                         >
                             Annuler
                         </Link>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#F26419] hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#7c3aed] hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? (
                                 <>
@@ -596,7 +596,7 @@ export default function EditDepartment() {
                                     Un département inactif masque ses cours
                                 </li>
                                 <li className="flex items-center">
-                                    <div className="w-2 h-2 bg-orange-400 rounded-full mr-3"></div>
+                                    <div className="w-2 h-2 bg-violet-400 rounded-full mr-3"></div>
                                     Les enseignants ne peuvent plus prendre de présences
                                 </li>
                                 <li className="flex items-center">

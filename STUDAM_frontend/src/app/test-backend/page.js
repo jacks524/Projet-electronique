@@ -176,12 +176,12 @@ export default function Register() {
                 <div className="bg-white rounded-xl shadow-2xl p-8">
                     {/* Header */}
                     <div className="text-center mb-8">
-                        <div className="mx-auto h-16 w-16 bg-gradient-to-r from-[#F26419] to-[#FF7A47] rounded-full flex items-center justify-center mb-4">
+                        <div className="mx-auto h-16 w-16 bg-gradient-to-r from-[#7c3aed] to-[#a855f7] rounded-full flex items-center justify-center mb-4">
                             <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
                             </svg>
                         </div>
-                        <h1 className="text-3xl font-bold text-[#1B396A]">
+                        <h1 className="text-3xl font-bold text-[#312e81]">
                             Inscription
                         </h1>
                         <p className="mt-2 text-sm text-gray-600">
@@ -220,7 +220,7 @@ export default function Register() {
                                     autoComplete="name"
                                     value={formData.name}
                                     onChange={handleChange}
-                                    className={`appearance-none relative block w-full px-3 py-3 border ${errors.name ? 'border-red-300' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors`}
+                                    className={`appearance-none relative block w-full px-3 py-3 border ${errors.name ? 'border-red-300' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors`}
                                     placeholder="Entrez votre nom complet"
                                 />
                                 {errors.name && (
@@ -240,7 +240,7 @@ export default function Register() {
                                     autoComplete="email"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    className={`appearance-none relative block w-full px-3 py-3 border ${errors.email ? 'border-red-300' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors`}
+                                    className={`appearance-none relative block w-full px-3 py-3 border ${errors.email ? 'border-red-300' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors`}
                                     placeholder="Entrez votre adresse email"
                                 />
                                 {errors.email && (
@@ -260,7 +260,7 @@ export default function Register() {
                                     autoComplete="tel"
                                     value={formData.phoneNumber}
                                     onChange={handleChange}
-                                    className={`appearance-none relative block w-full px-3 py-3 border ${errors.phoneNumber ? 'border-red-300' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors`}
+                                    className={`appearance-none relative block w-full px-3 py-3 border ${errors.phoneNumber ? 'border-red-300' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors`}
                                     placeholder="+221 77 123 45 67"
                                 />
                                 {errors.phoneNumber && (
@@ -280,7 +280,7 @@ export default function Register() {
                                     autoComplete="username"
                                     value={formData.username}
                                     onChange={handleChange}
-                                    className={`appearance-none relative block w-full px-3 py-3 border ${errors.username ? 'border-red-300' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors`}
+                                    className={`appearance-none relative block w-full px-3 py-3 border ${errors.username ? 'border-red-300' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors`}
                                     placeholder="Nom d'utilisateur unique"
                                 />
                                 {errors.username && (
@@ -301,7 +301,7 @@ export default function Register() {
                                     name="role"
                                     value={formData.role}
                                     onChange={handleChange}
-                                    className={`appearance-none relative block w-full px-3 py-3 border ${errors.role ? 'border-red-300' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors`}
+                                    className={`appearance-none relative block w-full px-3 py-3 border ${errors.role ? 'border-red-300' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors`}
                                 >
                                     <option value="">Sélectionnez votre rôle</option>
                                     <option value="ADMIN">Administrateur</option>
@@ -326,7 +326,7 @@ export default function Register() {
                                         autoComplete="new-password"
                                         value={formData.password}
                                         onChange={handleChange}
-                                        className={`appearance-none relative block w-full px-3 py-3 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors`}
+                                        className={`appearance-none relative block w-full px-3 py-3 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors`}
                                         placeholder="Entrez votre mot de passe"
                                     />
                                     <button
@@ -367,7 +367,7 @@ export default function Register() {
                                         autoComplete="new-password"
                                         value={formData.password_confirmation}
                                         onChange={handleChange}
-                                        className={`appearance-none relative block w-full px-3 py-3 pr-10 border ${errors.password_confirmation ? 'border-red-300' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F26419] focus:border-[#F26419] focus:z-10 sm:text-sm transition-colors`}
+                                        className={`appearance-none relative block w-full px-3 py-3 pr-10 border ${errors.password_confirmation ? 'border-red-300' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors`}
                                         placeholder="Confirmez votre mot de passe"
                                     />
                                     <button
@@ -399,16 +399,16 @@ export default function Register() {
                                 id="terms"
                                 name="terms"
                                 type="checkbox"
-                                className="h-4 w-4 text-[#F26419] focus:ring-[#F26419] border-gray-300 rounded"
+                                className="h-4 w-4 text-[#7c3aed] focus:ring-[#7c3aed] border-gray-300 rounded"
                                 required
                             />
                             <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
                                 J&apos;accepte les{' '}
-                                <Link href="/terms" className="text-[#F26419] hover:text-[#E55A1A] underline">
+                                <Link href="/terms" className="text-[#7c3aed] hover:text-[#6d28d9] underline">
                                     conditions d&apos;utilisation
                                 </Link>
                                 {' '}et la{' '}
-                                <Link href="/privacy" className="text-[#F26419] hover:text-[#E55A1A] underline">
+                                <Link href="/privacy" className="text-[#7c3aed] hover:text-[#6d28d9] underline">
                                     politique de confidentialité
                                 </Link>
                             </label>
@@ -419,7 +419,7 @@ export default function Register() {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-[#F26419] to-[#FF7A47] hover:from-[#E55A1A] hover:to-[#F26419] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
+                                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-[#7c3aed] to-[#a855f7] hover:from-[#6d28d9] hover:to-[#7c3aed] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02]"
                             >
                                 {isLoading ? (
                                     <div className="flex items-center">
@@ -439,7 +439,7 @@ export default function Register() {
                         <div className="text-center">
                             <p className="text-sm text-gray-600">
                                 Vous avez déjà un compte ?{' '}
-                                <Link href="/auth/login" className="font-medium text-[#F26419] hover:text-[#E55A1A] underline">
+                                <Link href="/auth/login" className="font-medium text-[#7c3aed] hover:text-[#6d28d9] underline">
                                     Se connecter
                                 </Link>
                             </p>

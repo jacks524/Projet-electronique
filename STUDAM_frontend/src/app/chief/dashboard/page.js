@@ -79,7 +79,7 @@ export default function ChiefDashboard() {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed] mx-auto"></div>
                     <p className="mt-4 text-gray-600">Chargement du tableau de bord...</p>
                 </div>
             </div>
@@ -98,7 +98,7 @@ export default function ChiefDashboard() {
         <div className="space-y-6">
             {/* En-tête */}
             <div>
-                <h1 className="text-2xl font-bold text-[#1B396A]">
+                <h1 className="text-2xl font-bold text-[#312e81]">
                     Dashboard - Département {departmentInfo.name}
                 </h1>
                 <DashboardHeader user={user} />
@@ -110,7 +110,7 @@ export default function ChiefDashboard() {
                     title="Enseignants"
                     count={departmentInfo.stats.teachers}
                     icon={
-                        <svg className="w-8 h-8 text-[#F26419]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-8 h-8 text-[#7c3aed]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                     }
@@ -119,7 +119,7 @@ export default function ChiefDashboard() {
                     title="Étudiants"
                     count={departmentInfo.stats.students}
                     icon={
-                        <svg className="w-8 h-8 text-[#F26419]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-8 h-8 text-[#7c3aed]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                         </svg>
                     }
@@ -128,7 +128,7 @@ export default function ChiefDashboard() {
                     title="Classes"
                     count={departmentInfo.stats.classes}
                     icon={
-                        <svg className="w-8 h-8 text-[#F26419]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-8 h-8 text-[#7c3aed]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
                     }
@@ -137,7 +137,7 @@ export default function ChiefDashboard() {
                     title="Taux de Présence"
                     count={`${departmentInfo.stats.attendanceRate}%`}
                     icon={
-                        <svg className="w-8 h-8 text-[#F26419]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-8 h-8 text-[#7c3aed]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     }
@@ -146,7 +146,7 @@ export default function ChiefDashboard() {
 
             {/* Actions Rapides */}
             <div className="bg-white shadow rounded-lg p-6">
-                <h2 className="text-lg font-semibold text-[#1B396A] mb-4">Actions Rapides</h2>
+                <h2 className="text-lg font-semibold text-[#312e81] mb-4">Actions Rapides</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Link href="/chief/teachers/create">
                         <Button className="w-full justify-center">
@@ -179,7 +179,7 @@ export default function ChiefDashboard() {
                 {/* Liste des enseignants récents */}
                 <div className="bg-white shadow rounded-lg">
                     <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                        <h3 className="text-lg font-medium text-[#1B396A]">Derniers enseignants ajoutés</h3>
+                        <h3 className="text-lg font-medium text-[#312e81]">Derniers enseignants ajoutés</h3>
                     </div>
                     {departmentInfo.recentTeachers.length === 0 ? (
                         <div className="px-4 py-4 sm:px-6">
@@ -191,7 +191,7 @@ export default function ChiefDashboard() {
                                 <li key={teacher.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <div className="text-sm font-medium text-[#1B396A]">
+                                            <div className="text-sm font-medium text-[#312e81]">
                                                 {teacher.nom}
                                             </div>
                                             <div className="text-sm text-gray-500">
@@ -203,7 +203,7 @@ export default function ChiefDashboard() {
                                         </div>
                                         <Link
                                             href={`/chief/teachers/${teacher.id}`}
-                                            className="text-sm text-[#F26419] hover:text-opacity-80"
+                                            className="text-sm text-[#7c3aed] hover:text-opacity-80"
                                         >
                                             Voir détails
                                         </Link>
@@ -217,7 +217,7 @@ export default function ChiefDashboard() {
                 {/* Classes avec le plus d'étudiants */}
                 <div className="bg-white shadow rounded-lg">
                     <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                        <h3 className="text-lg font-medium text-[#1B396A]">Classes les plus peuplées</h3>
+                        <h3 className="text-lg font-medium text-[#312e81]">Classes les plus peuplées</h3>
                     </div>
                     {departmentInfo.topClasses.length === 0 ? (
                         <div className="px-4 py-4 sm:px-6">
@@ -229,7 +229,7 @@ export default function ChiefDashboard() {
                                 <li key={classe.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <div className="text-sm font-medium text-[#1B396A]">
+                                            <div className="text-sm font-medium text-[#312e81]">
                                                 {classe.nom}
                                             </div>
                                             <div className="text-sm text-gray-500">
@@ -248,7 +248,7 @@ export default function ChiefDashboard() {
                       </span>
                                             <Link
                                                 href={`/chief/classes/${classe.id}`}
-                                                className="text-sm text-[#F26419] hover:text-opacity-80"
+                                                className="text-sm text-[#7c3aed] hover:text-opacity-80"
                                             >
                                                 Gérer
                                             </Link>

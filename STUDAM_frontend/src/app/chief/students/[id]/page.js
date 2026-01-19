@@ -110,7 +110,7 @@ export default function StudentDetailPage() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed] mx-auto"></div>
                     <p className="mt-4 text-gray-600">Chargement...</p>
                 </div>
             </div>
@@ -122,7 +122,7 @@ export default function StudentDetailPage() {
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <p className="text-red-600">Étudiant non trouvé</p>
-                    <Link href="/chief/students" className="mt-4 text-[#F26419] hover:underline">
+                    <Link href="/chief/students" className="mt-4 text-[#7c3aed] hover:underline">
                         Retour à la liste
                     </Link>
                 </div>
@@ -135,7 +135,7 @@ export default function StudentDetailPage() {
             {/* En-tête */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#1B396A]">Profil de l'étudiant</h1>
+                    <h1 className="text-3xl font-bold text-[#312e81]">Profil de l'étudiant</h1>
                     <p className="text-gray-600 mt-1">Détails et historique complet</p>
                 </div>
                 <Link href="/chief/students">
@@ -150,10 +150,10 @@ export default function StudentDetailPage() {
 
             {/* Carte principale */}
             <div className="bg-white shadow rounded-lg overflow-hidden">
-                <div className="bg-gradient-to-r from-[#1B396A] to-[#2A5490] px-6 py-8">
+                <div className="bg-gradient-to-r from-[#312e81] to-[#4338ca] px-6 py-8">
                     <div className="flex items-center space-x-6">
                         <div className="h-24 w-24 bg-white rounded-full flex items-center justify-center">
-                            <span className="text-4xl font-bold text-[#F26419]">
+                            <span className="text-4xl font-bold text-[#7c3aed]">
                                 {student.nom.split(' ').map(n => n[0]).join('')}
                             </span>
                         </div>
@@ -191,7 +191,7 @@ export default function StudentDetailPage() {
                         <div className="text-sm text-gray-600">Retards</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-[#F26419]">{stats.presentRate}%</div>
+                        <div className="text-2xl font-bold text-[#7c3aed]">{stats.presentRate}%</div>
                         <div className="text-sm text-gray-600">Taux de présence</div>
                     </div>
                 </div>
@@ -203,7 +203,7 @@ export default function StudentDetailPage() {
                             onClick={() => setActiveTab('info')}
                             className={`py-4 px-6 border-b-2 font-medium text-sm ${
                                 activeTab === 'info'
-                                    ? 'border-[#F26419] text-[#F26419]'
+                                    ? 'border-[#7c3aed] text-[#7c3aed]'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                         >
@@ -213,7 +213,7 @@ export default function StudentDetailPage() {
                             onClick={() => setActiveTab('attendance')}
                             className={`py-4 px-6 border-b-2 font-medium text-sm ${
                                 activeTab === 'attendance'
-                                    ? 'border-[#F26419] text-[#F26419]'
+                                    ? 'border-[#7c3aed] text-[#7c3aed]'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                         >

@@ -147,7 +147,7 @@ export default function EditTeacherPage() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419] mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed] mx-auto"></div>
                     <p className="mt-4 text-gray-600">Chargement...</p>
                 </div>
             </div>
@@ -159,7 +159,7 @@ export default function EditTeacherPage() {
             {/* En-tête */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#1B396A]">Modifier l'enseignant</h1>
+                    <h1 className="text-3xl font-bold text-[#312e81]">Modifier l'enseignant</h1>
                     <p className="text-gray-600 mt-1">Mettez à jour les informations de l'enseignant</p>
                 </div>
                 <Link href={`/chief/teachers/${teacherId}`}>
@@ -187,7 +187,7 @@ export default function EditTeacherPage() {
                                 name="name"
                                 value={formData.name}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.name ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.name ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                             />
                             {errors.name && (
                                 <p className="mt-1 text-sm text-red-600">{errors.name}</p>
@@ -205,7 +205,7 @@ export default function EditTeacherPage() {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                             />
                             {errors.email && (
                                 <p className="mt-1 text-sm text-red-600">{errors.email}</p>
@@ -223,7 +223,7 @@ export default function EditTeacherPage() {
                                 name="phoneNumber"
                                 value={formData.phoneNumber}
                                 onChange={handleChange}
-                                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                             />
                         </div>
 
@@ -238,7 +238,7 @@ export default function EditTeacherPage() {
                                 name="username"
                                 value={formData.username}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.username ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.username ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                             />
                             {errors.username && (
                                 <p className="mt-1 text-sm text-red-600">{errors.username}</p>
@@ -256,7 +256,7 @@ export default function EditTeacherPage() {
                                 name="matricule"
                                 value={formData.matricule}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.matricule ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.matricule ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                             />
                             {errors.matricule && (
                                 <p className="mt-1 text-sm text-red-600">{errors.matricule}</p>
@@ -273,7 +273,7 @@ export default function EditTeacherPage() {
                                 name="departmentId"
                                 value={formData.departmentId}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.departmentId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.departmentId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                             >
                                 <option value="">Sélectionner un département</option>
                                 {departments.map((dept) => (

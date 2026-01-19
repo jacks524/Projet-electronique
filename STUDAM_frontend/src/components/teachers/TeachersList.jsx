@@ -44,7 +44,7 @@ const TeachersList = ({
             <tr key={teacher.id} className={teacher.status === 'inactive' ? 'bg-gray-50' : ''}>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 h-10 w-10 bg-[#1B396A] rounded-full flex items-center justify-center">
+                  <div className="flex-shrink-0 h-10 w-10 bg-[#312e81] rounded-full flex items-center justify-center">
                     <span className="text-white font-medium text-sm">
                       {teacher.nom.split(' ').map(n => n[0]).join('')}
                     </span>
@@ -54,7 +54,7 @@ const TeachersList = ({
                       {teacher.nom}
                     </div>
                     {teacher.isChefDepartement && (
-                      <div className="text-xs text-[#F26419]">
+                      <div className="text-xs text-[#7c3aed]">
                         Chef de département
                       </div>
                     )}
@@ -103,7 +103,7 @@ const TeachersList = ({
                 <div className="flex space-x-2">
                   <button
                     onClick={() => onEdit(teacher)}
-                    className="text-[#1B396A] hover:text-[#F26419]"
+                    className="text-[#312e81] hover:text-[#7c3aed]"
                   >
                     <span className="sr-only">Modifier</span>
                     <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -135,7 +135,7 @@ const TeachersList = ({
                     onClick={() => onToggleChefDepartement(teacher.id)}
                     className={`${
                       teacher.isChefDepartement 
-                        ? 'text-[#F26419] hover:text-[#D55615]' 
+                        ? 'text-[#7c3aed] hover:text-[#6d28d9]' 
                         : 'text-gray-600 hover:text-gray-800'
                     }`}
                     title={teacher.isChefDepartement ? "Retirer rôle de chef de département" : "Définir comme chef de département"}

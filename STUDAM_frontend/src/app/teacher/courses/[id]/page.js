@@ -62,7 +62,7 @@ export default function CourseDetailsPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-center h-64">
                         <div className="text-center">
-                            <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                             <p className="text-gray-600">Chargement des détails du cours...</p>
                         </div>
                     </div>
@@ -83,7 +83,7 @@ export default function CourseDetailsPage() {
                         <p className="text-gray-500 mb-6">Le cours demandé n'existe pas ou vous n'y avez pas accès.</p>
                         <Link
                             href="/teacher/courses"
-                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 transition-colors"
+                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 transition-colors"
                         >
                             Retour aux cours
                         </Link>
@@ -115,7 +115,7 @@ export default function CourseDetailsPage() {
                 <div className="mt-4 md:mt-0 flex space-x-3">
                     <Link
                         href={`/teacher/attendance?course=${courseId}`}
-                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 transition-colors"
+                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 transition-colors"
                     >
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -143,7 +143,7 @@ export default function CourseDetailsPage() {
                             onClick={() => setActiveTab(tab)}
                             className={`py-2 px-1 border-b-2 font-medium text-sm capitalize ${
                                 activeTab === tab
-                                    ? 'border-orange-500 text-orange-600'
+                                    ? 'border-violet-500 text-violet-600'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                         >
@@ -224,8 +224,8 @@ export default function CourseDetailsPage() {
                                         href={`/teacher/attendance?course=${courseId}`}
                                         className="flex items-center p-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors group"
                                     >
-                                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
-                                            <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div className="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                                            <svg className="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                             </svg>
                                         </div>
@@ -283,8 +283,8 @@ export default function CourseDetailsPage() {
                                 <div key={classItem.id} className="p-6 hover:bg-gray-50 transition-colors">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center space-x-4">
-                                            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                                                <span className="font-bold text-orange-600">{classItem.name}</span>
+                                            <div className="w-12 h-12 bg-violet-100 rounded-lg flex items-center justify-center">
+                                                <span className="font-bold text-violet-600">{classItem.name}</span>
                                             </div>
                                             <div>
                                                 <h3 className="font-semibold text-gray-900">{classItem.name} - {classItem.level}</h3>
@@ -297,7 +297,7 @@ export default function CourseDetailsPage() {
                                         <div className="flex items-center space-x-3">
                                             <Link
                                                 href={`/teacher/attendance?course=${courseId}&class=${classItem.id}`}
-                                                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors"
+                                                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors"
                                             >
                                                 Présences
                                             </Link>
@@ -329,7 +329,7 @@ export default function CourseDetailsPage() {
                                     <input
                                         type="text"
                                         placeholder="Rechercher un étudiant..."
-                                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                                     />
                                 </div>
                             </div>
@@ -378,7 +378,7 @@ export default function CourseDetailsPage() {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <Link
                                                 href={`/teacher/attendance?student=${student.id}&course=${courseId}`}
-                                                className="text-orange-600 hover:text-orange-900 mr-4"
+                                                className="text-violet-600 hover:text-violet-900 mr-4"
                                             >
                                                 Voir présences
                                             </Link>

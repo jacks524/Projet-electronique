@@ -143,7 +143,7 @@ export default function CreateSubjectPage() {
             {/* En-tête */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#1B396A]">Créer une matière</h1>
+                    <h1 className="text-3xl font-bold text-[#312e81]">Créer une matière</h1>
                     <p className="text-gray-600 mt-1">Ajoutez une nouvelle matière au département</p>
                 </div>
                 <Link href="/chief/subjects">
@@ -171,7 +171,7 @@ export default function CreateSubjectPage() {
                                 name="libelle"
                                 value={formData.libelle}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.libelle ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.libelle ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                                 placeholder="Ex: Programmation Web"
                             />
                             {errors.libelle && (
@@ -190,7 +190,7 @@ export default function CreateSubjectPage() {
                                 name="code"
                                 value={formData.code}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.code ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm uppercase`}
+                                className={`block w-full px-3 py-2 border ${errors.code ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm uppercase`}
                                 placeholder="Ex: INFO301"
                             />
                             {errors.code && (
@@ -208,7 +208,7 @@ export default function CreateSubjectPage() {
                                 name="departmentId"
                                 value={formData.departmentId}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.departmentId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.departmentId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                             >
                                 <option value="">Sélectionner un département</option>
                                 {departments.map((dept) => (
@@ -232,7 +232,7 @@ export default function CreateSubjectPage() {
                                 name="teacherId"
                                 value={formData.teacherId}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.teacherId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.teacherId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                             >
                                 <option value="">Sélectionner un enseignant</option>
                                 {teachers.map((teacher) => (
@@ -258,7 +258,7 @@ export default function CreateSubjectPage() {
                                 min="1"
                                 value={formData.credits}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.credits ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.credits ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                                 placeholder="Ex: 3"
                             />
                             {errors.credits && (
@@ -278,7 +278,7 @@ export default function CreateSubjectPage() {
                                 min="1"
                                 value={formData.heuresCoursParSemaine}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.heuresCoursParSemaine ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.heuresCoursParSemaine ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                                 placeholder="Ex: 4"
                             />
                             {errors.heuresCoursParSemaine && (
@@ -298,7 +298,7 @@ export default function CreateSubjectPage() {
                             rows="4"
                             value={formData.description}
                             onChange={handleChange}
-                            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                             placeholder="Description de la matière, objectifs, contenu..."
                         />
                     </div>

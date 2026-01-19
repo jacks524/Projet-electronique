@@ -129,7 +129,7 @@ export default function ClassesReportPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed]"></div>
             </div>
         );
     }
@@ -140,7 +140,7 @@ export default function ClassesReportPage() {
             <div className="bg-white shadow rounded-lg p-6">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-2xl font-bold text-[#1B396A]">
+                        <h1 className="text-2xl font-bold text-[#312e81]">
                             Rapport des classes
                         </h1>
                         <p className="text-gray-600 mt-2">
@@ -173,7 +173,7 @@ export default function ClassesReportPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Total classes</p>
-                            <p className="text-3xl font-bold text-[#1B396A] mt-2">{classes.length}</p>
+                            <p className="text-3xl font-bold text-[#312e81] mt-2">{classes.length}</p>
                         </div>
                         <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                             <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -215,10 +215,10 @@ export default function ClassesReportPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Taux moy. présence</p>
-                            <p className="text-3xl font-bold text-orange-600 mt-2">{avgRate}%</p>
+                            <p className="text-3xl font-bold text-violet-600 mt-2">{avgRate}%</p>
                         </div>
-                        <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                            <svg className="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                         </div>
@@ -240,7 +240,7 @@ export default function ClassesReportPage() {
                             placeholder="Rechercher une classe..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                         />
                     </div>
 
@@ -248,7 +248,7 @@ export default function ClassesReportPage() {
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
-                            className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                            className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                         >
                             <option value="name">Nom</option>
                             <option value="students">Nombre d'étudiants</option>
@@ -257,7 +257,7 @@ export default function ClassesReportPage() {
                         </select>
                         <button
                             onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-[#F26419] focus:border-[#F26419]"
+                            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-[#7c3aed] focus:border-[#7c3aed]"
                         >
                             {sortOrder === 'asc' ? (
                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -318,7 +318,7 @@ export default function ClassesReportPage() {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <div className="flex-shrink-0 h-10 w-10">
-                                                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[#1B396A] to-[#2A5490] flex items-center justify-center">
+                                                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[#312e81] to-[#4338ca] flex items-center justify-center">
                                                     <span className="text-white font-bold text-sm">{classe.code}</span>
                                                 </div>
                                             </div>
@@ -363,7 +363,7 @@ export default function ClassesReportPage() {
                                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                         <Link
                                             href={`/chief/classes/${classe.classId}`}
-                                            className="text-[#F26419] hover:text-[#E55A1A] mr-3"
+                                            className="text-[#7c3aed] hover:text-[#6d28d9] mr-3"
                                         >
                                             Détails
                                         </Link>
@@ -385,7 +385,7 @@ export default function ClassesReportPage() {
             {/* Distribution Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white shadow rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-[#1B396A] mb-4">
+                    <h3 className="text-lg font-semibold text-[#312e81] mb-4">
                         Distribution des effectifs
                     </h3>
                     <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
@@ -400,7 +400,7 @@ export default function ClassesReportPage() {
                 </div>
 
                 <div className="bg-white shadow rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-[#1B396A] mb-4">
+                    <h3 className="text-lg font-semibold text-[#312e81] mb-4">
                         Taux de présence par classe
                     </h3>
                     <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
@@ -418,7 +418,7 @@ export default function ClassesReportPage() {
             {/* Top/Bottom Performers */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white shadow rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-[#1B396A] mb-4">
+                    <h3 className="text-lg font-semibold text-[#312e81] mb-4">
                         Classes les plus assidues
                     </h3>
                     <div className="space-y-3">
@@ -431,7 +431,7 @@ export default function ClassesReportPage() {
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
                                             index === 0 ? 'bg-yellow-500' :
                                                 index === 1 ? 'bg-gray-400' :
-                                                    index === 2 ? 'bg-orange-600' :
+                                                    index === 2 ? 'bg-violet-600' :
                                                         'bg-gray-300'
                                         }`}>
                                             {index + 1}
@@ -450,7 +450,7 @@ export default function ClassesReportPage() {
                 </div>
 
                 <div className="bg-white shadow rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-[#1B396A] mb-4">
+                    <h3 className="text-lg font-semibold text-[#312e81] mb-4">
                         Classes nécessitant un suivi
                     </h3>
                     <div className="space-y-3">
@@ -485,7 +485,7 @@ export default function ClassesReportPage() {
 
             {/* Recommendations */}
             <div className="bg-white shadow rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-[#1B396A] mb-4">
+                <h3 className="text-lg font-semibold text-[#312e81] mb-4">
                     Analyse et recommandations
                 </h3>
                 <ul className="space-y-3">

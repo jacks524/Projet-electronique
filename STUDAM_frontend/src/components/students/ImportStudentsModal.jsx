@@ -62,7 +62,7 @@ const ImportStudentsModal = ({
       <div className="bg-white rounded-lg shadow-xl max-w-lg w-full">
         <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg leading-6 font-medium text-[#1B396A]">
+            <h3 className="text-lg leading-6 font-medium text-[#312e81]">
               Importer des Étudiants
             </h3>
             <button
@@ -88,7 +88,7 @@ const ImportStudentsModal = ({
               <select
                 id="import-class"
                 name="import-class"
-                className={`mt-1 block w-full bg-white border ${errors.class ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                className={`mt-1 block w-full bg-white border ${errors.class ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                 value={selectedClass}
                 onChange={handleClassChange}
                 disabled={isUploading}
@@ -114,7 +114,7 @@ const ImportStudentsModal = ({
                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                   <div className="flex text-sm text-gray-600">
-                    <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-[#F26419] hover:text-[#D55615] focus-within:outline-none">
+                    <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-[#7c3aed] hover:text-[#6d28d9] focus-within:outline-none">
                       <span>Télécharger un fichier</span>
                       <input 
                         id="file-upload" 
@@ -164,7 +164,7 @@ const ImportStudentsModal = ({
           <div className="mt-5 sm:mt-6 sm:flex sm:flex-row-reverse">
             <button
               type="submit"
-              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#F26419] text-base font-medium text-white hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419] sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#7c3aed] text-base font-medium text-white hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed] sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
               disabled={isUploading}
             >
               {isUploading ? (
@@ -182,7 +182,7 @@ const ImportStudentsModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1B396A] sm:mt-0 sm:w-auto sm:text-sm disabled:opacity-50"
+              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#312e81] sm:mt-0 sm:w-auto sm:text-sm disabled:opacity-50"
               disabled={isUploading}
             >
               Annuler

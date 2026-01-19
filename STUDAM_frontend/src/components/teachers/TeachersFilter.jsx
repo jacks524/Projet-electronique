@@ -64,7 +64,7 @@ const TeachersFilter = ({ departments = [], subjects = [], filters, onFilterChan
               type="text"
               name="search"
               id="search"
-              className="focus:ring-[#F26419] focus:border-[#F26419] block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
+              className="focus:ring-[#7c3aed] focus:border-[#7c3aed] block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
               placeholder="Nom ou email"
               value={search}
               onChange={handleSearchChange}
@@ -79,7 +79,7 @@ const TeachersFilter = ({ departments = [], subjects = [], filters, onFilterChan
           <select
             id="department"
             name="department"
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm rounded-md"
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm rounded-md"
             value={department}
             onChange={handleDepartmentChange}
           >
@@ -99,7 +99,7 @@ const TeachersFilter = ({ departments = [], subjects = [], filters, onFilterChan
           <select
             id="subject"
             name="subject"
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm rounded-md"
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm rounded-md"
             value={subject}
             onChange={handleSubjectChange}
             disabled={!department}

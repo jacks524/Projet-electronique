@@ -119,7 +119,7 @@ export default function EditClassTimetablePage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed]"></div>
             </div>
         );
     }
@@ -128,7 +128,7 @@ export default function EditClassTimetablePage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#1B396A]">Modifier l'emploi du temps</h1>
+                    <h1 className="text-3xl font-bold text-[#312e81]">Modifier l'emploi du temps</h1>
                     <p className="text-gray-600 mt-1">{classe?.name} - {classe?.level}</p>
                 </div>
                 <Link href={`/chief/timetables/classes/${classId}`}>
@@ -160,12 +160,12 @@ export default function EditClassTimetablePage() {
                                     return (
                                         <td
                                             key={`${day}-${time}`}
-                                            className={`px-1 py-1 text-sm ${schedule ? 'cursor-pointer hover:bg-orange-50' : 'cursor-pointer hover:bg-gray-50'}`}
+                                            className={`px-1 py-1 text-sm ${schedule ? 'cursor-pointer hover:bg-violet-50' : 'cursor-pointer hover:bg-gray-50'}`}
                                             onClick={() => handleCellClick(day, time, schedule)}
                                         >
                                             {schedule ? (
-                                                <div className="p-2 rounded-md bg-orange-100 border border-orange-200 h-full min-h-[80px]">
-                                                    <div className="font-medium text-[#1B396A]">{schedule.matiere?.libelle}</div>
+                                                <div className="p-2 rounded-md bg-violet-100 border border-violet-200 h-full min-h-[80px]">
+                                                    <div className="font-medium text-[#312e81]">{schedule.matiere?.libelle}</div>
                                                     <div className="text-xs text-gray-500">Code: {schedule.matiere?.code}</div>
                                                     <div className="text-xs text-gray-500">Prof: {schedule.matiere?.enseignant?.nom}</div>
                                                 </div>

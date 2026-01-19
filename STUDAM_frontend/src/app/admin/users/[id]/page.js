@@ -92,7 +92,7 @@ export default function UserDetailsPage() {
                 {/* Informations personnelles */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <svg className="w-5 h-5 mr-2 text-[#F26419]" fill="none" viewBox="0 0 24 24"
+                        <svg className="w-5 h-5 mr-2 text-[#7c3aed]" fill="none" viewBox="0 0 24 24"
                              stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -144,7 +144,7 @@ export default function UserDetailsPage() {
                 {/* Rôles et permissions */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <svg className="w-5 h-5 mr-2 text-[#F26419]" fill="none" viewBox="0 0 24 24"
+                        <svg className="w-5 h-5 mr-2 text-[#7c3aed]" fill="none" viewBox="0 0 24 24"
                              stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                                   d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
@@ -155,7 +155,7 @@ export default function UserDetailsPage() {
                         {userData.roles && userData.roles.length > 0 ? (
                             userData.roles.map((role, index) => (
                                 <span key={index}
-                                      className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-[#1B396A] to-[#437DE0] text-white">
+                                      className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-[#312e81] to-[#6366f1] text-white">
                                     {role.role || role}
                                 </span>
                             ))
@@ -168,7 +168,7 @@ export default function UserDetailsPage() {
                 {/* Départements */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <svg className="w-5 h-5 mr-2 text-[#F26419]" fill="none" viewBox="0 0 24 24"
+                        <svg className="w-5 h-5 mr-2 text-[#7c3aed]" fill="none" viewBox="0 0 24 24"
                              stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                                   d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
@@ -199,7 +199,7 @@ export default function UserDetailsPage() {
             <div className="space-y-4">
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <svg className="w-5 h-5 mr-2 text-[#F26419]" fill="none" viewBox="0 0 24 24"
+                        <svg className="w-5 h-5 mr-2 text-[#7c3aed]" fill="none" viewBox="0 0 24 24"
                              stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                                   d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
@@ -210,14 +210,14 @@ export default function UserDetailsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {subjects.map((subject) => (
                                 <div key={subject.subjectId}
-                                     className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-[#F26419] transition-colors">
+                                     className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-[#7c3aed] transition-colors">
                                     <div className="flex items-start justify-between">
                                         <div>
                                             <p className="font-medium text-gray-900">{subject.name}</p>
                                             <p className="text-sm text-gray-500 mt-1">Code: {subject.code}</p>
                                         </div>
                                         <span
-                                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F26419] text-white">
+                                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#7c3aed] text-white">
                                             Actif
                                         </span>
                                     </div>
@@ -246,7 +246,7 @@ export default function UserDetailsPage() {
                 blue: 'bg-blue-100 text-blue-600',
                 green: 'bg-green-100 text-green-600',
                 purple: 'bg-purple-100 text-purple-600',
-                orange: 'bg-orange-100 text-orange-600'
+                orange: 'bg-violet-100 text-violet-600'
             };
             return colors[color] || colors.blue;
         };
@@ -280,7 +280,7 @@ export default function UserDetailsPage() {
             <div className="min-h-screen bg-gray-100 flex items-center justify-center">
                 <div className="text-center">
                     <div
-                        className="animate-spin h-12 w-12 mx-auto border-4 border-[#F26419] border-t-transparent rounded-full mb-4"></div>
+                        className="animate-spin h-12 w-12 mx-auto border-4 border-[#7c3aed] border-t-transparent rounded-full mb-4"></div>
                     <p className="text-gray-600 text-lg">Chargement des détails...</p>
                 </div>
             </div>
@@ -292,7 +292,7 @@ export default function UserDetailsPage() {
             <div className="min-h-screen bg-gray-100 flex items-center justify-center">
                 <div className="text-center">
                     <p className="text-gray-600 text-lg mb-4">Utilisateur non trouvé</p>
-                    <Link href="/admin/users" className="text-[#F26419] hover:underline">
+                    <Link href="/admin/users" className="text-[#7c3aed] hover:underline">
                         Retour à la liste
                     </Link>
                 </div>
@@ -305,7 +305,7 @@ export default function UserDetailsPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Fil d'Ariane */}
                 <nav className="mb-6 flex items-center text-sm text-gray-500">
-                    <Link href="/admin/users" className="hover:text-[#F26419] transition-colors">
+                    <Link href="/admin/users" className="hover:text-[#7c3aed] transition-colors">
                         Utilisateurs
                     </Link>
                     <svg className="w-4 h-4 mx-2" fill="currentColor" viewBox="0 0 20 20">
@@ -318,11 +318,11 @@ export default function UserDetailsPage() {
 
                 {/* En-tête du profil */}
                 <div className="bg-white shadow-xl rounded-xl overflow-hidden mb-6">
-                    <div className="bg-gradient-to-r from-[#1B396A] to-[#437DE0] px-6 py-8">
+                    <div className="bg-gradient-to-r from-[#312e81] to-[#6366f1] px-6 py-8">
                         <div className="flex flex-col sm:flex-row items-center justify-between">
                             <div className="flex flex-col sm:flex-row items-center">
                                 <div
-                                    className="flex-shrink-0 h-24 w-24 bg-white rounded-full flex items-center justify-center text-[#1B396A] text-3xl font-bold mb-4 sm:mb-0 shadow-lg">
+                                    className="flex-shrink-0 h-24 w-24 bg-white rounded-full flex items-center justify-center text-[#312e81] text-3xl font-bold mb-4 sm:mb-0 shadow-lg">
                                     {userData.name ? userData.name.charAt(0).toUpperCase() : 'U'}
                                 </div>
                                 <div className="sm:ml-6 text-center sm:text-left">
@@ -361,7 +361,7 @@ export default function UserDetailsPage() {
                                 </button>
                                 <Link
                                     href={`/admin/users/${userId}/edit`}
-                                    className="px-4 py-2 bg-white text-[#1B396A] rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
+                                    className="px-4 py-2 bg-white text-[#312e81] rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
                                 >
                                     Modifier
                                 </Link>
@@ -381,7 +381,7 @@ export default function UserDetailsPage() {
                             <button
                                 className={`relative px-6 py-4 font-medium text-sm border-b-2 transition-all duration-200 ${
                                     activeTab === 'info'
-                                        ? 'border-[#F26419] text-[#F26419] bg-white'
+                                        ? 'border-[#7c3aed] text-[#7c3aed] bg-white'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 }`}
                                 onClick={() => setActiveTab('info')}
@@ -391,7 +391,7 @@ export default function UserDetailsPage() {
                             <button
                                 className={`relative px-6 py-4 font-medium text-sm border-b-2 transition-all duration-200 ${
                                     activeTab === 'subjects'
-                                        ? 'border-[#F26419] text-[#F26419] bg-white'
+                                        ? 'border-[#7c3aed] text-[#7c3aed] bg-white'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 }`}
                                 onClick={() => setActiveTab('subjects')}
@@ -401,7 +401,7 @@ export default function UserDetailsPage() {
                             <button
                                 className={`relative px-6 py-4 font-medium text-sm border-b-2 transition-all duration-200 ${
                                     activeTab === 'stats'
-                                        ? 'border-[#F26419] text-[#F26419] bg-white'
+                                        ? 'border-[#7c3aed] text-[#7c3aed] bg-white'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 }`}
                                 onClick={() => setActiveTab('stats')}

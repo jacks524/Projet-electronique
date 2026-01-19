@@ -138,7 +138,7 @@ export default function CreateTeacherPage() {
             {/* En-tête */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#1B396A]">Créer un enseignant</h1>
+                    <h1 className="text-3xl font-bold text-[#312e81]">Créer un enseignant</h1>
                     <p className="text-gray-600 mt-1">Ajoutez un nouvel enseignant au système</p>
                 </div>
                 <Link href="/chief/teachers">
@@ -166,7 +166,7 @@ export default function CreateTeacherPage() {
                                 name="name"
                                 value={formData.name}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.name ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.name ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                                 placeholder="Ex: Dr. Mamadou Diallo"
                             />
                             {errors.name && (
@@ -185,7 +185,7 @@ export default function CreateTeacherPage() {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                                 placeholder="enseignant@email.com"
                             />
                             {errors.email && (
@@ -204,7 +204,7 @@ export default function CreateTeacherPage() {
                                 name="phoneNumber"
                                 value={formData.phoneNumber}
                                 onChange={handleChange}
-                                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                                 placeholder="+221 77 123 45 67"
                             />
                         </div>
@@ -220,7 +220,7 @@ export default function CreateTeacherPage() {
                                 name="username"
                                 value={formData.username}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.username ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.username ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                                 placeholder="nom.utilisateur"
                             />
                             {errors.username && (
@@ -239,7 +239,7 @@ export default function CreateTeacherPage() {
                                 name="matricule"
                                 value={formData.matricule}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.matricule ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.matricule ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                                 placeholder="TEACH2024001"
                             />
                             {errors.matricule && (
@@ -259,7 +259,7 @@ export default function CreateTeacherPage() {
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className={`block w-full px-3 py-2 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                    className={`block w-full px-3 py-2 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                                     placeholder="••••••••"
                                 />
                                 <button
@@ -295,7 +295,7 @@ export default function CreateTeacherPage() {
                                 name="confirmPassword"
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                                 placeholder="••••••••"
                             />
                             {errors.confirmPassword && (
@@ -313,7 +313,7 @@ export default function CreateTeacherPage() {
                                 name="departmentId"
                                 value={formData.departmentId}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.departmentId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm`}
+                                className={`block w-full px-3 py-2 border ${errors.departmentId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                             >
                                 <option value="">Sélectionner un département</option>
                                 {departments.map((dept) => (

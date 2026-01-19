@@ -65,7 +65,7 @@ const ProfileInfo = ({ user, onUpdateProfile }) => {
           className={`inline-flex items-center px-3 py-1.5 border border-transparent text-sm leading-4 font-medium rounded-md ${
             isEditing 
               ? 'text-gray-700 bg-gray-100 hover:bg-gray-200'
-              : 'text-white bg-[#1B396A] hover:bg-opacity-90'
+              : 'text-white bg-[#312e81] hover:bg-opacity-90'
           }`}
         >
           {isEditing ? (
@@ -100,7 +100,7 @@ const ProfileInfo = ({ user, onUpdateProfile }) => {
                   id="nom"
                   value={formData.nom}
                   onChange={handleChange}
-                  className={`shadow-sm focus:ring-[#F26419] focus:border-[#F26419] block w-full sm:text-sm border-gray-300 rounded-md ${
+                  className={`shadow-sm focus:ring-[#7c3aed] focus:border-[#7c3aed] block w-full sm:text-sm border-gray-300 rounded-md ${
                     errors.nom ? 'border-red-500' : ''
                   }`}
                 />
@@ -119,7 +119,7 @@ const ProfileInfo = ({ user, onUpdateProfile }) => {
                   id="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`shadow-sm focus:ring-[#F26419] focus:border-[#F26419] block w-full sm:text-sm border-gray-300 rounded-md ${
+                  className={`shadow-sm focus:ring-[#7c3aed] focus:border-[#7c3aed] block w-full sm:text-sm border-gray-300 rounded-md ${
                     errors.email ? 'border-red-500' : ''
                   }`}
                 />
@@ -138,7 +138,7 @@ const ProfileInfo = ({ user, onUpdateProfile }) => {
                   id="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="shadow-sm focus:ring-[#F26419] focus:border-[#F26419] block w-full sm:text-sm border-gray-300 rounded-md"
+                  className="shadow-sm focus:ring-[#7c3aed] focus:border-[#7c3aed] block w-full sm:text-sm border-gray-300 rounded-md"
                 />
               </div>
             </div>
@@ -154,7 +154,7 @@ const ProfileInfo = ({ user, onUpdateProfile }) => {
                   rows={4}
                   value={formData.bio}
                   onChange={handleChange}
-                  className="shadow-sm focus:ring-[#F26419] focus:border-[#F26419] block w-full sm:text-sm border-gray-300 rounded-md"
+                  className="shadow-sm focus:ring-[#7c3aed] focus:border-[#7c3aed] block w-full sm:text-sm border-gray-300 rounded-md"
                   placeholder="Quelques mots à propos de vous..."
                 ></textarea>
               </div>
@@ -168,13 +168,13 @@ const ProfileInfo = ({ user, onUpdateProfile }) => {
             <button
               type="button"
               onClick={toggleEdit}
-              className="mr-3 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1B396A]"
+              className="mr-3 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#312e81]"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#F26419] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419]"
+              className="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#7c3aed] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed]"
             >
               Enregistrer
             </button>

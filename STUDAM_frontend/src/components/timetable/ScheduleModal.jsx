@@ -80,7 +80,7 @@ const ScheduleModal = ({
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="text-lg leading-6 font-medium text-[#1B396A]">
+          <h3 className="text-lg leading-6 font-medium text-[#312e81]">
             {schedule ? 'Modifier un cours' : 'Ajouter un cours'}
           </h3>
           <button
@@ -107,7 +107,7 @@ const ScheduleModal = ({
               <select
                 id="matiere"
                 name="matiere"
-                className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                 value={formData.matiere?.id || ''}
                 onChange={handleChange}
                 required
@@ -129,7 +129,7 @@ const ScheduleModal = ({
                 id="notes"
                 name="notes"
                 rows="3"
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                 placeholder="Notes supplémentaires sur ce cours..."
                 value={formData.notes}
                 onChange={handleChange}
@@ -140,14 +140,14 @@ const ScheduleModal = ({
           <div className="mt-5 sm:mt-6 sm:flex sm:flex-row-reverse">
             <button
               type="submit"
-              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#F26419] text-base font-medium text-white hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419] sm:ml-3 sm:w-auto sm:text-sm"
+              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#7c3aed] text-base font-medium text-white hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed] sm:ml-3 sm:w-auto sm:text-sm"
             >
               {schedule ? 'Enregistrer les modifications' : 'Ajouter'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1B396A] sm:mt-0 sm:w-auto sm:text-sm"
+              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#312e81] sm:mt-0 sm:w-auto sm:text-sm"
             >
               Annuler
             </button>

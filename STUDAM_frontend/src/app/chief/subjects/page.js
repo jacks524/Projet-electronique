@@ -134,7 +134,7 @@ export default function SubjectsPage() {
             <div className="min-h-screen bg-gray-100 py-6">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#F26419]"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#7c3aed]"></div>
                     </div>
                 </div>
             </div>
@@ -148,14 +148,14 @@ export default function SubjectsPage() {
                 <div className="mb-8">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-[#1B396A]">Matières</h1>
+                            <h1 className="text-3xl font-bold text-[#312e81]">Matières</h1>
                             <p className="mt-2 text-gray-600">
                                 Gestion des matières et des enseignements
                             </p>
                         </div>
                         <Link
                             href="/dashboard"
-                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419]"
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed]"
                         >
                             <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -176,7 +176,7 @@ export default function SubjectsPage() {
                                 id="department"
                                 value={selectedDepartment}
                                 onChange={(e) => setSelectedDepartment(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#F26419] focus:border-[#F26419]"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed]"
                             >
                                 <option value="">Tous les départements</option>
                                 {departments.map((dept) => (
@@ -228,14 +228,14 @@ export default function SubjectsPage() {
                                         <div className="flex-1">
                                             <div className="flex items-center">
                                                 <div className="flex-shrink-0">
-                                                    <div className="h-10 w-10 bg-[#F26419] rounded-lg flex items-center justify-center">
+                                                    <div className="h-10 w-10 bg-[#7c3aed] rounded-lg flex items-center justify-center">
                                                         <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                                                         </svg>
                                                     </div>
                                                 </div>
                                                 <div className="ml-4">
-                                                    <h3 className="text-lg font-medium text-[#1B396A]">{subject.libelle}</h3>
+                                                    <h3 className="text-lg font-medium text-[#312e81]">{subject.libelle}</h3>
                                                     <p className="text-sm text-gray-500">Code: {subject.code}</p>
                                                 </div>
                                             </div>
@@ -273,7 +273,7 @@ export default function SubjectsPage() {
                                     <div className="mt-6 flex justify-end space-x-3">
                                         <Link
                                             href={`/src/app/chief/subjects/${subject.id}/attendance`}
-                                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#F26419] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F26419]"
+                                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#7c3aed] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed]"
                                         >
                                             <svg className="-ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -295,12 +295,12 @@ export default function SubjectsPage() {
                     >
                         <div className="flex items-center">
                             <div className="flex-shrink-0">
-                                <svg className="h-8 w-8 text-[#F26419]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="h-8 w-8 text-[#7c3aed]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                             </div>
                             <div className="ml-4">
-                                <h3 className="text-lg font-medium text-[#1B396A]">Prendre les présences</h3>
+                                <h3 className="text-lg font-medium text-[#312e81]">Prendre les présences</h3>
                                 <p className="text-sm text-gray-500">Enregistrer les présences pour vos matières</p>
                             </div>
                         </div>
@@ -312,12 +312,12 @@ export default function SubjectsPage() {
                     >
                         <div className="flex items-center">
                             <div className="flex-shrink-0">
-                                <svg className="h-8 w-8 text-[#1B396A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="h-8 w-8 text-[#312e81]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                 </svg>
                             </div>
                             <div className="ml-4">
-                                <h3 className="text-lg font-medium text-[#1B396A]">Gérer les enseignants</h3>
+                                <h3 className="text-lg font-medium text-[#312e81]">Gérer les enseignants</h3>
                                 <p className="text-sm text-gray-500">Consulter et gérer les enseignants</p>
                             </div>
                         </div>
@@ -334,7 +334,7 @@ export default function SubjectsPage() {
                                 </svg>
                             </div>
                             <div className="ml-4">
-                                <h3 className="text-lg font-medium text-[#1B396A]">Emploi du temps</h3>
+                                <h3 className="text-lg font-medium text-[#312e81]">Emploi du temps</h3>
                                 <p className="text-sm text-gray-500">Consulter les plannings des matières</p>
                             </div>
                         </div>

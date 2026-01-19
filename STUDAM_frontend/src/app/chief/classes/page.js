@@ -40,12 +40,7 @@ export default function ClassesPage() {
                 throw new Error("Département non trouvé");
             }
 
-            const classesData = await classService.getByDepartment({
-                departmentId: targetDepartment.departmentId,
-                name: "temp",
-                code: "temp",
-                description: "temp"
-            });
+            const classesData = await classService.getByDepartment(targetDepartment.departmentId);
 
             setClasses(classesData);
             setFilteredClasses(classesData);
@@ -101,7 +96,7 @@ export default function ClassesPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F26419]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed]"></div>
             </div>
         );
     }
@@ -112,7 +107,7 @@ export default function ClassesPage() {
             <div className="bg-white shadow rounded-lg p-6">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-[#1B396A]">
+                        <h1 className="text-2xl font-bold text-[#312e81]">
                             Gestion des classes
                         </h1>
                         <p className="text-gray-600 mt-2">
@@ -136,7 +131,7 @@ export default function ClassesPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Total classes</p>
-                            <p className="text-3xl font-bold text-[#1B396A] mt-2">{classes.length}</p>
+                            <p className="text-3xl font-bold text-[#312e81] mt-2">{classes.length}</p>
                         </div>
                         <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                             <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -185,12 +180,12 @@ export default function ClassesPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-600">Capacité totale</p>
-                            <p className="text-3xl font-bold text-orange-600 mt-2">
+                            <p className="text-3xl font-bold text-violet-600 mt-2">
                                 {classes.reduce((sum, c) => sum + (c.capacity || 0), 0)}
                             </p>
                         </div>
-                        <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                            <svg className="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                         </div>
@@ -212,7 +207,7 @@ export default function ClassesPage() {
                             placeholder="Rechercher une classe..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                         />
                     </div>
 
@@ -220,7 +215,7 @@ export default function ClassesPage() {
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
-                            className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#F26419] focus:border-[#F26419] sm:text-sm"
+                            className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
                         >
                             <option value="name">Nom</option>
                             <option value="code">Code</option>
@@ -259,7 +254,7 @@ export default function ClassesPage() {
                         <div key={classe.classId} className="bg-white shadow rounded-lg p-6 hover:shadow-xl transition-shadow duration-200">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex-shrink-0">
-                                    <div className="w-12 h-12 bg-gradient-to-br from-[#1B396A] to-[#2A5490] rounded-lg flex items-center justify-center">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-[#312e81] to-[#4338ca] rounded-lg flex items-center justify-center">
                                         <span className="text-white font-bold text-sm">{classe.code}</span>
                                     </div>
                                 </div>
@@ -268,7 +263,7 @@ export default function ClassesPage() {
                                 </span>
                             </div>
 
-                            <h3 className="text-lg font-semibold text-[#1B396A] mb-2">
+                            <h3 className="text-lg font-semibold text-[#312e81] mb-2">
                                 {classe.name}
                             </h3>
 
@@ -290,7 +285,7 @@ export default function ClassesPage() {
                                         </button>
                                     </Link>
                                     <Link href={`/chief/classes/${classe.classId}/edit`}>
-                                        <button className="p-2 text-[#1B396A] hover:bg-gray-100 rounded-lg transition-colors" title="Modifier">
+                                        <button className="p-2 text-[#312e81] hover:bg-gray-100 rounded-lg transition-colors" title="Modifier">
                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                             </svg>
