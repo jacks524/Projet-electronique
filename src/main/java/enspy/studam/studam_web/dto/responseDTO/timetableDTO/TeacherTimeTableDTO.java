@@ -44,15 +44,21 @@ public class TeacherTimeTableDTO {
       dto.setDay(schedule.getDay());
       dto.setStartHour(schedule.getStartHour());
       dto.setEndHour(schedule.getEndHour());
-      dto.setSubject(MinimalSubjectDTO.toDTO(schedule.getSubject()));
-      dto.setClasse(ClassResponseDTO.toDto(timetable.getClazz()));
+      if (schedule.getSubject() != null) {
+        dto.setSubject(MinimalSubjectDTO.toDTO(schedule.getSubject()));
+      }
+      if (timetable != null && timetable.getClazz() != null) {
+        dto.setClasse(ClassResponseDTO.toDto(timetable.getClazz()));
+      }
       return dto;
     }
   }
 
   public static TeacherTimeTableDTO toDTO(List<Schedule> schedules) {
     if (schedules.isEmpty()) {
-      return null;
+      TeacherTimeTableDTO empty = new TeacherTimeTableDTO();
+      empty.setSchedules(List.of());
+      return empty;
     }
     Timetable timetable = schedules.get(0).getTimetable();
     TeacherTimeTableDTO dto = new TeacherTimeTableDTO();
