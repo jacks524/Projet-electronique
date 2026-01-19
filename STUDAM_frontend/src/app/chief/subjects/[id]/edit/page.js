@@ -5,10 +5,15 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
+import { useAuthContext } from '@/context/authContext';
+import subjectService from '@/services/subjectService';
+import departmentService from '@/services/departmentService';
+import userService from '@/services/userService';
 
 export default function EditSubjectPage() {
     const params = useParams();
     const router = useRouter();
+    const { user } = useAuthContext();
     const subjectId = params.id;
 
     const [formData, setFormData] = useState({
@@ -31,51 +36,51 @@ export default function EditSubjectPage() {
         loadData();
     }, [subjectId]);
 
+    const resolveDepartment = (departmentsList) => {
+        if (user?.departmentIdIfChief) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentIdIfChief);
+        }
+        if (Array.isArray(user?.departmentsIds) && user.departmentsIds.length > 0) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentsIds[0]);
+        }
+        if (Array.isArray(user?.departmentNames) && user.departmentNames.length > 0) {
+            return departmentsList.find((dept) => dept.name === user.departmentNames[0]);
+        }
+        return null;
+    };
+
     const loadData = async () => {
         try {
             setLoading(true);
-            // TODO: Appeler les endpoints
-            // const subjectData = await subjectService.getById(subjectId);
-            // const departmentsData = await departmentService.getAll();
-            // const teachersData = await userService.getTeachers();
+            const [subjectData, departmentsData] = await Promise.all([
+                subjectService.getById(subjectId),
+                departmentService.getAll(),
+            ]);
 
-            // Données mockées
-            const mockSubject = {
-                id: subjectId,
-                libelle: 'Programmation Web',
-                code: 'INFO301',
-                description: 'Introduction aux technologies web modernes : HTML5, CSS3, JavaScript, React, Node.js.',
-                credits: 3,
-                heuresCoursParSemaine: 4,
-                departmentId: 1,
-                teacherId: 1
-            };
+            const departmentsList = Array.isArray(departmentsData) ? departmentsData : [];
+            const chiefDepartment = resolveDepartment(departmentsList);
 
-            const mockDepartments = [
-                { id: 1, name: 'Informatique' },
-                { id: 2, name: 'Mathématiques' }
-            ];
+            if (!chiefDepartment) {
+                throw new Error("Aucun departement n'est assigne a votre compte.");
+            }
 
-            const mockTeachers = [
-                { id: 1, name: 'Dr. Mamadou Diallo' },
-                { id: 2, name: 'Prof. Aissatou Fall' }
-            ];
+            const teachersData = await userService.getUsersByRoleAndDepartment('TEACHER', chiefDepartment.departmentId);
+
+            setDepartments([{ id: chiefDepartment.departmentId, name: chiefDepartment.name }]);
+            setTeachers(Array.isArray(teachersData) ? teachersData : []);
 
             setFormData({
-                libelle: mockSubject.libelle,
-                code: mockSubject.code,
-                description: mockSubject.description || '',
-                credits: mockSubject.credits.toString(),
-                heuresCoursParSemaine: mockSubject.heuresCoursParSemaine.toString(),
-                departmentId: mockSubject.departmentId.toString(),
-                teacherId: mockSubject.teacherId.toString()
+                libelle: subjectData?.name || subjectData?.libelle || '',
+                code: subjectData?.code || '',
+                description: subjectData?.description || '',
+                credits: subjectData?.credits ? subjectData.credits.toString() : '',
+                heuresCoursParSemaine: subjectData?.heuresCoursParSemaine ? subjectData.heuresCoursParSemaine.toString() : '',
+                departmentId: chiefDepartment.departmentId.toString(),
+                teacherId: subjectData?.teacher?.id ? subjectData.teacher.id.toString() : (subjectData?.teacherId ? subjectData.teacherId.toString() : ''),
             });
 
-            setDepartments(mockDepartments);
-            setTeachers(mockTeachers);
-
         } catch (error) {
-            toast.error("Erreur lors du chargement des données");
+            toast.error(error.message || "Erreur lors du chargement des donnees");
             console.error(error);
         } finally {
             setLoading(false);
@@ -101,19 +106,29 @@ export default function EditSubjectPage() {
         const newErrors = {};
 
         if (!formData.libelle.trim()) {
-            newErrors.libelle = "Le libellé est requis";
+            newErrors.libelle = "Le libelle est requis";
         }
 
         if (!formData.code.trim()) {
             newErrors.code = "Le code est requis";
+        } else if (formData.code.length < 4) {
+            newErrors.code = "Le code doit contenir au moins 4 caracteres";
         }
 
         if (!formData.departmentId) {
-            newErrors.departmentId = "Le département est requis";
+            newErrors.departmentId = "Le departement est requis";
         }
 
         if (!formData.teacherId) {
             newErrors.teacherId = "L'enseignant est requis";
+        }
+
+        if (formData.credits && (isNaN(formData.credits) || formData.credits < 1)) {
+            newErrors.credits = "Le nombre de credits doit etre un nombre positif";
+        }
+
+        if (formData.heuresCoursParSemaine && (isNaN(formData.heuresCoursParSemaine) || formData.heuresCoursParSemaine < 1)) {
+            newErrors.heuresCoursParSemaine = "Le nombre d'heures doit etre un nombre positif";
         }
 
         return newErrors;
@@ -131,20 +146,21 @@ export default function EditSubjectPage() {
         setSaving(true);
 
         try {
-            // TODO: Appeler l'endpoint
-            // await subjectService.update(subjectId, {
-            //     ...formData,
-            //     credits: parseInt(formData.credits) || 0,
-            //     heuresCoursParSemaine: parseInt(formData.heuresCoursParSemaine) || 0,
-            //     departmentId: parseInt(formData.departmentId),
-            //     teacherId: parseInt(formData.teacherId)
-            // });
+            await subjectService.update(subjectId, {
+                name: formData.libelle,
+                code: formData.code.toUpperCase(),
+                description: formData.description,
+                credits: parseInt(formData.credits, 10) || 0,
+                heuresCoursParSemaine: parseInt(formData.heuresCoursParSemaine, 10) || 0,
+                departmentId: parseInt(formData.departmentId, 10),
+                teacherId: parseInt(formData.teacherId, 10)
+            });
 
-            toast.success("Matière modifiée avec succès");
+            toast.success("Matiere modifiee avec succes");
             router.push(`/chief/subjects/${subjectId}`);
 
         } catch (error) {
-            toast.error("Erreur lors de la modification");
+            toast.error(error.message || "Erreur lors de la modification de la matiere");
             console.error(error);
         } finally {
             setSaving(false);
@@ -154,21 +170,17 @@ export default function EditSubjectPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed] mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Chargement...</p>
-                </div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed]"></div>
             </div>
         );
     }
 
     return (
         <div className="space-y-6">
-            {/* En-tête */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#312e81]">Modifier la matière</h1>
-                    <p className="text-gray-600 mt-1">Mettez à jour les informations de la matière</p>
+                    <h1 className="text-3xl font-bold text-[#312e81]">Modifier la matiere</h1>
+                    <p className="text-gray-600 mt-1">Mettez a jour les informations de la matiere</p>
                 </div>
                 <Link href={`/chief/subjects/${subjectId}`}>
                     <Button variant="secondary">
@@ -180,14 +192,12 @@ export default function EditSubjectPage() {
                 </Link>
             </div>
 
-            {/* Formulaire */}
             <div className="bg-white shadow rounded-lg">
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Libellé */}
                         <div>
                             <label htmlFor="libelle" className="block text-sm font-medium text-gray-700 mb-1">
-                                Libellé de la matière <span className="text-red-500">*</span>
+                                Libelle de la matiere <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -202,10 +212,9 @@ export default function EditSubjectPage() {
                             )}
                         </div>
 
-                        {/* Code */}
                         <div>
                             <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">
-                                Code <span className="text-red-500">*</span>
+                                Code de la matiere <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -220,19 +229,19 @@ export default function EditSubjectPage() {
                             )}
                         </div>
 
-                        {/* Département */}
                         <div>
                             <label htmlFor="departmentId" className="block text-sm font-medium text-gray-700 mb-1">
-                                Département <span className="text-red-500">*</span>
+                                Departement <span className="text-red-500">*</span>
                             </label>
                             <select
                                 id="departmentId"
                                 name="departmentId"
                                 value={formData.departmentId}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.departmentId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
+                                disabled
+                                className={`block w-full px-3 py-2 border ${errors.departmentId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm bg-gray-50`}
                             >
-                                <option value="">Sélectionner</option>
+                                <option value="">Selectionner un departement</option>
                                 {departments.map((dept) => (
                                     <option key={dept.id} value={dept.id}>
                                         {dept.name}
@@ -244,10 +253,9 @@ export default function EditSubjectPage() {
                             )}
                         </div>
 
-                        {/* Enseignant */}
                         <div>
                             <label htmlFor="teacherId" className="block text-sm font-medium text-gray-700 mb-1">
-                                Enseignant <span className="text-red-500">*</span>
+                                Enseignant responsable <span className="text-red-500">*</span>
                             </label>
                             <select
                                 id="teacherId"
@@ -256,7 +264,7 @@ export default function EditSubjectPage() {
                                 onChange={handleChange}
                                 className={`block w-full px-3 py-2 border ${errors.teacherId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                             >
-                                <option value="">Sélectionner</option>
+                                <option value="">Selectionner un enseignant</option>
                                 {teachers.map((teacher) => (
                                     <option key={teacher.id} value={teacher.id}>
                                         {teacher.name}
@@ -268,10 +276,9 @@ export default function EditSubjectPage() {
                             )}
                         </div>
 
-                        {/* Crédits */}
                         <div>
                             <label htmlFor="credits" className="block text-sm font-medium text-gray-700 mb-1">
-                                Crédits
+                                Nombre de credits
                             </label>
                             <input
                                 type="number"
@@ -280,14 +287,16 @@ export default function EditSubjectPage() {
                                 min="1"
                                 value={formData.credits}
                                 onChange={handleChange}
-                                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
+                                className={`block w-full px-3 py-2 border ${errors.credits ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                             />
+                            {errors.credits && (
+                                <p className="mt-1 text-sm text-red-600">{errors.credits}</p>
+                            )}
                         </div>
 
-                        {/* Heures */}
                         <div>
                             <label htmlFor="heuresCoursParSemaine" className="block text-sm font-medium text-gray-700 mb-1">
-                                Heures/semaine
+                                Heures de cours par semaine
                             </label>
                             <input
                                 type="number"
@@ -296,12 +305,14 @@ export default function EditSubjectPage() {
                                 min="1"
                                 value={formData.heuresCoursParSemaine}
                                 onChange={handleChange}
-                                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
+                                className={`block w-full px-3 py-2 border ${errors.heuresCoursParSemaine ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                             />
+                            {errors.heuresCoursParSemaine && (
+                                <p className="mt-1 text-sm text-red-600">{errors.heuresCoursParSemaine}</p>
+                            )}
                         </div>
                     </div>
 
-                    {/* Description */}
                     <div>
                         <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
                             Description
@@ -316,7 +327,6 @@ export default function EditSubjectPage() {
                         />
                     </div>
 
-                    {/* Boutons */}
                     <div className="flex justify-end space-x-3 pt-6 border-t">
                         <Link href={`/chief/subjects/${subjectId}`}>
                             <Button type="button" variant="secondary">
@@ -324,7 +334,17 @@ export default function EditSubjectPage() {
                             </Button>
                         </Link>
                         <Button type="submit" disabled={saving}>
-                            {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+                            {saving ? (
+                                <>
+                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Enregistrement...
+                                </>
+                            ) : (
+                                'Enregistrer les modifications'
+                            )}
                         </Button>
                     </div>
                 </form>

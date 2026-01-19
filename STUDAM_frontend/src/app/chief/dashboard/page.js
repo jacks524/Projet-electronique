@@ -4,22 +4,25 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthContext } from '../../../context/authContext';
-import DashboardHeader from '../../../components/dashboard/DashboardHeader';
-import StatCard from '../../../components/dashboard/StatCard';
-import Button from '../../../components/ui/Button';
-import ClassList from '../../../components/dashboard/ClassList';
-import SubjectList from '../../../components/dashboard/SubjectList';
+import reportService from '../../../services/reportService';
 import departmentService from '../../../services/departmentService';
-import userService from "../../../services/userService";
-import classService from "../../../services/classService";
-import toast from "react-hot-toast";
-
+import userService from '../../../services/userService';
+import classService from '../../../services/classService';
+import toast from 'react-hot-toast';
 
 export default function ChiefDashboard() {
     const router = useRouter();
     const { user, isAuthenticated, loading: authLoading } = useAuthContext();
-    const [departmentInfo, setDepartmentInfo] = useState({ name: '', stats: { teachers: 0, students: 0, classes: 0, attendanceRate: 0 }, recentTeachers: [], topClasses: [] });
+
     const [loading, setLoading] = useState(true);
+    const [departmentInfo, setDepartmentInfo] = useState({
+        id: null,
+        name: '',
+        stats: { teachers: 0, students: 0, classes: 0, attendanceRate: 0 },
+        recentTeachers: [],
+        topClasses: []
+    });
+    const [recentActivity, setRecentActivity] = useState([]);
 
     useEffect(() => {
         if (authLoading) return;
@@ -28,45 +31,74 @@ export default function ChiefDashboard() {
             router.push('/auth/login');
             return;
         }
-        if (user && user.departmentNames && user.departmentNames.length > 0) {
-            loadDashboardData(user.departmentNames[0]);
-        } else {
-            toast.error("Aucun département n'est assigné à votre compte.");
-            setLoading(false);
-        }
-
+        loadDashboardData();
     }, [user, isAuthenticated, authLoading, router]);
 
-    const loadDashboardData = async (departmentName) => {
+    const resolveDepartment = (departmentsList) => {
+        if (user?.departmentIdIfChief) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentIdIfChief);
+        }
+        if (Array.isArray(user?.departmentsIds) && user.departmentsIds.length > 0) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentsIds[0]);
+        }
+        if (Array.isArray(user?.departmentNames) && user.departmentNames.length > 0) {
+            return departmentsList.find((dept) => dept.name === user.departmentNames[0]);
+        }
+        return null;
+    };
+
+    const loadDashboardData = async () => {
         try {
             setLoading(true);
-
-            const allDepartments = await departmentService.getAll();
-            const targetDepartment = allDepartments.find(d => d.name === departmentName);
+            const departments = await departmentService.getAll();
+            const targetDepartment = resolveDepartment(Array.isArray(departments) ? departments : []);
 
             if (!targetDepartment) {
-                throw new Error(`Département "${departmentName}" non trouvé.`);
+                throw new Error("Aucun departement n'est assigne a votre compte.");
             }
-            const departmentId = targetDepartment.departmentId;
 
-            const [teachers, classes] = await Promise.all([
-                userService.getUsersByRoleAndDepartment('TEACHER', departmentId),
-                classService.getByDepartment({ departmentId, name: "temp", code: "temp", description: "temp" }),
+            const [teachers, classes, recent] = await Promise.all([
+                userService.getUsersByRoleAndDepartment('TEACHER', targetDepartment.departmentId),
+                classService.getByDepartment(targetDepartment.departmentId),
+                reportService.getRecentActivity(5, targetDepartment.departmentId),
             ]);
 
-            const totalStudents = classes.reduce((sum, cls) => sum + (cls.studentNumber || 0), 0);
+            const classesList = Array.isArray(classes) ? classes : [];
+            const totalStudents = classesList.reduce((sum, cls) => sum + (cls.studentNumber || 0), 0);
+            const teachersList = Array.isArray(teachers) ? teachers : [];
+
+            const recentTeachers = [...teachersList]
+                .sort((a, b) => new Date(b.createdDate || 0) - new Date(a.createdDate || 0))
+                .slice(0, 3)
+                .map((teacher) => ({
+                    id: teacher.id,
+                    nom: teacher.name,
+                    email: teacher.email,
+                    dateAjout: teacher.createdDate
+                }));
+
+            const topClasses = [...classesList]
+                .sort((a, b) => (b.studentNumber || 0) - (a.studentNumber || 0))
+                .slice(0, 3)
+                .map((classe) => ({
+                    id: classe.classId,
+                    nom: classe.name,
+                    etudiantsCount: classe.studentNumber || 0
+                }));
 
             setDepartmentInfo({
+                id: targetDepartment.departmentId,
                 name: targetDepartment.name,
                 stats: {
-                    teachers: teachers.length,
+                    teachers: teachersList.length,
                     students: totalStudents,
-                    classes: classes.length,
+                    classes: classesList.length,
                     attendanceRate: 0
                 },
-                recentTeachers: teachers.slice(0, 3).map(t => ({ id: t.id, nom: t.name, email: t.email, dateAjout: t.createdDate })),
-                topClasses: classes.sort((a, b) => b.studentNumber - a.studentNumber).slice(0, 3).map(c => ({ id: c.classId, nom: c.name, etudiantsCount: c.studentNumber }))
+                recentTeachers,
+                topClasses
             });
+            setRecentActivity(Array.isArray(recent) ? recent : []);
 
         } catch (error) {
             toast.error(error.message || "Erreur de chargement du dashboard.");
@@ -75,190 +107,314 @@ export default function ChiefDashboard() {
         }
     };
 
-    if (authLoading || loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7c3aed] mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Chargement du tableau de bord...</p>
+    const StatCard = ({ title, value, icon, color, href, trend }) => {
+        const Card = (
+            <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-slate-100 overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 opacity-5">
+                    <div className={`w-full h-full rounded-full bg-gradient-to-br ${color} transform translate-x-8 -translate-y-8`}></div>
+                </div>
+
+                <div className="relative">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-white shadow-lg`}>
+                            {icon}
+                        </div>
+                        {trend && (
+                            <div className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                </svg>
+                                {trend}%
+                            </div>
+                        )}
+                    </div>
+                    <div className="text-3xl font-bold text-slate-800 mb-1">
+                        {Number.isFinite(value) ? value.toLocaleString() : 0}
+                    </div>
+                    <div className="text-sm text-slate-500 font-medium">{title}</div>
                 </div>
             </div>
         );
-    }
 
-    if (!departmentInfo) {
+        if (href) {
+            return (
+                <Link href={href} className="group">
+                    {Card}
+                </Link>
+            );
+        }
+
+        return Card;
+    };
+
+    const QuickActionCard = ({ title, description, icon, color, href }) => (
+        <Link href={href}>
+            <div className={`bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all duration-200 border-l-4 ${color} group cursor-pointer`}>
+                <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-xl bg-gradient-to-br ${color.replace("border-", "from-").replace("-500", "-100")} ${color.replace("border-", "to-").replace("-500", "-200")}`}>
+                        {icon}
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="font-semibold text-slate-800 mb-1 group-hover:text-violet-600 transition-colors">{title}</h3>
+                        <p className="text-xs text-slate-500">{description}</p>
+                    </div>
+                    <svg className="w-5 h-5 text-slate-400 group-hover:text-violet-600 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </div>
+            </div>
+        </Link>
+    );
+
+    const getActivityMeta = (activity) => {
+        const type = (activity?.type || activity?.action || activity?.category || activity?.description || "").toString().toLowerCase();
+
+        if (type.includes("attendance") || type.includes("presence") || type.includes("session")) {
+            return { bg: "bg-violet-100 text-violet-600", icon: (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+                </svg>
+            ) };
+        }
+
+        if (type.includes("classe") || type.includes("class")) {
+            return { bg: "bg-blue-100 text-blue-600", icon: (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21h18M4 21V4a1 1 0 011-1h14a1 1 0 011 1v17" />
+                </svg>
+            ) };
+        }
+
+        if (type.includes("teacher") || type.includes("enseignant") || type.includes("user")) {
+            return { bg: "bg-emerald-100 text-emerald-600", icon: (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            ) };
+        }
+
+        return { bg: "bg-slate-100 text-slate-600", icon: (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5h10M11 9h7M11 13h10M11 17h7M6 7h.01M6 11h.01M6 15h.01M6 19h.01" />
+            </svg>
+        ) };
+    };
+
+    if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <p className="text-red-600">Erreur lors du chargement des données</p>
+            <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 mx-auto"></div>
+                    <p className="mt-4 text-slate-600">Chargement des donnees...</p>
+                </div>
             </div>
         );
     }
 
     return (
         <div className="space-y-6">
-            {/* En-tête */}
-            <div>
-                <h1 className="text-2xl font-bold text-[#312e81]">
-                    Dashboard - Département {departmentInfo.name}
-                </h1>
-                <DashboardHeader user={user} />
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-800">Tableau de bord</h1>
+                    <p className="text-sm text-slate-500 mt-1">Departement {departmentInfo.name}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <button className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                        <span className="flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Exporter
+                        </span>
+                    </button>
+                    <button className="px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700 transition-colors">
+                        Generer rapport
+                    </button>
+                </div>
             </div>
 
-            {/* Cartes de Statistiques */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
-                    title="Enseignants"
-                    count={departmentInfo.stats.teachers}
+                    title="Etudiants"
+                    value={departmentInfo.stats.students}
                     icon={
-                        <svg className="w-8 h-8 text-[#7c3aed]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422A12.083 12.083 0 0112 21a12.083 12.083 0 01-6.16-10.422L12 14z" />
                         </svg>
                     }
+                    color="from-violet-500 to-purple-600"
+                    href="/chief/students"
+                    trend={12}
                 />
                 <StatCard
-                    title="Étudiants"
-                    count={departmentInfo.stats.students}
+                    title="Enseignants"
+                    value={departmentInfo.stats.teachers}
                     icon={
-                        <svg className="w-8 h-8 text-[#7c3aed]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                     }
+                    color="from-blue-500 to-indigo-600"
+                    href="/chief/teachers"
+                    trend={8}
                 />
                 <StatCard
                     title="Classes"
-                    count={departmentInfo.stats.classes}
+                    value={departmentInfo.stats.classes}
                     icon={
-                        <svg className="w-8 h-8 text-[#7c3aed]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21h18M4 21V4a1 1 0 011-1h14a1 1 0 011 1v17" />
                         </svg>
                     }
+                    color="from-amber-500 to-violet-600"
+                    href="/chief/classes"
+                    trend={5}
                 />
                 <StatCard
-                    title="Taux de Présence"
-                    count={`${departmentInfo.stats.attendanceRate}%`}
+                    title="Taux de presence"
+                    value={departmentInfo.stats.attendanceRate}
                     icon={
-                        <svg className="w-8 h-8 text-[#7c3aed]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     }
+                    color="from-green-500 to-emerald-600"
                 />
             </div>
 
-            {/* Actions Rapides */}
-            <div className="bg-white shadow rounded-lg p-6">
-                <h2 className="text-lg font-semibold text-[#312e81] mb-4">Actions Rapides</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Link href="/chief/teachers/create">
-                        <Button className="w-full justify-center">
-                            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Ajouter un enseignant
-                        </Button>
-                    </Link>
-                    <Link href="/chief/classes/create">
-                        <Button className="w-full justify-center">
-                            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Créer une nouvelle classe
-                        </Button>
-                    </Link>
-                    <Link href="/chief/timetables">
-                        <Button className="w-full justify-center">
-                            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            Gérer l'emploi du temps
-                        </Button>
-                    </Link>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <QuickActionCard
+                    title="Ajouter un enseignant"
+                    description="Creer un enseignant dans le departement"
+                    icon={
+                        <svg className="w-5 h-5 text-violet-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                    }
+                    color="border-violet-500"
+                    href="/chief/teachers/create"
+                />
+                <QuickActionCard
+                    title="Creer une classe"
+                    description="Ajouter une nouvelle classe"
+                    icon={
+                        <svg className="w-5 h-5 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21h18M4 21V4a1 1 0 011-1h14a1 1 0 011 1v17" />
+                        </svg>
+                    }
+                    color="border-amber-500"
+                    href="/chief/classes/create"
+                />
+                <QuickActionCard
+                    title="Emploi du temps"
+                    description="Gerer les horaires du departement"
+                    icon={
+                        <svg className="w-5 h-5 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    }
+                    color="border-emerald-500"
+                    href="/chief/timetables"
+                />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Liste des enseignants récents */}
-                <div className="bg-white shadow rounded-lg">
-                    <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                        <h3 className="text-lg font-medium text-[#312e81]">Derniers enseignants ajoutés</h3>
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-lg font-bold text-slate-800">Derniers enseignants ajoutes</h2>
+                        <Link href="/chief/teachers" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
+                            Voir tout
+                        </Link>
                     </div>
                     {departmentInfo.recentTeachers.length === 0 ? (
-                        <div className="px-4 py-4 sm:px-6">
-                            <div className="text-sm text-gray-500">Aucun enseignant récemment ajouté.</div>
+                        <div className="text-sm text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-6 text-center">
+                            Aucun enseignant recemment ajoute.
                         </div>
                     ) : (
-                        <ul className="divide-y divide-gray-200">
+                        <div className="space-y-3">
                             {departmentInfo.recentTeachers.map((teacher) => (
-                                <li key={teacher.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <div className="text-sm font-medium text-[#312e81]">
-                                                {teacher.nom}
-                                            </div>
-                                            <div className="text-sm text-gray-500">
-                                                {teacher.email}
-                                            </div>
-                                            <div className="text-xs text-gray-400">
-                                                Ajouté le {new Date(teacher.dateAjout).toLocaleDateString('fr-FR')}
-                                            </div>
-                                        </div>
-                                        <Link
-                                            href={`/chief/teachers/${teacher.id}`}
-                                            className="text-sm text-[#7c3aed] hover:text-opacity-80"
-                                        >
-                                            Voir détails
-                                        </Link>
+                                <div key={teacher.id} className="flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors border border-slate-100">
+                                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-violet-100 text-violet-600">
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
                                     </div>
-                                </li>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm text-slate-800 font-medium">{teacher.nom}</p>
+                                        <p className="text-xs text-slate-500 mt-1">{teacher.email}</p>
+                                    </div>
+                                    <Link href={`/chief/teachers/${teacher.id}`} className="text-sm text-violet-600 hover:text-violet-700 font-medium">
+                                        Voir details
+                                    </Link>
+                                </div>
                             ))}
-                        </ul>
+                        </div>
                     )}
                 </div>
 
-                {/* Classes avec le plus d'étudiants */}
-                <div className="bg-white shadow rounded-lg">
-                    <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                        <h3 className="text-lg font-medium text-[#312e81]">Classes les plus peuplées</h3>
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-lg font-bold text-slate-800">Classes les plus peuplees</h2>
+                        <Link href="/chief/classes" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
+                            Voir tout
+                        </Link>
                     </div>
                     {departmentInfo.topClasses.length === 0 ? (
-                        <div className="px-4 py-4 sm:px-6">
-                            <div className="text-sm text-gray-500">Aucune classe disponible.</div>
+                        <div className="text-sm text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-6 text-center">
+                            Aucune classe disponible.
                         </div>
                     ) : (
-                        <ul className="divide-y divide-gray-200">
+                        <div className="space-y-3">
                             {departmentInfo.topClasses.map((classe) => (
-                                <li key={classe.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <div className="text-sm font-medium text-[#312e81]">
-                                                {classe.nom}
-                                            </div>
-                                            <div className="text-sm text-gray-500">
-                                                {classe.etudiantsCount} étudiants
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          classe.etudiantsCount > 40
-                              ? 'bg-green-100 text-green-800'
-                              : classe.etudiantsCount > 30
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {classe.etudiantsCount > 40 ? 'Élevé' : classe.etudiantsCount > 30 ? 'Moyen' : 'Faible'}
-                      </span>
-                                            <Link
-                                                href={`/chief/classes/${classe.id}`}
-                                                className="text-sm text-[#7c3aed] hover:text-opacity-80"
-                                            >
-                                                Gérer
-                                            </Link>
-                                        </div>
+                                <div key={classe.id} className="flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors border border-slate-100">
+                                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-100 text-blue-600">
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21h18M4 21V4a1 1 0 011-1h14a1 1 0 011 1v17" />
+                                        </svg>
                                     </div>
-                                </li>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm text-slate-800 font-medium">{classe.nom}</p>
+                                        <p className="text-xs text-slate-500 mt-1">{classe.etudiantsCount} etudiants</p>
+                                    </div>
+                                    <Link href={`/chief/classes/${classe.id}`} className="text-sm text-violet-600 hover:text-violet-700 font-medium">
+                                        Gerer
+                                    </Link>
+                                </div>
                             ))}
-                        </ul>
+                        </div>
                     )}
                 </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-bold text-slate-800">Activite recente</h2>
+                    <Link href="/chief/reports" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
+                        Voir tout
+                    </Link>
+                </div>
+                {recentActivity.length === 0 ? (
+                    <div className="text-sm text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-6 text-center">
+                        Aucune activite recente disponible.
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {recentActivity.map((activity) => {
+                            const meta = getActivityMeta(activity);
+                            return (
+                                <div key={activity.id || `${activity.description}-${activity.timestamp}`} className="flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors border border-slate-100">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${meta.bg} flex-shrink-0`}>
+                                        {meta.icon}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm text-slate-800 font-medium">{activity.description || "Activite recente"}</p>
+                                        <p className="text-xs text-slate-500 mt-1">{activity.timestamp || ""}</p>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </div>
     );

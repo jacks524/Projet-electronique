@@ -18,6 +18,19 @@ export default function TimetableClassesListPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
+    const resolveDepartment = (departmentsList) => {
+        if (user?.departmentIdIfChief) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentIdIfChief);
+        }
+        if (Array.isArray(user?.departmentsIds) && user.departmentsIds.length > 0) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentsIds[0]);
+        }
+        if (Array.isArray(user?.departmentNames) && user.departmentNames.length > 0) {
+            return departmentsList.find((dept) => dept.name === user.departmentNames[0]);
+        }
+        return null;
+    };
+
     useEffect(() => {
         if (authLoading) return;
         if (!isAuthenticated) {
@@ -54,13 +67,8 @@ export default function TimetableClassesListPage() {
         try {
             setLoading(true);
 
-            if (!user?.departmentNames || user.departmentNames.length === 0) {
-                toast.error("Aucun departement assigne");
-                return;
-            }
-
             const departments = await departmentService.getAll();
-            const targetDepartment = departments.find(d => d.name === user.departmentNames[0]);
+            const targetDepartment = resolveDepartment(Array.isArray(departments) ? departments : []);
 
             if (!targetDepartment) {
                 throw new Error('Departement introuvable');

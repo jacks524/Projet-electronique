@@ -17,6 +17,20 @@ export default function ClassesPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState('name');
+    const [departmentName, setDepartmentName] = useState('');
+
+    const resolveDepartment = (departmentsList) => {
+        if (user?.departmentIdIfChief) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentIdIfChief);
+        }
+        if (Array.isArray(user?.departmentsIds) && user.departmentsIds.length > 0) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentsIds[0]);
+        }
+        if (Array.isArray(user?.departmentNames) && user.departmentNames.length > 0) {
+            return departmentsList.find((dept) => dept.name === user.departmentNames[0]);
+        }
+        return null;
+    };
 
     useEffect(() => {
         loadClasses();
@@ -26,26 +40,21 @@ export default function ClassesPage() {
         try {
             setLoading(true);
 
-            if (!user?.departmentNames || user.departmentNames.length === 0) {
-                toast.error("Aucun département assigné");
-                return;
-            }
-
-            const allDepartments = await departmentService.getAll();
-            const targetDepartment = allDepartments.find(
-                d => d.name === user.departmentNames[0]
-            );
+            const departments = await departmentService.getAll();
+            const targetDepartment = resolveDepartment(Array.isArray(departments) ? departments : []);
 
             if (!targetDepartment) {
-                throw new Error("Département non trouvé");
+                throw new Error("Aucun departement assigne");
             }
+
+            setDepartmentName(targetDepartment.name || '');
 
             const classesData = await classService.getByDepartment(targetDepartment.departmentId);
 
             setClasses(classesData);
             setFilteredClasses(classesData);
         } catch (error) {
-            toast.error("Erreur lors du chargement des classes");
+            toast.error(error.message || "Erreur lors du chargement des classes");
             console.error(error);
         } finally {
             setLoading(false);
@@ -65,14 +74,13 @@ export default function ClassesPage() {
     }, [searchTerm, classes]);
 
     const handleDeleteClass = async (classId, className) => {
-        if (!window.confirm(`Êtes-vous sûr de vouloir supprimer la classe "${className}" ? Cette action est irréversible.`)) {
+        if (!window.confirm(`Etes-vous sur de vouloir supprimer la classe "${className}" ? Cette action est irreversible.`)) {
             return;
         }
 
         try {
-            // TODO: Implémenter l'appel API
-            // await classService.delete(classId);
-            toast.success("Classe supprimée avec succès");
+            await classService.remove(classId);
+            toast.success("Classe supprimee avec succes");
             loadClasses();
         } catch (error) {
             toast.error("Erreur lors de la suppression");
@@ -111,7 +119,7 @@ export default function ClassesPage() {
                             Gestion des classes
                         </h1>
                         <p className="text-gray-600 mt-2">
-                            {classes.length} classe(s) • Département: {user?.departmentNames?.[0]}
+                            {classes.length} classe(s) - Departement: {departmentName || '---'}
                         </p>
                     </div>
                     <Link href="/chief/classes/create">
@@ -119,7 +127,7 @@ export default function ClassesPage() {
                             <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                             </svg>
-                            Créer une classe
+                            Creer une classe
                         </Button>
                     </Link>
                 </div>
@@ -144,7 +152,7 @@ export default function ClassesPage() {
                 <div className="bg-white shadow rounded-lg p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-600">Total étudiants</p>
+                            <p className="text-sm text-gray-600">Total etudiants</p>
                             <p className="text-3xl font-bold text-green-600 mt-2">
                                 {classes.reduce((sum, c) => sum + (c.studentNumber || 0), 0)}
                             </p>
@@ -179,9 +187,9 @@ export default function ClassesPage() {
                 <div className="bg-white shadow rounded-lg p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-600">Capacité totale</p>
+                            <p className="text-sm text-gray-600">Capacite totale</p>
                             <p className="text-3xl font-bold text-violet-600 mt-2">
-                                {classes.reduce((sum, c) => sum + (c.capacity || 0), 0)}
+                                {classes.filter(c => (c.studentNumber || 0) > 0).length}
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center">
@@ -231,9 +239,9 @@ export default function ClassesPage() {
                     <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">Aucune classe trouvée</h3>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">Aucune classe trouvee</h3>
                     <p className="mt-1 text-sm text-gray-500">
-                        {searchTerm ? "Essayez avec d'autres mots-clés" : "Commencez par créer votre première classe"}
+                        {searchTerm ? "Essayez avec d'autres mots-cles" : "Commencez par creer votre premiere classe"}
                     </p>
                     {!searchTerm && (
                         <div className="mt-6">
@@ -242,7 +250,7 @@ export default function ClassesPage() {
                                     <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                                     </svg>
-                                    Créer une classe
+                                    Creer une classe
                                 </Button>
                             </Link>
                         </div>
@@ -259,7 +267,7 @@ export default function ClassesPage() {
                                     </div>
                                 </div>
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    {classe.studentNumber || 0} étudiants
+                                    {classe.studentNumber || 0} etudiants
                                 </span>
                             </div>
 
@@ -277,7 +285,7 @@ export default function ClassesPage() {
                             <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
                                 <div className="flex space-x-2">
                                     <Link href={`/chief/classes/${classe.classId}`}>
-                                        <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Voir détails">
+                                        <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Voir details">
                                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />

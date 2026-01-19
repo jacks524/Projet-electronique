@@ -11,6 +11,19 @@ import toast from 'react-hot-toast';
 export default function TeachersReportPage() {
     const { user } = useAuthContext();
     const [loading, setLoading] = useState(true);
+
+    const resolveDepartment = (departmentsList) => {
+        if (user?.departmentIdIfChief) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentIdIfChief);
+        }
+        if (Array.isArray(user?.departmentsIds) && user.departmentsIds.length > 0) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentsIds[0]);
+        }
+        if (Array.isArray(user?.departmentNames) && user.departmentNames.length > 0) {
+            return departmentsList.find((dept) => dept.name === user.departmentNames[0]);
+        }
+        return null;
+    };
     const [teachers, setTeachers] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState('name');
@@ -24,15 +37,8 @@ export default function TeachersReportPage() {
         try {
             setLoading(true);
 
-            if (!user?.departmentNames || user.departmentNames.length === 0) {
-                toast.error("Aucun département assigné");
-                return;
-            }
-
             const allDepartments = await departmentService.getAll();
-            const targetDepartment = allDepartments.find(
-                d => d.name === user.departmentNames[0]
-            );
+            const targetDepartment = resolveDepartment(Array.isArray(allDepartments) ? allDepartments : []);
 
             if (!targetDepartment) {
                 throw new Error("Département non trouvé");

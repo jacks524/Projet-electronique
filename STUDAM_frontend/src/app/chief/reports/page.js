@@ -18,6 +18,19 @@ export default function ReportsPage() {
     });
     const [loading, setLoading] = useState(true);
 
+    const resolveDepartment = (departmentsList) => {
+        if (user?.departmentIdIfChief) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentIdIfChief);
+        }
+        if (Array.isArray(user?.departmentsIds) && user.departmentsIds.length > 0) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentsIds[0]);
+        }
+        if (Array.isArray(user?.departmentNames) && user.departmentNames.length > 0) {
+            return departmentsList.find((dept) => dept.name === user.departmentNames[0]);
+        }
+        return null;
+    };
+
     useEffect(() => {
         loadStats();
     }, [user]);
@@ -26,30 +39,18 @@ export default function ReportsPage() {
         try {
             setLoading(true);
 
-            if (!user?.departmentNames || user.departmentNames.length === 0) {
-                toast.error("Aucun département assigné");
-                return;
-            }
-
             const allDepartments = await departmentService.getAll();
-            const targetDepartment = allDepartments.find(
-                d => d.name === user.departmentNames[0]
-            );
+            const targetDepartment = resolveDepartment(Array.isArray(allDepartments) ? allDepartments : []);
 
             if (!targetDepartment) {
-                throw new Error("Département non trouvé");
+                throw new Error('Aucun departement assigne');
             }
 
             const departmentId = targetDepartment.departmentId;
 
             const [teachers, classes] = await Promise.all([
                 userService.getUsersByRoleAndDepartment('TEACHER', departmentId),
-                classService.getByDepartment({
-                    departmentId,
-                    name: "temp",
-                    code: "temp",
-                    description: "temp"
-                })
+                classService.getByDepartment(departmentId)
             ]);
 
             const totalStudents = classes.reduce((sum, c) => sum + (c.studentNumber || 0), 0);

@@ -25,10 +25,10 @@ const getDashboardStats = async () => {
   }
 };
 
-const getRecentActivity = async (limit = 5) => {
+const getRecentActivity = async (limit = 5, departmentId) => {
   try {
     const { data } = await apiClient.get("/reports/admin/recent-activity", {
-      params: { limit },
+      params: { limit, departmentId },
     });
     return Array.isArray(data) ? data : [];
   } catch (error) {

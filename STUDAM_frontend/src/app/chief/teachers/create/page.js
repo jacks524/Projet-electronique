@@ -5,9 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
+import { useAuthContext } from '@/context/authContext';
+import departmentService from '@/services/departmentService';
+import userService from '@/services/userService';
 
 export default function CreateTeacherPage() {
     const router = useRouter();
+    const { user, isAuthenticated, loading: authLoading } = useAuthContext();
 
     const [formData, setFormData] = useState({
         name: '',
@@ -20,30 +24,50 @@ export default function CreateTeacherPage() {
         departmentId: ''
     });
 
-    const [departments, setDepartments] = useState([]);
+    const [departmentName, setDepartmentName] = useState('');
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
-        loadDepartments();
-    }, []);
+        if (authLoading) return;
+        if (!isAuthenticated) {
+            router.push('/auth/login');
+            return;
+        }
+        loadDepartment();
+    }, [user, isAuthenticated, authLoading, router]);
 
-    const loadDepartments = async () => {
+    const loadDepartment = async () => {
         try {
-            // TODO: Appeler l'endpoint
-            // const data = await departmentService.getAll();
+            const chiefDepartmentId = user?.departmentIdIfChief;
+            const fallbackId = Array.isArray(user?.departmentsIds) ? user.departmentsIds[0] : null;
+            const selectedId = chiefDepartmentId || fallbackId;
 
-            const mockDepartments = [
-                { id: 1, name: 'Informatique' },
-                { id: 2, name: 'Mathématiques' },
-                { id: 3, name: 'Physique' }
-            ];
+            if (selectedId) {
+                const dept = await departmentService.getById(selectedId);
+                setDepartmentName(dept.name);
+                setFormData(prev => ({ ...prev, departmentId: String(dept.departmentId) }));
+                return;
+            }
 
-            setDepartments(mockDepartments);
+            if (!user?.departmentNames || user.departmentNames.length === 0) {
+                toast.error("Aucun departement assigne");
+                return;
+            }
+
+            const allDepartments = await departmentService.getAll();
+            const targetDepartment = allDepartments.find(
+                d => d.name === user.departmentNames[0]
+            );
+
+            if (targetDepartment) {
+                setDepartmentName(targetDepartment.name);
+                setFormData(prev => ({ ...prev, departmentId: String(targetDepartment.departmentId) }));
+            }
 
         } catch (error) {
-            toast.error("Erreur lors du chargement des départements");
+            toast.error("Erreur lors du chargement du departement");
             console.error(error);
         }
     };
@@ -79,13 +103,13 @@ export default function CreateTeacherPage() {
         if (!formData.username.trim()) {
             newErrors.username = "Le nom d'utilisateur est requis";
         } else if (formData.username.length < 4) {
-            newErrors.username = "Le nom d'utilisateur doit contenir au moins 4 caractères";
+            newErrors.username = "Le nom d'utilisateur doit contenir au moins 4 caracteres";
         }
 
         if (!formData.password) {
             newErrors.password = "Le mot de passe est requis";
         } else if (formData.password.length < 6) {
-            newErrors.password = "Le mot de passe doit contenir au moins 6 caractères";
+            newErrors.password = "Le mot de passe doit contenir au moins 6 caracteres";
         }
 
         if (formData.password !== formData.confirmPassword) {
@@ -93,7 +117,7 @@ export default function CreateTeacherPage() {
         }
 
         if (!formData.departmentId) {
-            newErrors.departmentId = "Le département est requis";
+            newErrors.departmentId = "Le departement est requis";
         }
 
         if (!formData.matricule.trim()) {
@@ -115,18 +139,22 @@ export default function CreateTeacherPage() {
         setLoading(true);
 
         try {
-            // TODO: Appeler l'endpoint
-            // await userService.register({
-            //     ...formData,
-            //     role: 'TEACHER',
-            //     departmentId: parseInt(formData.departmentId)
-            // });
+            await userService.register({
+                name: formData.name,
+                email: formData.email,
+                username: formData.username,
+                password: formData.password,
+                phoneNumber: formData.phoneNumber,
+                matricule: formData.matricule,
+                role: 'TEACHER',
+                departmentIds: [formData.departmentId]
+            });
 
-            toast.success("Enseignant créé avec succès");
+            toast.success("Enseignant cree avec succes");
             router.push('/chief/teachers');
 
         } catch (error) {
-            toast.error(error.message || "Erreur lors de la création");
+            toast.error(error.message || "Erreur lors de la creation");
             console.error(error);
         } finally {
             setLoading(false);
@@ -135,11 +163,10 @@ export default function CreateTeacherPage() {
 
     return (
         <div className="space-y-6">
-            {/* En-tête */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#312e81]">Créer un enseignant</h1>
-                    <p className="text-gray-600 mt-1">Ajoutez un nouvel enseignant au système</p>
+                    <h1 className="text-3xl font-bold text-[#312e81]">Creer un enseignant</h1>
+                    <p className="text-gray-600 mt-1">Ajoutez un nouvel enseignant au systeme</p>
                 </div>
                 <Link href="/chief/teachers">
                     <Button variant="secondary">
@@ -151,11 +178,9 @@ export default function CreateTeacherPage() {
                 </Link>
             </div>
 
-            {/* Formulaire */}
             <div className="bg-white shadow rounded-lg">
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Nom complet */}
                         <div className="md:col-span-2">
                             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                                 Nom complet <span className="text-red-500">*</span>
@@ -174,7 +199,6 @@ export default function CreateTeacherPage() {
                             )}
                         </div>
 
-                        {/* Email */}
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                                 Email <span className="text-red-500">*</span>
@@ -193,10 +217,9 @@ export default function CreateTeacherPage() {
                             )}
                         </div>
 
-                        {/* Téléphone */}
                         <div>
                             <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
-                                Numéro de téléphone
+                                Numero de telephone
                             </label>
                             <input
                                 type="tel"
@@ -209,7 +232,6 @@ export default function CreateTeacherPage() {
                             />
                         </div>
 
-                        {/* Nom d'utilisateur */}
                         <div>
                             <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                                 Nom d'utilisateur <span className="text-red-500">*</span>
@@ -221,14 +243,13 @@ export default function CreateTeacherPage() {
                                 value={formData.username}
                                 onChange={handleChange}
                                 className={`block w-full px-3 py-2 border ${errors.username ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
-                                placeholder="nom.utilisateur"
+                                placeholder="enseignant123"
                             />
                             {errors.username && (
                                 <p className="mt-1 text-sm text-red-600">{errors.username}</p>
                             )}
                         </div>
 
-                        {/* Matricule */}
                         <div>
                             <label htmlFor="matricule" className="block text-sm font-medium text-gray-700 mb-1">
                                 Matricule <span className="text-red-500">*</span>
@@ -240,43 +261,49 @@ export default function CreateTeacherPage() {
                                 value={formData.matricule}
                                 onChange={handleChange}
                                 className={`block w-full px-3 py-2 border ${errors.matricule ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
-                                placeholder="TEACH2024001"
+                                placeholder="TEACH2024"
                             />
                             {errors.matricule && (
                                 <p className="mt-1 text-sm text-red-600">{errors.matricule}</p>
                             )}
                         </div>
 
-                        {/* Mot de passe */}
+                        <div>
+                            <label htmlFor="departmentId" className="block text-sm font-medium text-gray-700 mb-1">
+                                Departement
+                            </label>
+                            <input
+                                type="text"
+                                id="departmentId"
+                                value={departmentName || '---'}
+                                disabled
+                                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-600"
+                            />
+                            {errors.departmentId && (
+                                <p className="mt-1 text-sm text-red-600">{errors.departmentId}</p>
+                            )}
+                        </div>
+
                         <div>
                             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                                 Mot de passe <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <input
-                                    type={showPassword ? "text" : "password"}
+                                    type={showPassword ? 'text' : 'password'}
                                     id="password"
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className={`block w-full px-3 py-2 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
-                                    placeholder="••••••••"
+                                    className={`block w-full px-3 py-2 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
+                                    placeholder="******"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-gray-500"
                                 >
-                                    {showPassword ? (
-                                        <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/>
-                                        </svg>
-                                    ) : (
-                                        <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                        </svg>
-                                    )}
+                                    {showPassword ? 'Masquer' : 'Afficher'}
                                 </button>
                             </div>
                             {errors.password && (
@@ -284,91 +311,28 @@ export default function CreateTeacherPage() {
                             )}
                         </div>
 
-                        {/* Confirmation mot de passe */}
                         <div>
                             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                                 Confirmer le mot de passe <span className="text-red-500">*</span>
                             </label>
                             <input
-                                type={showPassword ? "text" : "password"}
+                                type="password"
                                 id="confirmPassword"
                                 name="confirmPassword"
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
                                 className={`block w-full px-3 py-2 border ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
-                                placeholder="••••••••"
+                                placeholder="******"
                             />
                             {errors.confirmPassword && (
                                 <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
                             )}
                         </div>
-
-                        {/* Département */}
-                        <div className="md:col-span-2">
-                            <label htmlFor="departmentId" className="block text-sm font-medium text-gray-700 mb-1">
-                                Département <span className="text-red-500">*</span>
-                            </label>
-                            <select
-                                id="departmentId"
-                                name="departmentId"
-                                value={formData.departmentId}
-                                onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.departmentId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
-                            >
-                                <option value="">Sélectionner un département</option>
-                                {departments.map((dept) => (
-                                    <option key={dept.id} value={dept.id}>
-                                        {dept.name}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.departmentId && (
-                                <p className="mt-1 text-sm text-red-600">{errors.departmentId}</p>
-                            )}
-                        </div>
                     </div>
 
-                    {/* Information */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div className="flex">
-                            <div className="flex-shrink-0">
-                                <svg className="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </div>
-                            <div className="ml-3">
-                                <h3 className="text-sm font-medium text-blue-800">Information</h3>
-                                <div className="mt-2 text-sm text-blue-700">
-                                    <p>L'enseignant recevra un email avec ses identifiants de connexion.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Boutons */}
-                    <div className="flex justify-end space-x-3 pt-6 border-t">
-                        <Link href="/chief/teachers">
-                            <Button type="button" variant="secondary">
-                                Annuler
-                            </Button>
-                        </Link>
+                    <div className="flex justify-end">
                         <Button type="submit" disabled={loading}>
-                            {loading ? (
-                                <>
-                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Création...
-                                </>
-                            ) : (
-                                <>
-                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/>
-                                    </svg>
-                                    Créer l'enseignant
-                                </>
-                            )}
+                            {loading ? 'Creation...' : 'Creer enseignant'}
                         </Button>
                     </div>
                 </form>

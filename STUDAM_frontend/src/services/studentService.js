@@ -29,9 +29,45 @@ const getByClass = async (classId, { page = 0, size = 2000 } = {}) => {
     }
 };
 
+
+const create = async (payload) => {
+    try {
+        const { data } = await apiClient.post('/student', payload);
+        return data;
+    } catch (error) {
+        console.error('Erreur API [createStudent]:', error);
+        throw new Error(error.response?.data?.message || "La creation de l'etudiant a echoue.");
+    }
+};
+
+const update = async (studentId, payload) => {
+    try {
+        const { data } = await apiClient.put(`/student/${studentId}`, payload);
+        return data;
+    } catch (error) {
+        console.error('Erreur API [updateStudent]:', error);
+        throw new Error(error.response?.data?.message || "La mise a jour de l'etudiant a echoue.");
+    }
+};
+
+
+const getById = async (studentId) => {
+    try {
+        const { data } = await apiClient.get(`/student/${studentId}`);
+        return data;
+    } catch (error) {
+        if (error.response?.status === 404) return null;
+        console.error('Erreur API [getStudentById]:', error);
+        throw new Error("Impossible de charger les details de l'etudiant.");
+    }
+};
+
 const studentService = {
     getAll,
     getByClass,
+    create,
+    update,
+    getById,
 };
 
 export default studentService;

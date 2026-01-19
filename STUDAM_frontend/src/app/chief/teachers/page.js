@@ -20,6 +20,20 @@ export default function TeachersPage() {
     const [sortBy, setSortBy] = useState('name');
     const [selectedClass, setSelectedClass] = useState('');
     const [teacherClassesMap, setTeacherClassesMap] = useState({});
+    const [departmentName, setDepartmentName] = useState('');
+
+    const resolveDepartment = (departmentsList) => {
+        if (user?.departmentIdIfChief) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentIdIfChief);
+        }
+        if (Array.isArray(user?.departmentsIds) && user.departmentsIds.length > 0) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentsIds[0]);
+        }
+        if (Array.isArray(user?.departmentNames) && user.departmentNames.length > 0) {
+            return departmentsList.find((dept) => dept.name === user.departmentNames[0]);
+        }
+        return null;
+    };
 
     useEffect(() => {
         if (authLoading) return;
@@ -42,18 +56,15 @@ export default function TeachersPage() {
         try {
             setLoading(true);
 
-            if (!user?.departmentNames || user.departmentNames.length === 0) {
-                toast.error("Aucun departement assigne");
-                return;
+            const departments = await departmentService.getAll();
+            const targetDepartment = resolveDepartment(Array.isArray(departments) ? departments : []);
+
+            if (targetDepartment) {
+                setDepartmentName(targetDepartment.name || '');
             }
 
-            const allDepartments = await departmentService.getAll();
-            const targetDepartment = allDepartments.find(
-                d => d.name === user.departmentNames[0]
-            );
-
             if (!targetDepartment) {
-                throw new Error("Departement non trouve");
+                throw new Error("Aucun departement assigne");
             }
 
             const [teachersData, classesData] = await Promise.all([
@@ -71,21 +82,32 @@ export default function TeachersPage() {
                 }
             }));
 
-            const classAssignments = await Promise.all(
-                teachersData.map(async (teacher) => {
-                    const teacherClasses = await classService.getByTeacher(teacher.id);
-                    return [teacher.id, teacherClasses.map(c => c.classId)];
-                })
-            );
+            const mappedTeachers = teachersData.map(teacher => ({
+                id: teacher.id,
+                name: teacher.name,
+                email: teacher.email,
+                matricule: teacher.matricule,
+                phoneNumber: teacher.phoneNumber,
+                status: teacher.active ? 'active' : 'inactive',
+                active: !!teacher.active,
+                dateEmbauche: teacher.createdDate || new Date().toISOString(),
+                departement: {
+                    id: targetDepartment.departmentId,
+                    nom: targetDepartment.name
+                }
+            }));
 
-            const nextMap = Object.fromEntries(classAssignments);
+            const classAssignments = {};
+            await Promise.all(mappedTeachers.map(async (teacher) => {
+                const teacherClasses = await classService.getByTeacher(teacher.id);
+                classAssignments[teacher.id] = teacherClasses.map(cls => cls.classId);
+            }));
 
-            setTeachers(teachersData);
+            setTeachers(mappedTeachers);
             setClasses(mappedClasses);
-            setTeacherClassesMap(nextMap);
-
+            setTeacherClassesMap(classAssignments);
         } catch (error) {
-            toast.error("Erreur lors du chargement des donnees");
+            toast.error(error.message || "Erreur lors du chargement des donnees");
             console.error(error);
         } finally {
             setLoading(false);
@@ -151,7 +173,7 @@ export default function TeachersPage() {
                             Gestion des enseignants
                         </h1>
                         <p className="text-gray-600 mt-2">
-                            {teachers.length} enseignant(s) - Departement: {user?.departmentNames?.[0]}
+                            {teachers.length} enseignant(s) - Departement: {departmentName || '---'}
                         </p>
                     </div>
                     <Link href="/chief/teachers/create">

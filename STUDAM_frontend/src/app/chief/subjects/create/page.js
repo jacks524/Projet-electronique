@@ -6,6 +6,9 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import { useAuthContext } from '@/context/authContext';
+import subjectService from '@/services/subjectService';
+import departmentService from '@/services/departmentService';
+import userService from '@/services/userService';
 
 export default function CreateSubjectPage() {
     const router = useRouter();
@@ -30,30 +33,40 @@ export default function CreateSubjectPage() {
         loadData();
     }, []);
 
+    const resolveDepartment = (departmentsList) => {
+        if (user?.departmentIdIfChief) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentIdIfChief);
+        }
+        if (Array.isArray(user?.departmentsIds) && user.departmentsIds.length > 0) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentsIds[0]);
+        }
+        if (Array.isArray(user?.departmentNames) && user.departmentNames.length > 0) {
+            return departmentsList.find((dept) => dept.name === user.departmentNames[0]);
+        }
+        return null;
+    };
+
     const loadData = async () => {
         try {
-            // TODO: Appeler les endpoints
-            // const departmentsData = await departmentService.getAll();
-            // const teachersData = await userService.getTeachers();
+            const departmentsData = await departmentService.getAll();
+            const departmentsList = Array.isArray(departmentsData) ? departmentsData : [];
+            const chiefDepartment = resolveDepartment(departmentsList);
 
-            // Données mockées
-            const mockDepartments = [
-                { id: 1, name: 'Informatique' },
-                { id: 2, name: 'Mathématiques' },
-                { id: 3, name: 'Physique' }
-            ];
+            if (!chiefDepartment) {
+                throw new Error("Aucun departement n'est assigne a votre compte.");
+            }
 
-            const mockTeachers = [
-                { id: 1, name: 'Dr. Mamadou Diallo', email: 'mamadou@email.com' },
-                { id: 2, name: 'Prof. Aissatou Fall', email: 'aissatou@email.com' },
-                { id: 3, name: 'Dr. Omar Sow', email: 'omar@email.com' }
-            ];
+            const teachersData = await userService.getUsersByRoleAndDepartment('TEACHER', chiefDepartment.departmentId);
 
-            setDepartments(mockDepartments);
-            setTeachers(mockTeachers);
+            setDepartments([{ id: chiefDepartment.departmentId, name: chiefDepartment.name }]);
+            setTeachers(Array.isArray(teachersData) ? teachersData : []);
+            setFormData((prev) => ({
+                ...prev,
+                departmentId: chiefDepartment.departmentId.toString(),
+            }));
 
         } catch (error) {
-            toast.error("Erreur lors du chargement des données");
+            toast.error(error.message || "Erreur lors du chargement des donnees");
             console.error(error);
         }
     };
@@ -65,7 +78,6 @@ export default function CreateSubjectPage() {
             [name]: value
         }));
 
-        // Effacer l'erreur du champ modifié
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -78,17 +90,17 @@ export default function CreateSubjectPage() {
         const newErrors = {};
 
         if (!formData.libelle.trim()) {
-            newErrors.libelle = "Le libellé est requis";
+            newErrors.libelle = "Le libelle est requis";
         }
 
         if (!formData.code.trim()) {
             newErrors.code = "Le code est requis";
         } else if (formData.code.length < 4) {
-            newErrors.code = "Le code doit contenir au moins 4 caractères";
+            newErrors.code = "Le code doit contenir au moins 4 caracteres";
         }
 
         if (!formData.departmentId) {
-            newErrors.departmentId = "Le département est requis";
+            newErrors.departmentId = "Le departement est requis";
         }
 
         if (!formData.teacherId) {
@@ -96,11 +108,11 @@ export default function CreateSubjectPage() {
         }
 
         if (formData.credits && (isNaN(formData.credits) || formData.credits < 1)) {
-            newErrors.credits = "Le nombre de crédits doit être un nombre positif";
+            newErrors.credits = "Le nombre de credits doit etre un nombre positif";
         }
 
         if (formData.heuresCoursParSemaine && (isNaN(formData.heuresCoursParSemaine) || formData.heuresCoursParSemaine < 1)) {
-            newErrors.heuresCoursParSemaine = "Le nombre d'heures doit être un nombre positif";
+            newErrors.heuresCoursParSemaine = "Le nombre d'heures doit etre un nombre positif";
         }
 
         return newErrors;
@@ -118,20 +130,21 @@ export default function CreateSubjectPage() {
         setLoading(true);
 
         try {
-            // TODO: Appeler l'endpoint
-            // await subjectService.create({
-            //     ...formData,
-            //     credits: parseInt(formData.credits) || 0,
-            //     heuresCoursParSemaine: parseInt(formData.heuresCoursParSemaine) || 0,
-            //     departmentId: parseInt(formData.departmentId),
-            //     teacherId: parseInt(formData.teacherId)
-            // });
+            await subjectService.create({
+                name: formData.libelle,
+                code: formData.code.toUpperCase(),
+                description: formData.description,
+                credits: parseInt(formData.credits, 10) || 0,
+                heuresCoursParSemaine: parseInt(formData.heuresCoursParSemaine, 10) || 0,
+                departmentId: parseInt(formData.departmentId, 10),
+                teacherId: parseInt(formData.teacherId, 10)
+            });
 
-            toast.success("Matière créée avec succès");
+            toast.success("Matiere creee avec succes");
             router.push('/chief/subjects');
 
         } catch (error) {
-            toast.error(error.message || "Erreur lors de la création de la matière");
+            toast.error(error.message || "Erreur lors de la creation de la matiere");
             console.error(error);
         } finally {
             setLoading(false);
@@ -140,11 +153,10 @@ export default function CreateSubjectPage() {
 
     return (
         <div className="space-y-6">
-            {/* En-tête */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#312e81]">Créer une matière</h1>
-                    <p className="text-gray-600 mt-1">Ajoutez une nouvelle matière au département</p>
+                    <h1 className="text-3xl font-bold text-[#312e81]">Creer une matiere</h1>
+                    <p className="text-gray-600 mt-1">Ajoutez une nouvelle matiere au departement</p>
                 </div>
                 <Link href="/chief/subjects">
                     <Button variant="secondary">
@@ -156,14 +168,12 @@ export default function CreateSubjectPage() {
                 </Link>
             </div>
 
-            {/* Formulaire */}
             <div className="bg-white shadow rounded-lg">
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Libellé */}
                         <div>
                             <label htmlFor="libelle" className="block text-sm font-medium text-gray-700 mb-1">
-                                Libellé de la matière <span className="text-red-500">*</span>
+                                Libelle de la matiere <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -179,10 +189,9 @@ export default function CreateSubjectPage() {
                             )}
                         </div>
 
-                        {/* Code */}
                         <div>
                             <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">
-                                Code de la matière <span className="text-red-500">*</span>
+                                Code de la matiere <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -198,19 +207,19 @@ export default function CreateSubjectPage() {
                             )}
                         </div>
 
-                        {/* Département */}
                         <div>
                             <label htmlFor="departmentId" className="block text-sm font-medium text-gray-700 mb-1">
-                                Département <span className="text-red-500">*</span>
+                                Departement <span className="text-red-500">*</span>
                             </label>
                             <select
                                 id="departmentId"
                                 name="departmentId"
                                 value={formData.departmentId}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.departmentId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
+                                disabled
+                                className={`block w-full px-3 py-2 border ${errors.departmentId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm bg-gray-50`}
                             >
-                                <option value="">Sélectionner un département</option>
+                                <option value="">Selectionner un departement</option>
                                 {departments.map((dept) => (
                                     <option key={dept.id} value={dept.id}>
                                         {dept.name}
@@ -222,7 +231,6 @@ export default function CreateSubjectPage() {
                             )}
                         </div>
 
-                        {/* Enseignant */}
                         <div>
                             <label htmlFor="teacherId" className="block text-sm font-medium text-gray-700 mb-1">
                                 Enseignant responsable <span className="text-red-500">*</span>
@@ -234,7 +242,7 @@ export default function CreateSubjectPage() {
                                 onChange={handleChange}
                                 className={`block w-full px-3 py-2 border ${errors.teacherId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
                             >
-                                <option value="">Sélectionner un enseignant</option>
+                                <option value="">Selectionner un enseignant</option>
                                 {teachers.map((teacher) => (
                                     <option key={teacher.id} value={teacher.id}>
                                         {teacher.name}
@@ -246,10 +254,9 @@ export default function CreateSubjectPage() {
                             )}
                         </div>
 
-                        {/* Crédits */}
                         <div>
                             <label htmlFor="credits" className="block text-sm font-medium text-gray-700 mb-1">
-                                Nombre de crédits
+                                Nombre de credits
                             </label>
                             <input
                                 type="number"
@@ -266,7 +273,6 @@ export default function CreateSubjectPage() {
                             )}
                         </div>
 
-                        {/* Heures par semaine */}
                         <div>
                             <label htmlFor="heuresCoursParSemaine" className="block text-sm font-medium text-gray-700 mb-1">
                                 Heures de cours par semaine
@@ -287,7 +293,6 @@ export default function CreateSubjectPage() {
                         </div>
                     </div>
 
-                    {/* Description */}
                     <div>
                         <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
                             Description
@@ -299,11 +304,10 @@ export default function CreateSubjectPage() {
                             value={formData.description}
                             onChange={handleChange}
                             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
-                            placeholder="Description de la matière, objectifs, contenu..."
+                            placeholder="Description de la matiere, objectifs, contenu..."
                         />
                     </div>
 
-                    {/* Boutons */}
                     <div className="flex justify-end space-x-3 pt-6 border-t">
                         <Link href="/chief/subjects">
                             <Button type="button" variant="secondary">
@@ -317,14 +321,14 @@ export default function CreateSubjectPage() {
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
-                                    Création...
+                                    Creation...
                                 </>
                             ) : (
                                 <>
                                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/>
                                     </svg>
-                                    Créer la matière
+                                    Creer la matiere
                                 </>
                             )}
                         </Button>

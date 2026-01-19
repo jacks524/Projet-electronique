@@ -28,29 +28,19 @@ export default function EditClassPage() {
     const loadClassData = async () => {
         try {
             setLoading(true);
+            const classData = await classService.getById(classId);
 
-            // TODO: Remplacer par l'appel API réel
-            // const classData = await classService.getById(classId);
-
-            // Simulation
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            const mockClassData = {
-                name: "Génie Informatique 3ème année",
-                code: "GI3",
-                description: "Formation en développement logiciel et systèmes",
-                capacity: 50
-            };
+            const capacityValue = classData.capacity ?? classData.maxStudents ?? '';
 
             setFormData({
-                name: mockClassData.name,
-                code: mockClassData.code,
-                description: mockClassData.description || '',
-                capacity: mockClassData.capacity ? mockClassData.capacity.toString() : ''
+                name: classData.name || '',
+                code: classData.code || '',
+                description: classData.description || '',
+                capacity: capacityValue ? capacityValue.toString() : ''
             });
 
         } catch (error) {
-            toast.error("Erreur lors du chargement des données");
+            toast.error("Erreur lors du chargement des donnees");
             console.error(error);
         } finally {
             setLoading(false);
@@ -105,18 +95,14 @@ export default function EditClassPage() {
         try {
             setSaving(true);
 
-            // TODO: Remplacer par l'appel API réel
-            // await classService.update(classId, {
-            //     name: formData.name,
-            //     code: formData.code,
-            //     description: formData.description,
-            //     capacity: formData.capacity ? parseInt(formData.capacity) : null
-            // });
+            await classService.update(classId, {
+                name: formData.name,
+                code: formData.code,
+                description: formData.description,
+                capacity: formData.capacity ? parseInt(formData.capacity, 10) : null
+            });
 
-            // Simulation
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            toast.success("Classe modifiée avec succès !");
+            toast.success("Classe modifiee avec succes !");
             router.push(`/chief/classes/${classId}`);
 
         } catch (error) {

@@ -39,10 +39,43 @@ const getById = async (classId) => {
     }
 };
 
+
+const create = async (payload) => {
+    try {
+        const { data } = await apiClient.post('/class', payload);
+        return data;
+    } catch (error) {
+        console.error('Erreur API [createClass]:', error);
+        throw new Error("La creation de la classe a echoue.");
+    }
+};
+
+const update = async (classId, payload) => {
+    try {
+        const { data } = await apiClient.put(`/class/${classId}`, payload);
+        return data;
+    } catch (error) {
+        console.error('Erreur API [updateClass]:', error);
+        throw new Error("La mise a jour de la classe a echoue.");
+    }
+};
+
+const remove = async (classId) => {
+    try {
+        await apiClient.delete(`/class/${classId}`);
+    } catch (error) {
+        console.error('Erreur API [deleteClass]:', error);
+        throw new Error("La suppression de la classe a echoue.");
+    }
+};
+
 const classService = {
     getByDepartment,
     getByTeacher,
     getById,
+    create,
+    update,
+    remove,
 };
 
 export default classService;

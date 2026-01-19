@@ -14,6 +14,36 @@ const login = async (username, password) => {
 
             const rolesFromApi = response.data.role || response.data.roles || [];
             const userRoles = rolesFromApi.map(r => r.role.toUpperCase());
+            let resolvedDepartments = response.data.departmentNames || [];
+            let resolvedDepartmentIds = response.data.departmentsIds || [];
+            const departmentIdIfChief = response.data.departmentIdIfChief || decodedToken.departmentIdIfChief || decodedToken.departmentId || null;
+
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('authToken', fullToken);
+            }
+
+            try {
+                const { data: userDetails } = await apiClient.get(`/user/${decodedToken.userId}`);
+                resolvedDepartments = userDetails?.departmentsNames || resolvedDepartments;
+                resolvedDepartmentIds = userDetails?.departmentsIds || resolvedDepartmentIds;
+            } catch (detailsError) {
+                console.warn("Impossible de charger les details utilisateur apres connexion:", detailsError);
+            }
+
+            if ((!resolvedDepartments || resolvedDepartments.length == 0) && departmentIdIfChief) {
+                try {
+                    const { data: dept } = await apiClient.get(`/departments/${departmentIdIfChief}`);
+                    if (dept?.name) {
+                        resolvedDepartments = [dept.name];
+                    }
+                } catch (deptError) {
+                    console.warn("Impossible de charger le departement du chef:", deptError);
+                }
+            }
+
+            if ((!resolvedDepartmentIds || resolvedDepartmentIds.length == 0) && departmentIdIfChief) {
+                resolvedDepartmentIds = [departmentIdIfChief];
+            }
 
             let mainRole = 'USER';
             if (userRoles.includes('ADMIN')) mainRole = 'ADMIN';
@@ -27,10 +57,11 @@ const login = async (username, password) => {
                 email: decodedToken.email || 'Email non fourni',
                 role: mainRole,
                 roles: userRoles,
-                departmentNames: response.data.departmentNames || [],
+                departmentNames: resolvedDepartments,
+                departmentsIds: resolvedDepartmentIds,
+                departmentIdIfChief,
             };
 
-            localStorage.setItem('authToken', fullToken);
             localStorage.setItem('user', JSON.stringify(user));
 
             return { token: fullToken, user };

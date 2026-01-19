@@ -6,6 +6,10 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import ScheduleModal from '@/components/timetable/ScheduleModal';
+import classService from '@/services/classService';
+import timetableService from '@/services/timetableService';
+import subjectService from '@/services/subjectService';
+import scheduleService from '@/services/scheduleService';
 
 export default function EditClassTimetablePage() {
     const params = useParams();
@@ -16,6 +20,7 @@ export default function EditClassTimetablePage() {
     const [classe, setClasse] = useState(null);
     const [subjects, setSubjects] = useState([]);
     const [schedules, setSchedules] = useState([]);
+    const [timetableId, setTimetableId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [selectedSchedule, setSelectedSchedule] = useState(null);
@@ -24,56 +29,91 @@ export default function EditClassTimetablePage() {
 
     const daysOfWeek = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
     const timeSlots = ['08:00 - 10:00', '10:00 - 12:00', '14:00 - 16:00', '16:00 - 18:00'];
+    const dayEnum = {
+        Lundi: 'MONDAY',
+        Mardi: 'TUESDAY',
+        Mercredi: 'WEDNESDAY',
+        Jeudi: 'THURSDAY',
+        Vendredi: 'FRIDAY',
+        Samedi: 'SATURDAY'
+    };
+    const dayMap = {
+        MONDAY: 'Lundi',
+        TUESDAY: 'Mardi',
+        WEDNESDAY: 'Mercredi',
+        THURSDAY: 'Jeudi',
+        FRIDAY: 'Vendredi',
+        SATURDAY: 'Samedi',
+        SUNDAY: 'Dimanche'
+    };
 
     useEffect(() => {
         loadData();
 
-        // Vérifier si on doit ouvrir le modal directement
         const day = searchParams.get('day');
         const time = searchParams.get('time');
-        const scheduleId = searchParams.get('scheduleId');
 
         if (day && time) {
             setSelectedDay(day);
             setSelectedTime(time);
             setShowModal(true);
-        } else if (scheduleId) {
-            // Charger et éditer un schedule existant
-            setShowModal(true);
         }
     }, [classId, searchParams]);
+
+    const formatTime = (timeStr) => {
+        if (!timeStr) return '';
+        return timeStr.substring(0, 5);
+    };
 
     const loadData = async () => {
         try {
             setLoading(true);
-            // TODO: Appeler les endpoints
+            const [classData, timetableData] = await Promise.all([
+                classService.getById(classId),
+                timetableService.getByClass(classId)
+            ]);
 
-            const mockClass = {
-                id: classId,
-                name: '3GI',
-                level: 'Licence 3',
-                department: { name: 'Informatique' }
-            };
+            setClasse({
+                id: classData.classId,
+                name: classData.name,
+                level: classData.code || '---',
+                department: { name: classData.departementResponseDTO?.name || '' }
+            });
 
-            const mockSubjects = [
-                { id: 1, libelle: 'Programmation Web', code: 'INFO301', enseignant: { id: 1, nom: 'Dr. Mamadou Diallo' } },
-                { id: 2, libelle: 'Base de données', code: 'INFO302', enseignant: { id: 2, nom: 'Prof. Aissatou Fall' } },
-                { id: 3, libelle: 'Réseaux', code: 'INFO303', enseignant: { id: 3, nom: 'Dr. Omar Sow' } }
-            ];
+            const timetableSchedules = Array.isArray(timetableData?.schedules) ? timetableData.schedules : [];
+            const mappedSchedules = timetableSchedules.map((schedule) => {
+                const start = formatTime(schedule.startHour);
+                const end = formatTime(schedule.endHour);
+                return {
+                    id: schedule.scheduleId || schedule.id,
+                    jour: dayMap[schedule.day] || schedule.day,
+                    horaire: `${start} - ${end}`,
+                    matiere: {
+                        id: schedule.subject?.subjectId || schedule.subject?.id,
+                        libelle: schedule.subject?.name || schedule.subject?.libelle,
+                        code: schedule.subject?.code,
+                        enseignant: {
+                            id: schedule.teacher?.id,
+                            nom: schedule.teacher?.name
+                        }
+                    }
+                };
+            });
 
-            const mockSchedules = [
-                {
-                    id: 1,
-                    jour: 'Lundi',
-                    horaire: '08:00 - 10:00',
-                    matiere: mockSubjects[0],
-                    notes: 'Cours en salle informatique'
-                }
-            ];
+            setSchedules(mappedSchedules);
+            setTimetableId(timetableData?.timetableId || timetableData?.id || null);
 
-            setClasse(mockClass);
-            setSubjects(mockSubjects);
-            setSchedules(mockSchedules);
+            if (classData?.departementResponseDTO?.departmentId) {
+                const subjectsData = await subjectService.getByDepartment(classData.departementResponseDTO.departmentId);
+                setSubjects((Array.isArray(subjectsData) ? subjectsData : []).map((subject) => ({
+                    id: subject.subjectId || subject.id,
+                    libelle: subject.name || subject.libelle,
+                    code: subject.code,
+                    teacherId: subject.teacher?.id || subject.teacherId,
+                })));
+            } else {
+                setSubjects([]);
+            }
 
         } catch (error) {
             toast.error("Erreur lors du chargement");
@@ -92,24 +132,47 @@ export default function EditClassTimetablePage() {
 
     const handleSave = async (scheduleData) => {
         try {
-            // TODO: Appeler l'endpoint
-            toast.success(selectedSchedule ? "Cours modifié" : "Cours ajouté");
+            if (!timetableId) {
+                toast.error("Aucun emploi du temps n'existe pour cette classe.");
+                return;
+            }
+
+            const [startTime, endTime] = scheduleData.horaire.split(' - ');
+            const subjectId = scheduleData.matiere?.id;
+            const subjectMeta = subjects.find((subject) => subject.id === subjectId);
+            const teacherId = subjectMeta?.teacherId || scheduleData.matiere?.enseignant?.id;
+
+            if (!teacherId) {
+                toast.error("Aucun enseignant associe a cette matiere.");
+                return;
+            }
+
+            const payload = {
+                day: dayEnum[scheduleData.jour],
+                startHour: startTime,
+                endHour: endTime,
+                subjectId: subjectId,
+                timetableId: timetableId,
+                teacherId: teacherId
+            };
+
+            if (selectedSchedule?.id) {
+                await scheduleService.update(selectedSchedule.id, payload);
+                toast.success("Cours modifie");
+            } else {
+                await scheduleService.create(payload);
+                toast.success("Cours ajoute");
+            }
+
             setShowModal(false);
-            loadData();
+            await loadData();
         } catch (error) {
-            toast.error("Erreur lors de l'enregistrement");
+            toast.error(error.message || "Erreur lors de l'enregistrement");
         }
     };
 
     const handleDelete = async (scheduleId) => {
-        try {
-            // TODO: Appeler l'endpoint
-            toast.success("Cours supprimé");
-            setShowModal(false);
-            loadData();
-        } catch (error) {
-            toast.error("Erreur lors de la suppression");
-        }
+        toast.error("La suppression de cours n'est pas encore disponible.");
     };
 
     const findSchedule = (day, time) => {
@@ -167,7 +230,7 @@ export default function EditClassTimetablePage() {
                                                 <div className="p-2 rounded-md bg-violet-100 border border-violet-200 h-full min-h-[80px]">
                                                     <div className="font-medium text-[#312e81]">{schedule.matiere?.libelle}</div>
                                                     <div className="text-xs text-gray-500">Code: {schedule.matiere?.code}</div>
-                                                    <div className="text-xs text-gray-500">Prof: {schedule.matiere?.enseignant?.nom}</div>
+                                                    <div className="text-xs text-gray-500">Prof: {schedule.matiere?.enseignant?.nom || '---'}</div>
                                                 </div>
                                             ) : (
                                                 <div className="p-2 rounded-md bg-gray-50 border border-gray-100 h-full min-h-[80px] flex items-center justify-center">

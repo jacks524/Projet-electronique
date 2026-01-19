@@ -29,6 +29,19 @@ export default function StudentsPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  const resolveDepartment = (departmentsList) => {
+    if (user?.departmentIdIfChief) {
+      return departmentsList.find((dept) => dept.departmentId === user.departmentIdIfChief);
+    }
+    if (Array.isArray(user?.departmentsIds) && user.departmentsIds.length > 0) {
+      return departmentsList.find((dept) => dept.departmentId === user.departmentsIds[0]);
+    }
+    if (Array.isArray(user?.departmentNames) && user.departmentNames.length > 0) {
+      return departmentsList.find((dept) => dept.name === user.departmentNames[0]);
+    }
+    return null;
+  };
+
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated) {
@@ -50,12 +63,12 @@ export default function StudentsPage() {
     setErrorMessage('');
 
     try {
-      if (!user?.departmentNames || user.departmentNames.length === 0) {
+      const departments = await departmentService.getAll();
+      const targetDepartment = resolveDepartment(Array.isArray(departments) ? departments : []);
+
+      if (!targetDepartment) {
         throw new Error('Aucun departement assigne a votre compte.');
       }
-
-      const departments = await departmentService.getAll();
-      const targetDepartment = departments.find(d => d.name === user.departmentNames[0]);
 
       if (!targetDepartment) {
         throw new Error('Departement introuvable.');
@@ -84,7 +97,7 @@ export default function StudentsPage() {
             classe,
             dateNaissance: student.birthDate,
             lieuNaissance: student.birthPlace,
-            status: 'active',
+            status: typeof student.active === 'boolean' ? (student.active ? 'active' : 'inactive') : 'active',
           }));
         })
       );
@@ -92,7 +105,7 @@ export default function StudentsPage() {
       setClasses(mappedClasses);
       setStudents(studentsByClass.flat());
     } catch (error) {
-      setErrorMessage(error.message || 'Erreur lors du chargement des etudiants.');
+      setErrorMessage(error?.message || 'Erreur lors du chargement des etudiants.');
     } finally {
       setLoading(false);
     }
@@ -103,9 +116,12 @@ export default function StudentsPage() {
   };
 
   const filteredStudents = students.filter(student => {
-    if (filters.search && !student.nom.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !student.matricule.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !student.email.toLowerCase().includes(filters.search.toLowerCase())) {
+    if (
+      filters.search &&
+      !student.nom.toLowerCase().includes(filters.search.toLowerCase()) &&
+      !student.matricule.toLowerCase().includes(filters.search.toLowerCase()) &&
+      !student.email.toLowerCase().includes(filters.search.toLowerCase())
+    ) {
       return false;
     }
 
@@ -126,32 +142,38 @@ export default function StudentsPage() {
     setShowModal(true);
   };
 
-  const handleSaveStudent = (studentData) => {
-    if (studentData.id) {
-      setStudents(prev =>
-        prev.map(item =>
-          item.id === studentData.id ? { ...item, ...studentData } : item
-        )
-      );
+  const handleSaveStudent = async (studentData) => {
+    setErrorMessage('');
 
-      setSuccessMessage('Etudiant modifie avec succes');
-    } else {
-      const newStudent = {
-        ...studentData,
-        id: students.length + 1,
-        status: 'active'
+    try {
+      const payload = {
+        name: studentData.nom,
+        email: studentData.email,
+        phoneNumber: studentData.phone || null,
+        matricule: studentData.matricule,
+        classId: studentData.classe?.id,
+        birthDate: studentData.dateNaissance,
+        birthPlace: studentData.lieuNaissance || '',
       };
 
-      setStudents(prev => [...prev, newStudent]);
-      setSuccessMessage('Etudiant ajoute avec succes');
+      if (studentData.id) {
+        await studentService.update(studentData.id, payload);
+        setSuccessMessage('Etudiant modifie avec succes');
+      } else {
+        await studentService.create(payload);
+        setSuccessMessage('Etudiant ajoute avec succes');
+      }
+
+      setShowModal(false);
+      setSelectedStudent(null);
+      await loadData();
+
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+    } catch (error) {
+      setErrorMessage(error?.message || "Erreur lors de l'enregistrement de l'etudiant.");
     }
-
-    setShowModal(false);
-    setSelectedStudent(null);
-
-    setTimeout(() => {
-      setSuccessMessage('');
-    }, 3000);
   };
 
   const handleToggleStatus = (studentId) => {
@@ -259,7 +281,7 @@ export default function StudentsPage() {
               className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#312e81]"
             >
               <svg className="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
               </svg>
               Importer
             </button>
@@ -269,7 +291,7 @@ export default function StudentsPage() {
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#7c3aed] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed]"
             >
               <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               Ajouter
             </button>

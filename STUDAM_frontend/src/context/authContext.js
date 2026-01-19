@@ -3,6 +3,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import authService from '../services/authService';
 import { useRouter } from 'next/navigation';
+import departmentService from '../services/departmentService';
 
 const AuthContext = createContext(null);
 
@@ -13,12 +14,34 @@ export const AuthProvider = ({ children }) => {
     const router = useRouter();
 
     useEffect(() => {
-        const checkLoggedIn = () => {
+        const checkLoggedIn = async () => {
             const storedUser = authService.getUser();
             const tokenExists = authService.isAuthenticated();
 
             if (tokenExists && storedUser) {
-                setUser(storedUser);
+                let nextUser = storedUser;
+                if (storedUser.role === 'DEPARTMENT_MANAGER' &&
+                    (!storedUser.departmentNames || storedUser.departmentNames.length === 0)) {
+                    const fallbackDepartmentId = storedUser.departmentIdIfChief ||
+                        (Array.isArray(storedUser.departmentsIds) ? storedUser.departmentsIds[0] : null);
+                    if (fallbackDepartmentId) {
+                        try {
+                            const dept = await departmentService.getById(fallbackDepartmentId);
+                            if (dept?.name) {
+                                nextUser = {
+                                    ...storedUser,
+                                    departmentNames: [dept.name],
+                                    departmentsIds: [fallbackDepartmentId],
+                                    departmentIdIfChief: storedUser.departmentIdIfChief || fallbackDepartmentId,
+                                };
+                                localStorage.setItem('user', JSON.stringify(nextUser));
+                            }
+                        } catch (error) {
+                            console.warn('Impossible de charger le departement du chef:', error);
+                        }
+                    }
+                }
+                setUser(nextUser);
                 setIsAuthenticated(true);
             }
             setLoading(false);

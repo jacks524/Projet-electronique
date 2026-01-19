@@ -30,10 +30,43 @@ const getById = async (subjectId) => {
     }
 };
 
+
+const create = async (payload) => {
+    try {
+        const { data } = await apiClient.post('/subject', payload);
+        return data;
+    } catch (error) {
+        console.error('Erreur API [createSubject]:', error);
+        throw new Error(error.response?.data?.message || "La creation de la matiere a echoue.");
+    }
+};
+
+const update = async (subjectId, payload) => {
+    try {
+        const { data } = await apiClient.put(`/subject/${subjectId}`, payload);
+        return data;
+    } catch (error) {
+        console.error('Erreur API [updateSubject]:', error);
+        throw new Error(error.response?.data?.message || "La mise a jour de la matiere a echoue.");
+    }
+};
+
+const remove = async (subjectId) => {
+    try {
+        await apiClient.delete(`/subject/${subjectId}`);
+    } catch (error) {
+        console.error('Erreur API [deleteSubject]:', error);
+        throw new Error(error.response?.data?.message || "La suppression de la matiere a echoue.");
+    }
+};
+
 const subjectService = {
     getByTeacher,
     getByDepartment,
     getById,
+    create,
+    update,
+    remove,
 };
 
 export default subjectService;

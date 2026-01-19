@@ -3,130 +3,122 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
+import { useAuthContext } from '@/context/authContext';
+import subjectService from '@/services/subjectService';
+import departmentService from '@/services/departmentService';
+import classService from '@/services/classService';
+import timetableService from '@/services/timetableService';
 
 export default function SubjectsPage() {
     const router = useRouter();
-    const [user, setUser] = useState(null);
+    const { user, isAuthenticated, loading: authLoading } = useAuthContext();
+
     const [loading, setLoading] = useState(true);
     const [subjects, setSubjects] = useState([]);
-    const [departments, setDepartments] = useState([]);
-    const [selectedDepartment, setSelectedDepartment] = useState('');
+    const [classes, setClasses] = useState([]);
+    const [selectedClass, setSelectedClass] = useState('');
+    const [classSubjectIds, setClassSubjectIds] = useState(null);
     const [error, setError] = useState('');
+    const [department, setDepartment] = useState(null);
 
     useEffect(() => {
-        // Vérifier si l'utilisateur est connecté
-        if (typeof window !== 'undefined') {
-            const userStr = localStorage.getItem('user');
-            if (!userStr) {
-                router.push('/auth/login');
-                return;
-            }
-
-            try {
-                const currentUser = JSON.parse(userStr);
-                setUser(currentUser);
-                loadSubjects();
-                loadDepartments();
-            } catch (error) {
-                console.error('Erreur lors de la récupération des données utilisateur:', error);
-                router.push('/auth/login');
-                return;
-            }
+        if (authLoading) return;
+        if (!isAuthenticated) {
+            router.push('/auth/login');
+            return;
         }
-    }, [router]);
+        loadData();
+    }, [authLoading, isAuthenticated]);
 
-    const loadSubjects = async () => {
+    useEffect(() => {
+        if (!selectedClass) {
+            setClassSubjectIds(null);
+            return;
+        }
+        loadClassSubjects(selectedClass);
+    }, [selectedClass]);
+
+    const resolveDepartment = (departmentsList) => {
+        if (user?.departmentIdIfChief) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentIdIfChief);
+        }
+        if (Array.isArray(user?.departmentsIds) && user.departmentsIds.length > 0) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentsIds[0]);
+        }
+        if (Array.isArray(user?.departmentNames) && user.departmentNames.length > 0) {
+            return departmentsList.find((dept) => dept.name === user.departmentNames[0]);
+        }
+        return null;
+    };
+
+    const normalizeSubjects = (items, departmentInfo) => {
+        return (Array.isArray(items) ? items : []).map((subject) => ({
+            id: subject.subjectId || subject.id,
+            libelle: subject.name || subject.libelle || '--',
+            code: subject.code || '--',
+            credits: subject.credits || 0,
+            heuresParSemaine: subject.heuresCoursParSemaine || subject.heuresParSemaine || 0,
+            description: subject.description || '',
+            teacher: subject.teacher || subject.enseignant || null,
+            department: subject.department || subject.departement || departmentInfo || null,
+        }));
+    };
+
+    const loadData = async () => {
         setLoading(true);
         setError('');
 
         try {
-            // TODO: Remplacer par un vrai appel API
-            // const response = await fetch('http://agence-voyage.ddns.net:9026/api/subjects', {
-            //   headers: {
-            //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            //     'Content-Type': 'application/json'
-            //   }
-            // });
+            const departments = await departmentService.getAll();
+            const targetDepartment = resolveDepartment(Array.isArray(departments) ? departments : []);
 
-            // Simulation temporaire en attendant la connexion backend
-            setTimeout(() => {
-                setSubjects([
-                    {
-                        id: 1,
-                        libelle: 'Programmation Web',
-                        code: 'INFO301',
-                        credits: 4,
-                        heuresParSemaine: 6,
-                        departement: { id: 1, nom: 'Informatique' },
-                        enseignant: { nom: 'Dr. Amadou Diallo' },
-                        description: 'Introduction aux technologies web modernes'
-                    },
-                    {
-                        id: 2,
-                        libelle: 'Systèmes d\'exploitation',
-                        code: 'INFO204',
-                        credits: 3,
-                        heuresParSemaine: 4,
-                        departement: { id: 1, nom: 'Informatique' },
-                        enseignant: { nom: 'Prof. Fatou Fall' },
-                        description: 'Concepts fondamentaux des systèmes d\'exploitation'
-                    },
-                    {
-                        id: 3,
-                        libelle: 'Réseaux Informatiques',
-                        code: 'INFO305',
-                        credits: 4,
-                        heuresParSemaine: 5,
-                        departement: { id: 1, nom: 'Informatique' },
-                        enseignant: { nom: 'Dr. Moussa Sow' },
-                        description: 'Architecture et protocoles des réseaux'
-                    },
-                    {
-                        id: 4,
-                        libelle: 'Base de Données',
-                        code: 'INFO203',
-                        credits: 4,
-                        heuresParSemaine: 5,
-                        departement: { id: 1, nom: 'Informatique' },
-                        enseignant: { nom: 'Dr. Aisha Kane' },
-                        description: 'Conception et gestion des bases de données'
-                    },
-                    {
-                        id: 5,
-                        libelle: 'Intelligence Artificielle',
-                        code: 'INFO401',
-                        credits: 5,
-                        heuresParSemaine: 6,
-                        departement: { id: 1, nom: 'Informatique' },
-                        enseignant: { nom: 'Prof. Ibrahim Sarr' },
-                        description: 'Algorithmes et techniques d\'IA'
-                    }
-                ]);
-                setLoading(false);
-            }, 500);
+            if (!targetDepartment) {
+                throw new Error("Aucun departement n'est assigne a votre compte.");
+            }
+
+            const [subjectsData, classesData] = await Promise.all([
+                subjectService.getByDepartment(targetDepartment.departmentId),
+                classService.getByDepartment(targetDepartment.departmentId),
+            ]);
+
+            const normalizedSubjects = normalizeSubjects(subjectsData, targetDepartment);
+            const mappedClasses = (Array.isArray(classesData) ? classesData : []).map((classe) => ({
+                id: classe.classId,
+                name: classe.name,
+                code: classe.code,
+            }));
+
+            setDepartment(targetDepartment);
+            setSubjects(normalizedSubjects);
+            setClasses(mappedClasses);
 
         } catch (error) {
-            console.error('Erreur lors du chargement des matières:', error);
-            setError('Impossible de charger les matières. Veuillez réessayer.');
+            console.error('Erreur lors du chargement des matieres:', error);
+            setError(error.message || 'Impossible de charger les matieres. Veuillez reessayer.');
+        } finally {
             setLoading(false);
         }
     };
 
-    const loadDepartments = async () => {
+    const loadClassSubjects = async (classId) => {
         try {
-            // TODO: Remplacer par un vrai appel API
-            setDepartments([
-                { id: 1, nom: 'Informatique' },
-                { id: 2, nom: 'Mathématiques' },
-                { id: 3, nom: 'Physique' }
-            ]);
+            const timetableData = await timetableService.getByClass(classId);
+            const schedules = Array.isArray(timetableData?.schedules) ? timetableData.schedules : [];
+            const subjectIds = new Set();
+            schedules.forEach((schedule) => {
+                const id = schedule.subject?.subjectId || schedule.subject?.id;
+                if (id) subjectIds.add(id);
+            });
+            setClassSubjectIds(Array.from(subjectIds));
         } catch (error) {
-            console.error('Erreur lors du chargement des départements:', error);
+            toast.error(error.message || "Impossible de charger les matieres de la classe.");
+            setClassSubjectIds([]);
         }
     };
 
-    const filteredSubjects = selectedDepartment
-        ? subjects.filter(subject => subject.departement.id.toString() === selectedDepartment)
+    const filteredSubjects = classSubjectIds
+        ? subjects.filter(subject => classSubjectIds.includes(subject.id))
         : subjects;
 
     if (loading) {
@@ -144,55 +136,52 @@ export default function SubjectsPage() {
     return (
         <div className="min-h-screen bg-gray-100 py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-[#312e81]">Matières</h1>
+                            <h1 className="text-3xl font-bold text-[#312e81]">Matieres</h1>
                             <p className="mt-2 text-gray-600">
-                                Gestion des matières et des enseignements
+                                Gestion des matieres du departement {department?.name || ''}
                             </p>
                         </div>
                         <Link
-                            href="/dashboard"
-                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed]"
+                            href="/chief/subjects/create"
+                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#7c3aed] hover:bg-opacity-90"
                         >
                             <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/>
                             </svg>
-                            Retour au dashboard
+                            Ajouter une matiere
                         </Link>
                     </div>
                 </div>
 
-                {/* Filtres */}
                 <div className="mb-6 bg-white p-4 rounded-lg shadow">
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1">
-                            <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">
-                                Filtrer par département
+                            <label htmlFor="class" className="block text-sm font-medium text-gray-700 mb-2">
+                                Filtrer par classe
                             </label>
                             <select
-                                id="department"
-                                value={selectedDepartment}
-                                onChange={(e) => setSelectedDepartment(e.target.value)}
+                                id="class"
+                                value={selectedClass}
+                                onChange={(e) => setSelectedClass(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed]"
                             >
-                                <option value="">Tous les départements</option>
-                                {departments.map((dept) => (
-                                    <option key={dept.id} value={dept.id}>{dept.nom}</option>
+                                <option value="">Toutes les classes</option>
+                                {classes.map((classe) => (
+                                    <option key={classe.id} value={classe.id}>{classe.name}</option>
                                 ))}
                             </select>
                         </div>
                         <div className="flex items-end">
-              <span className="text-sm text-gray-500">
-                {filteredSubjects.length} matière(s) trouvée(s)
-              </span>
+                            <span className="text-sm text-gray-500">
+                                {filteredSubjects.length} matiere(s) trouvee(s)
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                {/* Message d'erreur */}
                 {error && (
                     <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
                         <div className="flex">
@@ -206,16 +195,15 @@ export default function SubjectsPage() {
                     </div>
                 )}
 
-                {/* Liste des matières */}
                 {filteredSubjects.length === 0 ? (
                     <div className="bg-white rounded-lg shadow p-8">
                         <div className="text-center">
                             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                             </svg>
-                            <h3 className="mt-2 text-sm font-medium text-gray-900">Aucune matière</h3>
+                            <h3 className="mt-2 text-sm font-medium text-gray-900">Aucune matiere</h3>
                             <p className="mt-1 text-sm text-gray-500">
-                                Aucune matière ne correspond aux critères sélectionnés.
+                                Aucune matiere ne correspond aux criteres selectionnes.
                             </p>
                         </div>
                     </div>
@@ -241,30 +229,30 @@ export default function SubjectsPage() {
                                             </div>
 
                                             <div className="mt-4 space-y-2">
-                                                <p className="text-sm text-gray-600">{subject.description}</p>
+                                                <p className="text-sm text-gray-600">{subject.description || 'Aucune description fournie.'}</p>
 
                                                 <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-                          <span className="flex items-center">
-                            <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
-                              {subject.enseignant.nom}
-                          </span>
                                                     <span className="flex items-center">
-                            <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2-2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                            </svg>
-                                                        {subject.departement.nom}
-                          </span>
+                                                        <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                                        </svg>
+                                                        {subject.teacher?.name || subject.teacher?.nom || 'Enseignant non assigne'}
+                                                    </span>
+                                                    <span className="flex items-center">
+                                                        <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2-2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                                        </svg>
+                                                        {subject.department?.name || 'Departement'}
+                                                    </span>
                                                 </div>
 
                                                 <div className="flex gap-4 text-sm">
-                          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            {subject.credits} crédits
-                          </span>
+                                                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                                        {subject.credits} credits
+                                                    </span>
                                                     <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
-                            {subject.heuresParSemaine}h/semaine
-                          </span>
+                                                        {subject.heuresParSemaine}h/semaine
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -272,13 +260,16 @@ export default function SubjectsPage() {
 
                                     <div className="mt-6 flex justify-end space-x-3">
                                         <Link
-                                            href={`/src/app/chief/subjects/${subject.id}/attendance`}
-                                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#7c3aed] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed]"
+                                            href={`/chief/subjects/${subject.id}`}
+                                            className="inline-flex items-center px-3 py-2 border border-gray-200 text-sm leading-4 font-medium rounded-md text-gray-700 hover:bg-gray-50"
                                         >
-                                            <svg className="-ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            </svg>
-                                            Voir présences
+                                            Voir details
+                                        </Link>
+                                        <Link
+                                            href={`/chief/timetables?subject=${subject.id}`}
+                                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-[#7c3aed] hover:bg-opacity-90"
+                                        >
+                                            Voir emploi du temps
                                         </Link>
                                     </div>
                                 </div>
@@ -286,60 +277,6 @@ export default function SubjectsPage() {
                         ))}
                     </div>
                 )}
-
-                {/* Actions rapides */}
-                <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Link
-                        href="/presence"
-                        className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow border border-gray-200"
-                    >
-                        <div className="flex items-center">
-                            <div className="flex-shrink-0">
-                                <svg className="h-8 w-8 text-[#7c3aed]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </div>
-                            <div className="ml-4">
-                                <h3 className="text-lg font-medium text-[#312e81]">Prendre les présences</h3>
-                                <p className="text-sm text-gray-500">Enregistrer les présences pour vos matières</p>
-                            </div>
-                        </div>
-                    </Link>
-
-                    <Link
-                        href="/admin/teachers"
-                        className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow border border-gray-200"
-                    >
-                        <div className="flex items-center">
-                            <div className="flex-shrink-0">
-                                <svg className="h-8 w-8 text-[#312e81]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                </svg>
-                            </div>
-                            <div className="ml-4">
-                                <h3 className="text-lg font-medium text-[#312e81]">Gérer les enseignants</h3>
-                                <p className="text-sm text-gray-500">Consulter et gérer les enseignants</p>
-                            </div>
-                        </div>
-                    </Link>
-
-                    <Link
-                        href="/timetable"
-                        className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow border border-gray-200"
-                    >
-                        <div className="flex items-center">
-                            <div className="flex-shrink-0">
-                                <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                </svg>
-                            </div>
-                            <div className="ml-4">
-                                <h3 className="text-lg font-medium text-[#312e81]">Emploi du temps</h3>
-                                <p className="text-sm text-gray-500">Consulter les plannings des matières</p>
-                            </div>
-                        </div>
-                    </Link>
-                </div>
             </div>
         </div>
     );

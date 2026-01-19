@@ -16,6 +16,19 @@ export default function ClassesReportPage() {
     const [sortBy, setSortBy] = useState('name');
     const [sortOrder, setSortOrder] = useState('asc');
 
+    const resolveDepartment = (departmentsList) => {
+        if (user?.departmentIdIfChief) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentIdIfChief);
+        }
+        if (Array.isArray(user?.departmentsIds) && user.departmentsIds.length > 0) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentsIds[0]);
+        }
+        if (Array.isArray(user?.departmentNames) && user.departmentNames.length > 0) {
+            return departmentsList.find((dept) => dept.name === user.departmentNames[0]);
+        }
+        return null;
+    };
+
     useEffect(() => {
         loadClasses();
     }, [user]);
@@ -24,26 +37,15 @@ export default function ClassesReportPage() {
         try {
             setLoading(true);
 
-            if (!user?.departmentNames || user.departmentNames.length === 0) {
-                toast.error("Aucun département assigné");
-                return;
-            }
-
             const allDepartments = await departmentService.getAll();
-            const targetDepartment = allDepartments.find(
-                d => d.name === user.departmentNames[0]
-            );
+
+            const targetDepartment = resolveDepartment(Array.isArray(allDepartments) ? allDepartments : []);
 
             if (!targetDepartment) {
-                throw new Error("Département non trouvé");
+                throw new Error('Aucun departement assigne');
             }
 
-            const classesData = await classService.getByDepartment({
-                departmentId: targetDepartment.departmentId,
-                name: "temp",
-                code: "temp",
-                description: "temp"
-            });
+            const classesData = await classService.getByDepartment(targetDepartment.departmentId);
 
             // Enrichir avec des statistiques simulées
             const enrichedClasses = classesData.map(classe => ({

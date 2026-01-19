@@ -5,10 +5,14 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
+import { useAuthContext } from '@/context/authContext';
+import userService from '@/services/userService';
+import departmentService from '@/services/departmentService';
 
 export default function EditTeacherPage() {
     const params = useParams();
     const router = useRouter();
+    const { user } = useAuthContext();
     const teacherId = params.id;
 
     const [formData, setFormData] = useState({
@@ -29,42 +33,47 @@ export default function EditTeacherPage() {
         loadData();
     }, [teacherId]);
 
+    const resolveDepartment = (departmentsList) => {
+        if (user?.departmentIdIfChief) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentIdIfChief);
+        }
+        if (Array.isArray(user?.departmentsIds) && user.departmentsIds.length > 0) {
+            return departmentsList.find((dept) => dept.departmentId === user.departmentsIds[0]);
+        }
+        if (Array.isArray(user?.departmentNames) && user.departmentNames.length > 0) {
+            return departmentsList.find((dept) => dept.name === user.departmentNames[0]);
+        }
+        return null;
+    };
+
     const loadData = async () => {
         try {
             setLoading(true);
-            // TODO: Appeler les endpoints
-            // const teacherData = await userService.getById(teacherId);
-            // const departmentsData = await departmentService.getAll();
+            const [teacherData, departmentsData] = await Promise.all([
+                userService.getById(teacherId),
+                departmentService.getAll(),
+            ]);
 
-            const mockTeacher = {
-                id: teacherId,
-                name: 'Dr. Mamadou Diallo',
-                email: 'mamadou.diallo@email.com',
-                username: 'mdiallo',
-                phoneNumber: '+221 77 123 45 67',
-                matricule: 'TEACH2024001',
-                departmentId: 1
-            };
+            const departmentsList = Array.isArray(departmentsData) ? departmentsData : [];
+            const chiefDepartment = resolveDepartment(departmentsList);
 
-            const mockDepartments = [
-                { id: 1, name: 'Informatique' },
-                { id: 2, name: 'Mathématiques' },
-                { id: 3, name: 'Physique' }
-            ];
+            if (!chiefDepartment) {
+                throw new Error("Aucun departement n'est assigne a votre compte.");
+            }
 
             setFormData({
-                name: mockTeacher.name,
-                email: mockTeacher.email,
-                username: mockTeacher.username,
-                phoneNumber: mockTeacher.phoneNumber || '',
-                matricule: mockTeacher.matricule,
-                departmentId: mockTeacher.departmentId.toString()
+                name: teacherData?.name || '',
+                email: teacherData?.email || '',
+                username: teacherData?.username || '',
+                phoneNumber: teacherData?.phoneNumber || '',
+                matricule: teacherData?.matricule || '',
+                departmentId: chiefDepartment.departmentId.toString(),
             });
 
-            setDepartments(mockDepartments);
+            setDepartments([{ id: chiefDepartment.departmentId, name: chiefDepartment.name }]);
 
         } catch (error) {
-            toast.error("Erreur lors du chargement des données");
+            toast.error(error.message || "Erreur lors du chargement des donnees");
             console.error(error);
         } finally {
             setLoading(false);
@@ -108,7 +117,7 @@ export default function EditTeacherPage() {
         }
 
         if (!formData.departmentId) {
-            newErrors.departmentId = "Le département est requis";
+            newErrors.departmentId = "Le departement est requis";
         }
 
         return newErrors;
@@ -126,17 +135,21 @@ export default function EditTeacherPage() {
         setSaving(true);
 
         try {
-            // TODO: Appeler l'endpoint
-            // await userService.update(teacherId, {
-            //     ...formData,
-            //     departmentId: parseInt(formData.departmentId)
-            // });
+            await userService.update(teacherId, {
+                name: formData.name,
+                email: formData.email,
+                username: formData.username,
+                phoneNumber: formData.phoneNumber,
+                matricule: formData.matricule,
+                departmentId: parseInt(formData.departmentId, 10),
+                role: 'TEACHER',
+            });
 
-            toast.success("Enseignant modifié avec succès");
+            toast.success("Enseignant modifie avec succes");
             router.push(`/chief/teachers/${teacherId}`);
 
         } catch (error) {
-            toast.error("Erreur lors de la modification");
+            toast.error(error.message || "Erreur lors de la modification");
             console.error(error);
         } finally {
             setSaving(false);
@@ -156,11 +169,10 @@ export default function EditTeacherPage() {
 
     return (
         <div className="space-y-6">
-            {/* En-tête */}
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold text-[#312e81]">Modifier l'enseignant</h1>
-                    <p className="text-gray-600 mt-1">Mettez à jour les informations de l'enseignant</p>
+                    <p className="text-gray-600 mt-1">Mettez a jour les informations de l'enseignant</p>
                 </div>
                 <Link href={`/chief/teachers/${teacherId}`}>
                     <Button variant="secondary">
@@ -172,11 +184,9 @@ export default function EditTeacherPage() {
                 </Link>
             </div>
 
-            {/* Formulaire */}
             <div className="bg-white shadow rounded-lg">
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Nom complet */}
                         <div className="md:col-span-2">
                             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                                 Nom complet <span className="text-red-500">*</span>
@@ -194,7 +204,6 @@ export default function EditTeacherPage() {
                             )}
                         </div>
 
-                        {/* Email */}
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                                 Email <span className="text-red-500">*</span>
@@ -212,10 +221,9 @@ export default function EditTeacherPage() {
                             )}
                         </div>
 
-                        {/* Téléphone */}
                         <div>
                             <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
-                                Numéro de téléphone
+                                Numero de telephone
                             </label>
                             <input
                                 type="tel"
@@ -227,7 +235,6 @@ export default function EditTeacherPage() {
                             />
                         </div>
 
-                        {/* Nom d'utilisateur */}
                         <div>
                             <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                                 Nom d'utilisateur <span className="text-red-500">*</span>
@@ -245,7 +252,6 @@ export default function EditTeacherPage() {
                             )}
                         </div>
 
-                        {/* Matricule */}
                         <div>
                             <label htmlFor="matricule" className="block text-sm font-medium text-gray-700 mb-1">
                                 Matricule <span className="text-red-500">*</span>
@@ -263,19 +269,19 @@ export default function EditTeacherPage() {
                             )}
                         </div>
 
-                        {/* Département */}
                         <div className="md:col-span-2">
                             <label htmlFor="departmentId" className="block text-sm font-medium text-gray-700 mb-1">
-                                Département <span className="text-red-500">*</span>
+                                Departement <span className="text-red-500">*</span>
                             </label>
                             <select
                                 id="departmentId"
                                 name="departmentId"
                                 value={formData.departmentId}
                                 onChange={handleChange}
-                                className={`block w-full px-3 py-2 border ${errors.departmentId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
+                                disabled
+                                className={`block w-full px-3 py-2 border ${errors.departmentId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm bg-gray-50`}
                             >
-                                <option value="">Sélectionner un département</option>
+                                <option value="">Selectionner un departement</option>
                                 {departments.map((dept) => (
                                     <option key={dept.id} value={dept.id}>
                                         {dept.name}
@@ -288,7 +294,6 @@ export default function EditTeacherPage() {
                         </div>
                     </div>
 
-                    {/* Information */}
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                         <div className="flex">
                             <div className="flex-shrink-0">
@@ -299,13 +304,12 @@ export default function EditTeacherPage() {
                             <div className="ml-3">
                                 <h3 className="text-sm font-medium text-yellow-800">Remarque</h3>
                                 <div className="mt-2 text-sm text-yellow-700">
-                                    <p>Pour modifier le mot de passe, utilisez la fonction de réinitialisation.</p>
+                                    <p>Pour modifier le mot de passe, utilisez la fonction de reinitialisation.</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Boutons */}
                     <div className="flex justify-end space-x-3 pt-6 border-t">
                         <Link href={`/chief/teachers/${teacherId}`}>
                             <Button type="button" variant="secondary">

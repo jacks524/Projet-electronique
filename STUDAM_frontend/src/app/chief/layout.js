@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthContext } from '../../context/authContext';
 import { getRoleLabel } from '../../lib/roles';
+import reportService from '../../services/reportService';
 
 const BiometricLogo = ({ className = "w-10 h-10" }) => (
   <svg className={className} viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -69,13 +70,31 @@ export default function ChiefLayout({ children }) {
     const userRole = user?.role?.toUpperCase();
     if (!isAuthenticated || (userRole !== 'DEPARTMENT_MANAGER' && userRole !== 'ADMIN')) {
       router.push('/auth/login');
+      return;
     }
 
-    setRecentActivity([
-      { id: 1, description: 'Nouveau cours assigne', timestamp: 'Il y a 1 heure', icon: 'subjects' },
-      { id: 2, description: 'Rapport mensuel genere', timestamp: 'Hier', icon: 'reports' },
-      { id: 3, description: 'Mise a jour des classes', timestamp: 'Il y a 3 jours', icon: 'classes' },
-    ]);
+    const loadRecentActivity = async () => {
+      const departmentId = user?.departmentIdIfChief || (Array.isArray(user?.departmentsIds) && user.departmentsIds.length > 0 ? user.departmentsIds[0] : undefined);
+      const activities = await reportService.getRecentActivity(5, departmentId);
+      const mapped = (Array.isArray(activities) ? activities : []).map((activity) => {
+        const type = (activity?.type || activity?.action || activity?.category || activity?.description || '').toString().toLowerCase();
+        let icon = 'reports';
+        if (type.includes('class')) icon = 'classes';
+        if (type.includes('subject') || type.includes('matiere')) icon = 'subjects';
+        if (type.includes('teacher') || type.includes('enseignant') || type.includes('user')) icon = 'teachers';
+        if (type.includes('timetable') || type.includes('emploi')) icon = 'timetables';
+        if (type.includes('report') || type.includes('rapport')) icon = 'reports';
+        return {
+          id: activity.id || `${activity.description}-${activity.timestamp}`,
+          description: activity.description || 'Activite recente',
+          timestamp: activity.timestamp || '',
+          icon,
+        };
+      });
+      setRecentActivity(mapped);
+    };
+
+    loadRecentActivity();
   }, [user, isAuthenticated, authLoading, router]);
 
   const getGreeting = () => {

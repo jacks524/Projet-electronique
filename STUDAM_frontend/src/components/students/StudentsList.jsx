@@ -87,7 +87,7 @@ const StudentsList = ({
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <div className="flex space-x-2">
                   <Link 
-                    href={`/src/app/chief/students/${student.id}`}
+                    href={`/chief/students/${student.id}`}
                     className="text-blue-600 hover:text-blue-800"
                   >
                     <span className="sr-only">Voir</span>
