@@ -106,4 +106,10 @@ public class SchedulerService {
     payload.put("timetableId", schedule.getTimetable() != null ? schedule.getTimetable().getTimetableId() : null);
     webSocketEventPublisher.publish(type, payload);
   }
+
+  public void deleteSchedule(int id) {
+    Schedule schedule = schedulerLookupService.getScheduleById(id);
+    schedulerRepository.delete(schedule);
+    publishScheduleEvent("schedule.deleted", schedule);
+  }
 }

@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -51,6 +52,18 @@ public class ScheduleController {
       @PathVariable int id) {
     Schedule schedule = this.schedulerService.updateSchedule(id, entity);
     return ResponseEntity.ok(ScheduleResponseDTO.toDTO(schedule));
+  }
+
+  @DeleteMapping("/{id}")
+  @Operation(summary = "Delete a schedule", description = "Deletes a schedule entry from the system.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "204", description = "Schedule successfully deleted."),
+      @ApiResponse(responseCode = "404", description = "Schedule not found."),
+      @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred during the deletion process.")
+  })
+  public ResponseEntity<Void> deleteSchedule(@PathVariable int id) {
+    this.schedulerService.deleteSchedule(id);
+    return ResponseEntity.noContent().build();
   }
 
 }
