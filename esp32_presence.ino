@@ -1,4 +1,3 @@
-16011546;22M451;22p368;
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
