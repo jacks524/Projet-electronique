@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://tchassidaniel-spring-boot-app--8080.prod2.defang.dev/api';
+const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://projet-electronique.onrender.com/api';
 
 // 2. On crée une seule instance d'Axios qui sera utilisée partout.
 const apiClient = axios.create({

@@ -1,0 +1,10 @@
+{
+  "name": "projet-electronique",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix STUDAM_frontend run dev",
+    "build": "npm --prefix STUDAM_frontend run build",
+    "start": "npm --prefix STUDAM_frontend run start",
+    "lint": "npm --prefix STUDAM_frontend run lint"
+  }
+}
