@@ -11,12 +11,15 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +28,7 @@ import enspy.studam.studam_web.dto.requestDTO.AttendanceRequestDTO;
 import enspy.studam.studam_web.models.Subject;
 import enspy.studam.studam_web.models.User;
 import enspy.studam.studam_web.services.AttendanceService;
+import enspy.studam.studam_web.services.FingerprintTextStore;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
 import enspy.studam.studam_web.services.lookup.SubjectLookupService;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -49,6 +53,7 @@ public class FingerPrintController {
   private final AttendanceService attendanceService;
   private final SubjectLookupService subjectLookupService;
   private final UserLookupService userLookupService;
+  private final FingerprintTextStore fingerprintTextStore;
 
   @Hidden
   @PostMapping("/saveBySchedule")
@@ -111,10 +116,23 @@ public class FingerPrintController {
     try {
       ParsedAttendance parsed = parsePresenceText(rawText, sessionDate);
       this.attendanceService.saveAttendance(parsed.attendances, parsed.sessionDate);
+      fingerprintTextStore.save(rawText, sessionDate);
       return ResponseEntity.ok("Parsed successfully: " + parsed.attendances.size() + " records");
     } catch (IOException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error parsing text payload");
     }
+  }
+
+  @GetMapping(value = "/text", produces = "text/plain")
+  @Operation(summary = "Get last attendance text payload", description = "Returns the last raw TXT payload received from a fingerprint device.")
+  public ResponseEntity<String> getLastAttendanceText() {
+    FingerprintTextStore.StoredFingerprintText stored = fingerprintTextStore.getLast()
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No text payload available"));
+    return ResponseEntity.ok()
+        .contentType(MediaType.TEXT_PLAIN)
+        .header(HttpHeaders.LAST_MODIFIED, stored.getReceivedAt().toString())
+        .header("X-Session-Date", stored.getSessionDate() != null ? stored.getSessionDate() : "")
+        .body(stored.getRawText());
   }
 
   private ParsedAttendance parsePresenceText(String rawText, String sessionDate) throws IOException {
