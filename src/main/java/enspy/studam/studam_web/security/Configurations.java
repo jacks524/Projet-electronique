@@ -41,6 +41,7 @@ public class Configurations {
                   .requestMatchers("/fingerprint/text", "/api/fingerprint/text").permitAll()
                   .requestMatchers("/public/time", "/api/public/time").permitAll()
                   .requestMatchers("/public/time/**", "/api/public/time/**").permitAll()
+                  .requestMatchers("/ws", "/ws/**").permitAll()
                   .requestMatchers("/swagger-ui/**", "/api/swagger-ui/**").permitAll()
                   .requestMatchers("/v3/api-docs/**", "/api/v3/api-docs/**").permitAll()
                   .anyRequest().authenticated();

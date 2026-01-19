@@ -25,6 +25,7 @@ import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
 import enspy.studam.studam_web.services.lookup.SubjectLookupService;
 import enspy.studam.studam_web.services.lookup.StudentLookupService;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
+import enspy.studam.studam_web.websocket.WebSocketEventPublisher;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
@@ -39,6 +40,7 @@ public class UserService implements UserDetailsService {
   private SubjectLookupService subjectLookupService;
   private DepartmentLookupService departmentLookupService;
   private final StudentLookupService studentLookupService;
+  private final WebSocketEventPublisher webSocketEventPublisher;
 
   @Override
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -162,9 +164,19 @@ public class UserService implements UserDetailsService {
       }
       this.departmentLookupService.assignDepartmentManager(departments.get(0), teacher);
       this.departmentLookupService.updateDepartmentsForUser(departments, teacher);
+      publishUserDepartmentsAssigned(teacher, departments);
       return;
     }
     this.departmentLookupService.assignDepartmentsToUser(departments, teacher);
+    publishUserDepartmentsAssigned(teacher, departments);
+  }
+
+  private void publishUserDepartmentsAssigned(User user, List<Integer> departments) {
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("userId", user.getId());
+    payload.put("name", user.getName());
+    payload.put("departmentsIds", departments == null ? java.util.List.of() : departments);
+    webSocketEventPublisher.publish("user.departments.assigned", payload);
   }
 
 }

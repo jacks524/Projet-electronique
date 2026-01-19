@@ -23,7 +23,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import enspy.studam.studam_web.dto.requestDTO.AttendanceRequestDTO;
 import enspy.studam.studam_web.models.Subject;
+import enspy.studam.studam_web.models.User;
 import enspy.studam.studam_web.services.AttendanceService;
+import enspy.studam.studam_web.services.lookup.UserLookupService;
 import enspy.studam.studam_web.services.lookup.SubjectLookupService;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +35,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/fingerprint")
@@ -40,8 +44,11 @@ import lombok.AllArgsConstructor;
 @Tag(name = "Fingerprint Management", description = "APIs for receiving data from fingerprint devices")
 public class FingerPrintController {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(FingerPrintController.class);
+
   private final AttendanceService attendanceService;
   private final SubjectLookupService subjectLookupService;
+  private final UserLookupService userLookupService;
 
   @Hidden
   @PostMapping("/saveBySchedule")
@@ -102,15 +109,15 @@ public class FingerPrintController {
       @RequestBody String rawText,
       @RequestParam(name = "sessionDate", required = false) String sessionDate) {
     try {
-      List<AttendanceRequestDTO> attendances = parsePresenceText(rawText, sessionDate);
-      this.attendanceService.saveAttendance(attendances);
-      return ResponseEntity.ok("Parsed successfully: " + attendances.size() + " records");
+      ParsedAttendance parsed = parsePresenceText(rawText, sessionDate);
+      this.attendanceService.saveAttendance(parsed.attendances, parsed.sessionDate);
+      return ResponseEntity.ok("Parsed successfully: " + parsed.attendances.size() + " records");
     } catch (IOException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error parsing text payload");
     }
   }
 
-  private List<AttendanceRequestDTO> parsePresenceText(String rawText, String sessionDate) throws IOException {
+  private ParsedAttendance parsePresenceText(String rawText, String sessionDate) throws IOException {
     List<AttendanceRequestDTO> attendances = new ArrayList<>();
     BufferedReader reader = new BufferedReader(new StringReader(rawText));
     String line;
@@ -125,56 +132,127 @@ public class FingerPrintController {
       }
     }
 
-    String expectedTeacher = null;
-    Integer expectedSubjectId = null;
+    String headerTeacher = null;
+    String headerSubjectName = null;
+    Integer subjectId = null;
+    Long headerMillis = null;
+    boolean footerSeen = false;
 
     while ((line = reader.readLine()) != null) {
       lineNumber++;
       line = line.trim();
       if (line.isEmpty() || line.startsWith("---")) {
+        if (line.startsWith("---")) {
+          if (footerSeen) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Multiple footer lines detected at line " + lineNumber);
+          }
+          footerSeen = true;
+          String footerTeacher = extractFooterTeacher(line);
+          if (footerTeacher == null || headerTeacher == null || !footerTeacher.equals(headerTeacher)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Footer teacher matricule mismatch at line " + lineNumber);
+          }
+        }
         continue;
+      }
+      if (footerSeen) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            "Data found after footer line at " + lineNumber);
       }
 
       char delimiter = line.contains(";") ? ';' : ',';
       String[] parts = line.split(java.util.regex.Pattern.quote(String.valueOf(delimiter)), -1);
-      if (parts.length < 4) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid line at " + lineNumber);
+      if (headerTeacher == null) {
+        if (parts.length < 3) {
+          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid header line at " + lineNumber);
+        }
+        headerMillis = parseMillis(parts[0].trim(), lineNumber);
+        headerTeacher = parts[1].trim();
+        headerSubjectName = parts[2].trim();
+
+        User teacher = resolveTeacher(headerTeacher);
+        Subject subject = resolveSubject(headerSubjectName);
+        subjectId = subject.getSubjectId();
+        if (teacher == null || subjectId == null) {
+          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown teacher or subject in header");
+        }
+        continue;
       }
 
-      long elapsedMillis;
-      try {
-        elapsedMillis = Long.parseLong(parts[0].trim());
-      } catch (NumberFormatException ex) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid millis at line " + lineNumber);
+      if (parts.length < 2) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid student line at " + lineNumber);
       }
 
-      String teacherMatricule = parts[1].trim();
-      String subjectName = parts[2].trim();
-      String studentMatricule = parts[3].trim();
-
-      Subject subject = subjectLookupService.getSubjectByName(subjectName);
-      int subjectId = subject.getSubjectId();
-
-      if (expectedTeacher == null) {
-        expectedTeacher = teacherMatricule;
-        expectedSubjectId = subjectId;
-      } else if (!expectedTeacher.equals(teacherMatricule) || !expectedSubjectId.equals(subjectId)) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-            "Mixed teacher or subject detected at line " + lineNumber);
-      }
+      long elapsedMillis = parseMillis(parts[0].trim(), lineNumber);
+      String studentMatricule = parts[1].trim();
 
       AttendanceRequestDTO dto = new AttendanceRequestDTO();
       dto.setStudentId(studentMatricule);
-      dto.setTeacherId(teacherMatricule);
+      dto.setTeacherId(headerTeacher);
       dto.setSubjectId(subjectId);
       dto.setDate(baseDate.plus(Duration.ofMillis(elapsedMillis)));
       attendances.add(dto);
+    }
+
+    if (headerTeacher == null || headerSubjectName == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing header line");
+    }
+
+    if (!footerSeen) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing session footer line");
     }
 
     if (attendances.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No attendance records found in payload");
     }
 
-    return attendances;
+    LocalDateTime sessionStart = baseDate.plus(Duration.ofMillis(headerMillis != null ? headerMillis : 0));
+    return new ParsedAttendance(attendances, sessionStart);
+  }
+
+  private long parseMillis(String value, int lineNumber) {
+    try {
+      return Long.parseLong(value);
+    } catch (NumberFormatException ex) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid millis at line " + lineNumber);
+    }
+  }
+
+  private String extractFooterTeacher(String line) {
+    String normalized = line.replace("---", "").trim();
+    String prefix = "SESSION TERMINEE PAR:";
+    if (!normalized.startsWith(prefix)) {
+      return null;
+    }
+    return normalized.substring(prefix.length()).trim();
+  }
+
+  private User resolveTeacher(String matricule) {
+    try {
+      return userLookupService.getUserByMatricule(matricule);
+    } catch (ResponseStatusException ex) {
+      LOGGER.warn("Unknown teacher matricule received in fingerprint text: {}", matricule);
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown teacher matricule: " + matricule);
+    }
+  }
+
+  private Subject resolveSubject(String subjectName) {
+    try {
+      return subjectLookupService.getSubjectByName(subjectName);
+    } catch (ResponseStatusException ex) {
+      LOGGER.warn("Unknown subject name received in fingerprint text: {}", subjectName);
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown subject name: " + subjectName);
+    }
+  }
+
+  private static final class ParsedAttendance {
+    private final List<AttendanceRequestDTO> attendances;
+    private final LocalDateTime sessionDate;
+
+    private ParsedAttendance(List<AttendanceRequestDTO> attendances, LocalDateTime sessionDate) {
+      this.attendances = attendances;
+      this.sessionDate = sessionDate;
+    }
   }
 }

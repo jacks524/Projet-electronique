@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import enspy.studam.studam_web.websocket.WebSocketEventPublisher;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -47,6 +48,8 @@ public class StudentService {
 
     @Autowired
     private ClassLookupService classLookupService;
+    @Autowired
+    private WebSocketEventPublisher webSocketEventPublisher;
 
     /**
      * Resolves a Class entity from StudentRequestDTO.
@@ -91,6 +94,7 @@ public class StudentService {
         student.setClasses(classe);
 
         Student savedStudent = studentRepository.save(student);
+        publishStudentEvent("student.created", savedStudent);
         return StudentMapper.toDTO(savedStudent);
     }
 
@@ -131,6 +135,7 @@ public class StudentService {
         student.setClasses(classe);
 
         Student updatedStudent = studentRepository.save(student);
+        publishStudentEvent("student.updated", updatedStudent);
         return StudentMapper.toDTO(updatedStudent);
     }
 
@@ -140,7 +145,11 @@ public class StudentService {
                     HttpStatus.NOT_FOUND,
                     "Student not found with id: " + id);
         }
+        Student student = studentRepository.findById(id).orElse(null);
         studentRepository.deleteById(id);
+        if (student != null) {
+            publishStudentEvent("student.deleted", student);
+        }
     }
 
     public ImportStudentsResponseDTO importStudentsFromFile(MultipartFile file) {
@@ -172,6 +181,12 @@ public class StudentService {
         response.setTotalProcessed(response.getSuccessfulImports().size() + response.getFailedImports().size());
         response.setSuccessCount(response.getSuccessfulImports().size());
         response.setFailureCount(response.getFailedImports().size());
+
+        java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+        payload.put("totalProcessed", response.getTotalProcessed());
+        payload.put("successCount", response.getSuccessCount());
+        payload.put("failureCount", response.getFailureCount());
+        webSocketEventPublisher.publish("student.imported", payload);
 
         return response;
     }
@@ -287,5 +302,14 @@ public class StudentService {
         Pageable pageable = PageRequest.of(page, size);
         Class clazz = classLookupService.getClassById(classId);
         return studentRepository.findByClasses(clazz, pageable);
+    }
+
+    private void publishStudentEvent(String type, Student student) {
+        java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+        payload.put("studentId", student.getStudentId());
+        payload.put("matricule", student.getMatricule());
+        payload.put("name", student.getName());
+        payload.put("classId", student.getClasses() != null ? student.getClasses().getClassId() : null);
+        webSocketEventPublisher.publish(type, payload);
     }
 }

@@ -11,6 +11,7 @@ import enspy.studam.studam_web.repositories.DepartmentRepository;
 import enspy.studam.studam_web.services.lookup.ClassLookupService;
 import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
 import enspy.studam.studam_web.services.lookup.SubjectLookupService;
+import enspy.studam.studam_web.websocket.WebSocketEventPublisher;
 import lombok.AllArgsConstructor;
 import enspy.studam.studam_web.dto.responseDTO.ClassResponseDTO;
 import enspy.studam.studam_web.dto.responseDTO.StudentResponseDTO;
@@ -50,6 +51,7 @@ public class ClassService {
     private SchedulerRepository schedulerRepository;
     private AttendanceSessionRepository attendanceSessionRepository;
     private AttendanceRepository attendanceRepository;
+    private WebSocketEventPublisher webSocketEventPublisher;
 
     public ClassResponseDTO getClassById(int id) {
         Class cls = classRepository.findById(id)
@@ -82,6 +84,7 @@ public class ClassService {
         Class.setDescription(request.getDescription());
         Class.setStudentNumber(request.getStudentNumber() != 0 ? request.getStudentNumber() : 0);
         Class saved = classRepository.save(Class);
+        publishClassEvent("class.created", saved);
         ClassResponseDTO dto = ClassResponseDTO.toDto(saved);
         dto.setStudentNumber((int) studentRepository.countByClasses_ClassId(saved.getClassId()));
         return dto;
@@ -108,6 +111,7 @@ public class ClassService {
         Class.setStudentNumber(request.getStudentNumber() != 0 ? request.getStudentNumber() : 0);
 
         Class updated = classRepository.save(Class);
+        publishClassEvent("class.updated", updated);
         ClassResponseDTO dto = ClassResponseDTO.toDto(updated);
         dto.setStudentNumber((int) studentRepository.countByClasses_ClassId(updated.getClassId()));
         return dto;
@@ -143,6 +147,12 @@ public class ClassService {
         Subject subject = this.subjectLookupService.getSubjectById(subjectId);
         cls.getSubjects().add(subject);
         classRepository.save(cls);
+        java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+        payload.put("classId", cls.getClassId());
+        payload.put("className", cls.getName());
+        payload.put("subjectId", subject.getSubjectId());
+        payload.put("subjectName", subject.getName());
+        webSocketEventPublisher.publish("class.subject.assigned", payload);
     }
 
     public Page<Class> getAllClasses(int page, int size) {
@@ -184,6 +194,15 @@ public class ClassService {
         }
 
         classRepository.delete(cls);
+        publishClassEvent("class.deleted", cls);
     }
 
+    private void publishClassEvent(String type, Class cls) {
+        java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+        payload.put("classId", cls.getClassId());
+        payload.put("name", cls.getName());
+        payload.put("code", cls.getCode());
+        payload.put("departmentId", cls.getDepartment() != null ? cls.getDepartment().getDepartmentId() : null);
+        webSocketEventPublisher.publish(type, payload);
+    }
 }

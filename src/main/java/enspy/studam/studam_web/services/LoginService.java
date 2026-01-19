@@ -30,6 +30,7 @@ import enspy.studam.studam_web.security.JwtService;
 import enspy.studam.studam_web.security.SecurityUtils;
 import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
+import enspy.studam.studam_web.websocket.WebSocketEventPublisher;
 import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -45,6 +46,7 @@ public class LoginService {
   private EmailService emailService;
   private final UserLookupService userLookupService;
   private final DepartmentLookupService departmentLookupService;
+  private final WebSocketEventPublisher webSocketEventPublisher;
 
   public void forgotPassword(ForgotPasswordRequestDTO requestDTO) {
     User user = this.userLookupService.getUserByEmail(requestDTO.getEmail());
@@ -156,6 +158,14 @@ public class LoginService {
       }
     }
 
+    webSocketEventPublisher.publish("user.created", java.util.Map.of(
+        "userId", user.getId(),
+        "name", user.getName(),
+        "role", registerRequestDTO.getRole().name(),
+        "active", user.isActive(),
+        "departmentsIds", registerRequestDTO.getDepartmentsIds() == null
+            ? java.util.List.of()
+            : registerRequestDTO.getDepartmentsIds()));
     return user;
   }
 
@@ -193,6 +203,10 @@ public class LoginService {
     user.setPassword(new BCryptPasswordEncoder().encode(changePasswordRequestDTO.getNewPassword()));
     user = this.userRepository.save(user);
 
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("userId", user.getId());
+    payload.put("username", user.getUsername());
+    webSocketEventPublisher.publish("user.password.changed", payload);
     return user.toUserResponseDTO();
   }
 
@@ -222,19 +236,40 @@ public class LoginService {
       }
       departmentLookupService.updateDepartmentsForUser(userRequestDTO.getDepartmentsIds(), user);
     }
-    return this.userRepository.save(user);
+    user = this.userRepository.save(user);
+
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("userId", user.getId());
+    payload.put("name", user.getName());
+    payload.put("role", targetRole != null ? targetRole.name() : null);
+    payload.put("active", user.isActive());
+    payload.put("departmentsIds", userRequestDTO.getDepartmentsIds() == null
+        ? java.util.List.of()
+        : userRequestDTO.getDepartmentsIds());
+    webSocketEventPublisher.publish("user.updated", payload);
+    return user;
   }
 
   public User desactivateUser(int id) {
     User user = this.userLookupService.getUserById(id);
     user.setActive(false);
-    return this.userRepository.save(user);
+    user = this.userRepository.save(user);
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("userId", user.getId());
+    payload.put("active", user.isActive());
+    webSocketEventPublisher.publish("user.deactivated", payload);
+    return user;
   }
 
   public User activateUser(int id) {
     User user = this.userLookupService.getUserById(id);
     user.setActive(true);
-    return this.userRepository.save(user);
+    user = this.userRepository.save(user);
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("userId", user.getId());
+    payload.put("active", user.isActive());
+    webSocketEventPublisher.publish("user.activated", payload);
+    return user;
   }
 
   @Transactional
@@ -255,6 +290,11 @@ public class LoginService {
 
     // Maintenant, tu peux supprimer l'utilisateur en toute sécurité
     userRepository.delete(user);
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("userId", userId);
+    payload.put("name", user.getName());
+    payload.put("username", user.getUsername());
+    webSocketEventPublisher.publish("user.deleted", payload);
 
   }
 

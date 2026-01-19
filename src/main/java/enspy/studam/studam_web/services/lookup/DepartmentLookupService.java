@@ -9,6 +9,7 @@ import org.springframework.web.server.ResponseStatusException;
 import enspy.studam.studam_web.models.Department;
 import enspy.studam.studam_web.models.User;
 import enspy.studam.studam_web.repositories.DepartmentRepository;
+import enspy.studam.studam_web.websocket.WebSocketEventPublisher;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
@@ -16,6 +17,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class DepartmentLookupService {
   private final DepartmentRepository departmentRepository;
+  private final WebSocketEventPublisher webSocketEventPublisher;
 
   public List<Department> getAllDepartements() {
     return departmentRepository.findAll();
@@ -71,6 +73,13 @@ public class DepartmentLookupService {
     department.setDepartmentManager(user);
     department.addTeacher(user);
     departmentRepository.save(department);
+
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("departmentId", department.getDepartmentId());
+    payload.put("departmentName", department.getName());
+    payload.put("managerId", user.getId());
+    payload.put("managerName", user.getName());
+    webSocketEventPublisher.publish("department.manager.assigned", payload);
   }
 
   @Transactional

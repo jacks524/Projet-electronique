@@ -19,6 +19,7 @@ import enspy.studam.studam_web.repositories.UserRepository;
 import enspy.studam.studam_web.services.lookup.ClassLookupService;
 import enspy.studam.studam_web.services.lookup.SubjectLookupService;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
+import enspy.studam.studam_web.websocket.WebSocketEventPublisher;
 import lombok.AllArgsConstructor;
 
 @Service
@@ -30,6 +31,7 @@ public class SubjectService {
   private final UserLookupService userLookupService;
   private final SubjectLookupService subjectLookupService;
   private final ClassLookupService classLookupService;
+  private final WebSocketEventPublisher webSocketEventPublisher;
 
   public Subject createSubject(SubjectRequestDTO subjectRequestDTO) {
 
@@ -66,6 +68,7 @@ public class SubjectService {
       }
     }
 
+    publishSubjectEvent("subject.created", subject);
     return subject;
   }
 
@@ -101,6 +104,7 @@ public class SubjectService {
       }
     }
 
+    publishSubjectEvent("subject.updated", subject);
     return subject;
   }
 
@@ -125,9 +129,19 @@ public class SubjectService {
   public void deleteSubject(int id) {
     Subject subject = this.subjectLookupService.getSubjectById(id);
     this.subjectRepository.delete(subject);
+    publishSubjectEvent("subject.deleted", subject);
   }
 
   public Subject getSubjectById(int id) {
     return this.subjectLookupService.getSubjectById(id);
+  }
+
+  private void publishSubjectEvent(String type, Subject subject) {
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("subjectId", subject.getSubjectId());
+    payload.put("name", subject.getName());
+    payload.put("code", subject.getCode());
+    payload.put("departmentId", subject.getDepartment() != null ? subject.getDepartment().getDepartmentId() : null);
+    webSocketEventPublisher.publish(type, payload);
   }
 }
