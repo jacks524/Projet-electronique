@@ -159,7 +159,7 @@ public class ReportController {
   @GetMapping("/teachers-attendance")
   public ResponseEntity<List<TeacherAttendanceReportDTO>> getTeachersAttendance(
       @RequestParam(required = false) Integer departmentId,
-      @RequestParam(required = false) Integer teacherId,
+      @RequestParam(required = false) String teacherId,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
       @RequestParam(required = false) String status) {
@@ -172,8 +172,9 @@ public class ReportController {
     boolean isAdmin = hasRole(currentUser, UserRoleEnum.ADMIN);
     boolean isManager = hasRole(currentUser, UserRoleEnum.DEPARTMENT_MANAGER);
 
+    Integer teacherIdValue = parseOptionalInt(teacherId);
     Department department = departmentId != null ? departmentLookupService.getDepartmentById(departmentId) : null;
-    User teacher = teacherId != null ? userLookupService.getUserById(teacherId) : null;
+    User teacher = teacherIdValue != null ? userLookupService.getUserById(teacherIdValue) : null;
 
     if (!isAdmin) {
       if (isManager) {
@@ -252,5 +253,20 @@ public class ReportController {
       return false;
     }
     return user.getRoles().stream().anyMatch(r -> r.getRole() == role);
+  }
+
+  private Integer parseOptionalInt(String value) {
+    if (value == null) {
+      return null;
+    }
+    String trimmed = value.trim();
+    if (trimmed.isEmpty() || "undefined".equalsIgnoreCase(trimmed)) {
+      return null;
+    }
+    try {
+      return Integer.valueOf(trimmed);
+    } catch (NumberFormatException ex) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid teacherId");
+    }
   }
 }
