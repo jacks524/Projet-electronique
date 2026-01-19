@@ -30,6 +30,7 @@ import enspy.studam.studam_web.security.SecurityUtils;
 import enspy.studam.studam_web.services.lookup.StudentLookupService;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
 import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
+import enspy.studam.studam_web.websocket.WebSocketEventPublisher;
 import lombok.AllArgsConstructor;
 
 @RestController
@@ -42,6 +43,7 @@ public class ReportController {
   private final StudentLookupService studentLookupService;
   private final AttendanceSessionRepository attendanceSessionRepository;
   private final UserRepository userRepository;
+  private final WebSocketEventPublisher webSocketEventPublisher;
 
   @GetMapping("/statistics")
   public ResponseEntity<StatisticsResponseDTO> getStatistics() {
@@ -71,6 +73,18 @@ public class ReportController {
       statistics.setTotalUsers(1);
     }
 
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("totalDepartments", statistics.getTotalDepartments());
+    payload.put("totalStudents", statistics.getTotalStudents());
+    payload.put("totalTeachers", statistics.getTotalTeachers());
+    payload.put("totalUsers", statistics.getTotalUsers());
+    if (currentUser != null && currentUser.getRoles() != null) {
+      payload.put("role",
+          currentUser.getRoles().stream().map(r -> r.getRole().name()).toList());
+    } else {
+      payload.put("role", java.util.List.of());
+    }
+    webSocketEventPublisher.publish("report.statistics.generated", payload);
     return ResponseEntity.ok(statistics);
   }
 
@@ -134,6 +148,11 @@ public class ReportController {
     if (activities.size() > pageSize) {
       activities = activities.subList(0, pageSize);
     }
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("limit", pageSize);
+    payload.put("departmentId", departmentFilter != null ? departmentFilter.getDepartmentId() : null);
+    payload.put("total", activities.size());
+    webSocketEventPublisher.publish("report.recent-activity.generated", payload);
     return ResponseEntity.ok(activities);
   }
 
@@ -217,6 +236,14 @@ public class ReportController {
           sessionStatus));
     }
 
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("departmentId", department != null ? department.getDepartmentId() : null);
+    payload.put("teacherId", teacher != null ? teacher.getId() : null);
+    payload.put("startDate", startDate);
+    payload.put("endDate", endDate);
+    payload.put("status", normalizedStatus != null ? normalizedStatus : "ALL");
+    payload.put("total", results.size());
+    webSocketEventPublisher.publish("report.teachers-attendance.generated", payload);
     return ResponseEntity.ok(results);
   }
 

@@ -20,6 +20,7 @@ import enspy.studam.studam_web.services.lookup.SchedulerLookupService;
 import enspy.studam.studam_web.services.lookup.TimetableLookupService;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
 import enspy.studam.studam_web.models.Class;
+import enspy.studam.studam_web.websocket.WebSocketEventPublisher;
 import lombok.AllArgsConstructor;
 
 @Service
@@ -30,6 +31,7 @@ public class TimetableService {
   private final TimetableLookupService timetableLookupService;
   private final SchedulerLookupService schedulerLookupService;
   private final ClassLookupService classLookupService;
+  private final WebSocketEventPublisher webSocketEventPublisher;
 
   public TimetableResponseDTO createTimetable(TimetableRequestDTO entity) {
 
@@ -49,6 +51,7 @@ public class TimetableService {
     timetable.setSchedules(new ArrayList<>());
     timetable.setClazz(clazz);
     timetable = timetableRepository.save(timetable);
+    publishTimetableEvent("timetable.created", timetable);
 
     return TimetableResponseDTO.toDTO(timetable);
   }
@@ -82,5 +85,16 @@ public class TimetableService {
   public void deleteTimetable(int id) {
     Timetable timetable = this.timetableLookupService.getTimetableById(id);
     this.timetableRepository.delete(timetable);
+    publishTimetableEvent("timetable.deleted", timetable);
+  }
+
+  private void publishTimetableEvent(String type, Timetable timetable) {
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("timetableId", timetable.getTimetableId());
+    payload.put("classId", timetable.getClazz() != null ? timetable.getClazz().getClassId() : null);
+    payload.put("semester", timetable.getSemester());
+    payload.put("startDate", timetable.getStartDate());
+    payload.put("endDate", timetable.getEndDate());
+    webSocketEventPublisher.publish(type, payload);
   }
 }

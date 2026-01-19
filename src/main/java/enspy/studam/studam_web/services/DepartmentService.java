@@ -21,6 +21,7 @@ import enspy.studam.studam_web.models.User;
 import enspy.studam.studam_web.repositories.DepartmentRepository;
 import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
+import enspy.studam.studam_web.websocket.WebSocketEventPublisher;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
@@ -31,6 +32,7 @@ public class DepartmentService {
   private final DepartmentRepository departementRepository;
   private final DepartmentLookupService departmentLookupService;
   private final UserLookupService userLookupService;
+  private final WebSocketEventPublisher webSocketEventPublisher;
 
   @Transactional
   public DepartementResponseDTO createDepartement(DepartementRequestDTO departementRequestDTO) {
@@ -52,6 +54,7 @@ public class DepartmentService {
     department = departementRepository.save(department);
 
     if (departementRequestDTO.getDepartmentManagerId() == null) {
+      publishDepartmentEvent("department.created", department);
       return DepartementResponseDTO.toDTO(department);
     }
     // Validate if user exists
@@ -69,6 +72,8 @@ public class DepartmentService {
 
     user = this.userLookupService.UpdateUserRoles(user, UserRoleEnum.DEPARTMENT_MANAGER);
 
+    publishDepartmentEvent("department.created", department);
+    publishDepartmentManagerAssigned(department, user);
     return DepartementResponseDTO.toDTO(department);
   }
 
@@ -104,6 +109,7 @@ public class DepartmentService {
     updateDepartmentManager(department, departementRequestDTO.getDepartmentManagerId());
 
     Department updatedDepartment = departementRepository.save(department);
+    publishDepartmentEvent("department.updated", updatedDepartment);
     return DepartementResponseDTO.toDTO(updatedDepartment);
   }
 
@@ -142,6 +148,7 @@ public class DepartmentService {
       department.addTeacher(newManager); // addTeacher gère l'ajout s'il n'est pas déjà présent
       userLookupService.UpdateUserRoles(newManager, UserRoleEnum.DEPARTMENT_MANAGER);
       this.departementRepository.save(department);
+      publishDepartmentManagerAssigned(department, newManager);
     }
   }
 
@@ -149,6 +156,7 @@ public class DepartmentService {
     Department department = departmentLookupService.getDepartmentById(id);
     // TODO Remettre l'enseignant qui est chef de departement dans son role normal
     departementRepository.delete(department);
+    publishDepartmentEvent("department.deleted", department);
   }
 
   public DepartementResponseDetailsDTO getDepartmentDetailsById(int id) {
@@ -185,5 +193,23 @@ public class DepartmentService {
     stats.setTotalTeachers(department.getTeachers().size());
     stats.setAttendanceRate(0); // TODO: Calculate actual attendance rate if needed
     return stats;
+  }
+
+  private void publishDepartmentEvent(String type, Department department) {
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("departmentId", department.getDepartmentId());
+    payload.put("name", department.getName());
+    payload.put("code", department.getCode());
+    payload.put("updatedDate", department.getUpdatedDate());
+    webSocketEventPublisher.publish(type, payload);
+  }
+
+  private void publishDepartmentManagerAssigned(Department department, User manager) {
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("departmentId", department.getDepartmentId());
+    payload.put("departmentName", department.getName());
+    payload.put("managerId", manager.getId());
+    payload.put("managerName", manager.getName());
+    webSocketEventPublisher.publish("department.manager.assigned", payload);
   }
 }

@@ -17,6 +17,7 @@ import enspy.studam.studam_web.services.lookup.SchedulerLookupService;
 import enspy.studam.studam_web.services.lookup.SubjectLookupService;
 import enspy.studam.studam_web.services.lookup.TimetableLookupService;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
+import enspy.studam.studam_web.websocket.WebSocketEventPublisher;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
@@ -30,6 +31,7 @@ public class SchedulerService {
   private final UserLookupService userLookupService;
   private final SubjectLookupService subjectLookupService;
   private final TimetableLookupService timetableLookupService;
+  private final WebSocketEventPublisher webSocketEventPublisher;
 
   public Schedule getScheduleByDateAndSubjectList(LocalDateTime dateTime, List<Subject> subjects) {
     List<Schedule> schedules = schedulerRepository.findScheduleByDayTimeAndSubjects(
@@ -69,6 +71,7 @@ public class SchedulerService {
 
     this.userService.assignTeacherToSubject(entity.getSubjectId(), entity.getTeacherId());
 
+    publishScheduleEvent("schedule.created", schedule);
     return schedule;
   }
 
@@ -88,11 +91,25 @@ public class SchedulerService {
 
     this.userService.assignTeacherToSubject(entity.getSubjectId(), entity.getTeacherId());
 
+    publishScheduleEvent("schedule.updated", schedule);
     return schedule;
+  }
+
+  private void publishScheduleEvent(String type, Schedule schedule) {
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("scheduleId", schedule.getScheduleId());
+    payload.put("day", schedule.getDay());
+    payload.put("startHour", schedule.getStartHour());
+    payload.put("endHour", schedule.getEndHour());
+    payload.put("subjectId", schedule.getSubject() != null ? schedule.getSubject().getSubjectId() : null);
+    payload.put("teacherId", schedule.getTeacher() != null ? schedule.getTeacher().getId() : null);
+    payload.put("timetableId", schedule.getTimetable() != null ? schedule.getTimetable().getTimetableId() : null);
+    webSocketEventPublisher.publish(type, payload);
   }
 
   public void deleteSchedule(int id) {
     Schedule schedule = schedulerLookupService.getScheduleById(id);
     schedulerRepository.delete(schedule);
+    publishScheduleEvent("schedule.deleted", schedule);
   }
 }

@@ -1,5 +1,6 @@
 package enspy.studam.studam_web.services;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -23,6 +24,7 @@ import enspy.studam.studam_web.services.lookup.StudentLookupService;
 import enspy.studam.studam_web.services.lookup.SubjectLookupService;
 import enspy.studam.studam_web.services.lookup.TimetableLookupService;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
+import enspy.studam.studam_web.websocket.WebSocketEventPublisher;
 import lombok.AllArgsConstructor;
 
 @Service
@@ -37,8 +39,13 @@ public class AttendanceService {
   private final TimetableLookupService timetableLookupService;
   private final AttendanceSessionRepository attendanceSessionRepository;
   private final AttendanceLookupService attendanceLookupService;
+  private final WebSocketEventPublisher webSocketEventPublisher;
 
   public void saveAttendance(List<AttendanceRequestDTO> attendancesRequestDTO) {
+    saveAttendance(attendancesRequestDTO, null);
+  }
+
+  public void saveAttendance(List<AttendanceRequestDTO> attendancesRequestDTO, LocalDateTime sessionDate) {
     // Validate teacher
     User teacher = userLookupService.getUserByMatricule(attendancesRequestDTO.get(0).getTeacherId());
 
@@ -46,26 +53,40 @@ public class AttendanceService {
     Subject subject = subjectLookupService.getSubjectById(attendancesRequestDTO.get(0).getSubjectId());
 
     AttendanceSession attendanceSession = new AttendanceSession();
-    attendanceSession.setDate(attendancesRequestDTO.get(0).getDate());
+    attendanceSession.setDate(sessionDate != null ? sessionDate : attendancesRequestDTO.get(0).getDate());
     attendanceSession.setTeacher(teacher);
     attendanceSession.setSubject(subject);
     attendanceSession.setTimetable(
         this.timetableLookupService.getTimetableContainsDate(attendancesRequestDTO.get(0).getDate().toLocalDate()));
     attendanceSession = attendanceSessionRepository.save(attendanceSession);
     for (AttendanceRequestDTO attendanceRequestDTO : attendancesRequestDTO) {
-      // Validate student
       Student student = studentLookupService.getStudentByMatricule(attendanceRequestDTO.getStudentId());
 
-      // Create and save attendance record
       Attendance attendance = new Attendance();
       attendance.setStudent(student);
-
       attendance.setAttendanceSession(attendanceSession);
-
       attendance.setPresenceLoggedAt(attendanceRequestDTO.getDate());
       attendance.setAttendanceStatus(AttendanceStatus.PRESENT);
-      attendanceRepository.save(attendance);
+      attendance = attendanceRepository.save(attendance);
+
+      java.util.Map<String, Object> attendancePayload = new java.util.LinkedHashMap<>();
+      attendancePayload.put("attendanceId", attendance.getAttendanceId());
+      attendancePayload.put("studentId", student.getStudentId());
+      attendancePayload.put("studentName", student.getName());
+      attendancePayload.put("sessionId", attendanceSession.getAttendanceSessionId());
+      attendancePayload.put("status", attendance.getAttendanceStatus());
+      attendancePayload.put("loggedAt", attendance.getPresenceLoggedAt());
+      webSocketEventPublisher.publish("attendance.created", attendancePayload);
     }
+    java.util.Map<String, Object> sessionPayload = new java.util.LinkedHashMap<>();
+    sessionPayload.put("sessionId", attendanceSession.getAttendanceSessionId());
+    sessionPayload.put("teacherId", teacher.getId());
+    sessionPayload.put("teacherName", teacher.getName());
+    sessionPayload.put("subjectId", subject.getSubjectId());
+    sessionPayload.put("subjectName", subject.getName());
+    sessionPayload.put("date", attendanceSession.getDate());
+    sessionPayload.put("totalPresent", attendancesRequestDTO.size());
+    webSocketEventPublisher.publish("attendance.session.created", sessionPayload);
   }
 
   public void saveAttendanceOld(AttendanceRequestDTO attendanceRequestDTO) {
@@ -94,6 +115,16 @@ public class AttendanceService {
     Attendance attendance = this.attendanceLookupService.getAttendanceById(attendanceId);
     attendance.setAttendanceStatus(attendanceUpdateRequestDTO.getAttendanceStatus());
     attendanceRepository.save(attendance);
+    java.util.Map<String, Object> attendancePayload = new java.util.LinkedHashMap<>();
+    attendancePayload.put("attendanceId", attendance.getAttendanceId());
+    attendancePayload.put("status", attendance.getAttendanceStatus());
+    attendancePayload.put("studentId",
+        attendance.getStudent() != null ? attendance.getStudent().getStudentId() : null);
+    attendancePayload.put("sessionId",
+        attendance.getAttendanceSession() != null
+            ? attendance.getAttendanceSession().getAttendanceSessionId()
+            : null);
+    webSocketEventPublisher.publish("attendance.updated", attendancePayload);
   }
 
   public Page<Attendance> getAttendanceByStudentId(int studentId, int page, int size) {
