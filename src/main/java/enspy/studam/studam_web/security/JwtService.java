@@ -42,6 +42,8 @@ public class JwtService {
 
     Map<String, Object> claims = Map.of(
         "nom", user.getName(),
+        "userId", user.getId(),
+        "email", user.getEmail(),
         Claims.EXPIRATION, expireTime,
         Claims.SUBJECT, user.getUsername());
 
