@@ -4,6 +4,7 @@ import enspy.studam.studam_web.dto.requestDTO.ClassRequestDTO;
 import enspy.studam.studam_web.dto.responseDTO.ClassResponseDTO;
 import enspy.studam.studam_web.dto.responseDTO.StudentResponseDTO;
 import enspy.studam.studam_web.models.Class;
+import enspy.studam.studam_web.repositories.StudentRepository;
 import enspy.studam.studam_web.services.ClassService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class ClassController {
 
     private ClassService classService;
+    private StudentRepository studentRepository;
 
     @GetMapping("/all")
     @Operation(summary = "Get all classes with pagination", description = "Returns a list of all classes with pagination support.")
@@ -82,7 +84,11 @@ public class ClassController {
 
         return ResponseEntity.ok().body(
                 classes.stream()
-                        .map(ClassResponseDTO::toDto)
+                        .map(cls -> {
+                            ClassResponseDTO dto = ClassResponseDTO.toDto(cls);
+                            dto.setStudentNumber((int) studentRepository.countByClasses_ClassId(cls.getClassId()));
+                            return dto;
+                        })
                         .collect(Collectors.toList()));
     }
 

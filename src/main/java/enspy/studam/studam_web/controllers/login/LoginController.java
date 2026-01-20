@@ -19,6 +19,7 @@ import enspy.studam.studam_web.dto.requestDTO.LoginRequestDTO;
 import enspy.studam.studam_web.dto.requestDTO.RegisterRequestDTO;
 import enspy.studam.studam_web.dto.requestDTO.ResetPasswordRequestDTO;
 import enspy.studam.studam_web.dto.requestDTO.UserUpdateRequestDTO;
+import enspy.studam.studam_web.dto.responseDTO.SubjectResponseDTO;
 import enspy.studam.studam_web.dto.responseDTO.SubjectTeacherAssignmentDTO;
 import enspy.studam.studam_web.dto.responseDTO.TokenDTO;
 import enspy.studam.studam_web.dto.responseDTO.UserResponseDTO;
