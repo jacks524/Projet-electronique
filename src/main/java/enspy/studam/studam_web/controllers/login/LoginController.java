@@ -189,7 +189,7 @@ public class LoginController {
   @Operation(summary = "Assign a teacher to a subject", description = "This operation assigns a teacher to a subject.", tags = {
       "User Management" })
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Successfully assigned teacher to subject.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SubjectResponseDTO.class))),
+      @ApiResponse(responseCode = "200", description = "Successfully assigned teacher to subject.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SubjectTeacherAssignmentDTO.class))),
       @ApiResponse(responseCode = "404", description = "Not Found: Subject or teacher not found.", content = @Content(mediaType = "application/json")),
       @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred during the assignment process.", content = @Content(mediaType = "application/json"))
   })
