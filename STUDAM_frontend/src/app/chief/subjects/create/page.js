@@ -9,6 +9,7 @@ import { useAuthContext } from '@/context/authContext';
 import subjectService from '@/services/subjectService';
 import departmentService from '@/services/departmentService';
 import userService from '@/services/userService';
+import classService from '@/services/classService';
 
 export default function CreateSubjectPage() {
     const router = useRouter();
@@ -21,11 +22,13 @@ export default function CreateSubjectPage() {
         credits: '',
         heuresCoursParSemaine: '',
         departmentId: '',
-        teacherId: ''
+        teacherId: '',
+        classId: '' // Changed from classes array to single classId
     });
 
     const [departments, setDepartments] = useState([]);
     const [teachers, setTeachers] = useState([]);
+    const [classes, setClasses] = useState([]);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
 
@@ -57,9 +60,11 @@ export default function CreateSubjectPage() {
             }
 
             const teachersData = await userService.getUsersByRoleAndDepartment('TEACHER', chiefDepartment.departmentId);
+            const classesData = await classService.getByDepartment(chiefDepartment.departmentId);
 
             setDepartments([{ id: chiefDepartment.departmentId, name: chiefDepartment.name }]);
             setTeachers(Array.isArray(teachersData) ? teachersData : []);
+            setClasses(Array.isArray(classesData) ? classesData : []);
             setFormData((prev) => ({
                 ...prev,
                 departmentId: chiefDepartment.departmentId.toString(),
@@ -137,7 +142,8 @@ export default function CreateSubjectPage() {
                 credits: parseInt(formData.credits, 10) || 0,
                 heuresCoursParSemaine: parseInt(formData.heuresCoursParSemaine, 10) || 0,
                 departmentId: parseInt(formData.departmentId, 10),
-                teacherId: parseInt(formData.teacherId, 10)
+                teacherId: parseInt(formData.teacherId, 10),
+                classId: formData.classId ? parseInt(formData.classId, 10) : null
             });
 
             toast.success("Matiere creee avec succes");
@@ -161,7 +167,7 @@ export default function CreateSubjectPage() {
                 <Link href="/chief/subjects">
                     <Button variant="secondary">
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                         Retour
                     </Button>
@@ -254,6 +260,29 @@ export default function CreateSubjectPage() {
                             )}
                         </div>
 
+                        <div className="md:col-span-2">
+                            <label htmlFor="classId" className="block text-sm font-medium text-gray-700 mb-1">
+                                Classe assignée
+                            </label>
+                            <select
+                                id="classId"
+                                name="classId"
+                                value={formData.classId}
+                                onChange={handleChange}
+                                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
+                            >
+                                <option value="">Sélectionner une classe (optionnel)</option>
+                                {classes.map((classe) => (
+                                    <option key={classe.classId} value={classe.classId}>
+                                        {classe.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="mt-1 text-xs text-gray-500">
+                                Une matière ne peut être assignée qu'à une seule classe.
+                            </p>
+                        </div>
+
                         <div>
                             <label htmlFor="credits" className="block text-sm font-medium text-gray-700 mb-1">
                                 Nombre de credits
@@ -326,7 +355,7 @@ export default function CreateSubjectPage() {
                             ) : (
                                 <>
                                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/>
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                     </svg>
                                     Creer la matiere
                                 </>

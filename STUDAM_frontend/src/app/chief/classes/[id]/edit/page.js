@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Button from '../../../../../components/ui/Button';
+import classService from '../../../../../services/classService';
 import toast from 'react-hot-toast';
 
 export default function EditClassPage() {
@@ -32,11 +33,17 @@ export default function EditClassPage() {
 
             const capacityValue = classData.capacity ?? classData.maxStudents ?? '';
 
+            // Extract department ID properly
+            const deptId = classData.department?.departmentId ||
+                classData.department?.id ||
+                classData.departmentId;
+
             setFormData({
                 name: classData.name || '',
                 code: classData.code || '',
                 description: classData.description || '',
-                capacity: capacityValue ? capacityValue.toString() : ''
+                capacity: capacityValue ? capacityValue.toString() : '',
+                departmentId: deptId ? deptId.toString() : ''
             });
 
         } catch (error) {
@@ -95,11 +102,20 @@ export default function EditClassPage() {
         try {
             setSaving(true);
 
+            // Ensure departmentId is valid
+            const deptId = formData.departmentId ? parseInt(formData.departmentId, 10) : null;
+            if (!deptId || deptId === 0) {
+                toast.error("Erreur: Departement invalide");
+                setSaving(false);
+                return;
+            }
+
             await classService.update(classId, {
                 name: formData.name,
                 code: formData.code,
                 description: formData.description,
-                capacity: formData.capacity ? parseInt(formData.capacity, 10) : null
+                capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
+                departmentId: deptId
             });
 
             toast.success("Classe modifiee avec succes !");

@@ -53,15 +53,41 @@ export default function TeacherDetailPage() {
             });
 
             setSubjects(subjectsData || []);
-            setClasses((classesData || []).map(c => ({
-                id: c.classId,
-                name: c.name,
-                level: c.code || '---',
-                studentCount: c.studentNumber || 0
-            })));
 
-            const schedulesList = Array.isArray(timetableData?.schedules) ? timetableData.schedules : [];
+            // Calculate unique classes from subjects and classes data
+            const uniqueClassIds = new Set();
+            const classesMap = new Map();
+
+            // Add classes from direct class assignments
+            (classesData || []).forEach(c => {
+                uniqueClassIds.add(c.classId);
+                classesMap.set(c.classId, {
+                    id: c.classId,
+                    name: c.name,
+                    level: c.code || '---',
+                    studentCount: c.studentNumber || c.studentCount || 0
+                });
+            });
+
+            // Map classes for display
+            const mappedClasses = Array.from(classesMap.values());
+
+            console.log('Classes data received:', classesData);
+            console.log('Mapped classes:', mappedClasses);
+            console.log('Total students:', mappedClasses.reduce((sum, c) => sum + c.studentCount, 0));
+
+            setClasses(mappedClasses);
+
+            // Get schedules and filter for today
+            const schedulesList = Array.isArray(timetableData?.schedules) ? timetableData.schedules :
+                (Array.isArray(timetableData) ? timetableData.flatMap(t => t.schedules || []) : []);
+
             setSchedules(schedulesList);
+
+            // Calculate today's sessions
+            const dayKeys = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+            const today = dayKeys[new Date().getDay()];
+            const todaysSessions = schedulesList.filter(schedule => schedule.day === today);
 
         } catch (error) {
             toast.error("Erreur lors du chargement des donnees");
@@ -132,7 +158,9 @@ export default function TeacherDetailPage() {
         );
     }
 
-    const plannedSessions = schedules.length;
+    const dayKeys = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    const today = dayKeys[new Date().getDay()];
+    const plannedSessions = schedules.filter(schedule => schedule.day === today).length;
 
     return (
         <div className="space-y-6">
@@ -145,7 +173,7 @@ export default function TeacherDetailPage() {
                     <Link href={`/chief/teachers/${teacherId}/edit`}>
                         <Button variant="secondary">
                             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                             </svg>
                             Modifier
                         </Button>
@@ -162,7 +190,7 @@ export default function TeacherDetailPage() {
                     <Link href="/chief/teachers">
                         <Button variant="secondary">
                             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
                             Retour
                         </Button>
@@ -182,11 +210,10 @@ export default function TeacherDetailPage() {
                             <h2 className="text-3xl font-bold text-white">{teacher.name}</h2>
                             <p className="text-blue-100 text-lg mt-1">{teacher.matricule}</p>
                             <div className="flex items-center space-x-4 mt-2">
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                    teacher.status === 'active'
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-red-100 text-red-800'
-                                }`}>
+                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${teacher.status === 'active'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
+                                    }`}>
                                     {teacher.status === 'active' ? 'Actif' : 'Inactif'}
                                 </span>
                             </div>
@@ -219,31 +246,28 @@ export default function TeacherDetailPage() {
                     <nav className="flex -mb-px px-6">
                         <button
                             onClick={() => setActiveTab('info')}
-                            className={`py-4 px-6 border-b-2 font-medium text-sm ${
-                                activeTab === 'info'
-                                    ? 'border-[#7c3aed] text-[#7c3aed]'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            }`}
+                            className={`py-4 px-6 border-b-2 font-medium text-sm ${activeTab === 'info'
+                                ? 'border-[#7c3aed] text-[#7c3aed]'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                }`}
                         >
                             Informations
                         </button>
                         <button
                             onClick={() => setActiveTab('subjects')}
-                            className={`py-4 px-6 border-b-2 font-medium text-sm ${
-                                activeTab === 'subjects'
-                                    ? 'border-[#7c3aed] text-[#7c3aed]'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            }`}
+                            className={`py-4 px-6 border-b-2 font-medium text-sm ${activeTab === 'subjects'
+                                ? 'border-[#7c3aed] text-[#7c3aed]'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                }`}
                         >
                             Matieres
                         </button>
                         <button
                             onClick={() => setActiveTab('classes')}
-                            className={`py-4 px-6 border-b-2 font-medium text-sm ${
-                                activeTab === 'classes'
-                                    ? 'border-[#7c3aed] text-[#7c3aed]'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            }`}
+                            className={`py-4 px-6 border-b-2 font-medium text-sm ${activeTab === 'classes'
+                                ? 'border-[#7c3aed] text-[#7c3aed]'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                }`}
                         >
                             Classes
                         </button>

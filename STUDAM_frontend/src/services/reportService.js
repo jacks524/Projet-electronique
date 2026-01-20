@@ -49,10 +49,31 @@ const getTeacherAttendanceList = async ({ departmentId, teacherId, startDate, en
   }
 };
 
+const getValidatedReports = async (teacherId) => {
+  try {
+    const { data } = await apiClient.get(`/reports/teacher/${teacherId}/validated`, {
+      params: { status: 'VALIDATED' },
+    });
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error("Erreur lors de la recuperation des rapports valides:", error);
+    // Fallback: try getting all reports and filter by teacher
+    try {
+      const { data: allReports } = await apiClient.get("/reports/attendance");
+      return Array.isArray(allReports)
+        ? allReports.filter(r => r.teacherId === teacherId && r.status === 'VALIDATED')
+        : [];
+    } catch (fallbackError) {
+      return [];
+    }
+  }
+};
+
 const reportService = {
   getDashboardStats,
   getRecentActivity,
   getTeacherAttendanceList,
+  getValidatedReports,
 };
 
 export default reportService;

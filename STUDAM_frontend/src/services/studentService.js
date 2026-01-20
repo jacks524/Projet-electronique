@@ -62,12 +62,41 @@ const getById = async (studentId) => {
     }
 };
 
+const remove = async (studentId) => {
+    try {
+        await apiClient.delete(`/student/${studentId}`);
+    } catch (error) {
+        console.error('Erreur API [deleteStudent]:', error);
+        throw new Error(error.response?.data?.message || "La suppression de l'etudiant a echoue.");
+    }
+};
+
+const importStudents = async (file, classId) => {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('classId', classId);
+
+        const { data } = await apiClient.post('/student/import', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return data; // Expected { successCount: number, failedImports: Array }
+    } catch (error) {
+        console.error('Erreur API [importStudents]:', error);
+        throw new Error(error.response?.data?.message || "L'importation des etudiants a echoue.");
+    }
+};
+
 const studentService = {
     getAll,
     getByClass,
     create,
     update,
     getById,
+    remove,
+    importStudents,
 };
 
 export default studentService;

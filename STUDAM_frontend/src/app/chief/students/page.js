@@ -186,12 +186,36 @@ export default function StudentsPage() {
     );
   };
 
-  const handleImportStudents = () => {
-    setShowImportModal(false);
-    setSuccessMessage('Import demarre. Les nouveaux etudiants apparaitront apres traitement.');
-    setTimeout(() => {
-      setSuccessMessage('');
-    }, 3000);
+  const handleDeleteStudent = async (studentId, studentName) => {
+    if (!window.confirm(`Etes-vous sur de vouloir supprimer l'etudiant "${studentName}" ? Cette action est irreversible.`)) {
+      return;
+    }
+
+    try {
+      await studentService.remove(studentId);
+      setSuccessMessage('Etudiant supprime avec succes');
+      await loadData();
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+    } catch (error) {
+      setErrorMessage(error?.message || "Erreur lors de la suppression de l'etudiant.");
+    }
+  };
+
+  const handleImportStudents = async (file, classId) => {
+    try {
+      const result = await studentService.importStudents(file, classId);
+
+      // Show detailed feedback could be done here or in the modal
+      // For now, we'll close the modal and show a summary toast
+      // But better: return the result to the modal to show details
+
+      await loadData();
+      return result;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const handleOpenImportModal = () => {
@@ -312,6 +336,7 @@ export default function StudentsPage() {
             students={filteredStudents}
             onEdit={handleEditStudent}
             onToggleStatus={handleToggleStatus}
+            onDelete={handleDeleteStudent}
           />
         </div>
       </div>

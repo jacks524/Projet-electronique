@@ -12,9 +12,11 @@ const getAll = async () => {
 const getByTeacher = async (teacherId) => {
     try {
         const { data } = await apiClient.get(`/timetable/teacher/${teacherId}`);
-        return data;
+        if (Array.isArray(data)) return data;
+        if (data) return [data];
+        return [];
     } catch (error) {
-        if (error.response?.status === 404) return null;
+        if (error.response?.status === 404) return [];
         throw new Error("Impossible de charger l'emploi du temps.");
     }
 };

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 
-const ImportStudentsModal = ({ 
-  show, 
-  classes = [], 
-  onClose, 
-  onImport 
+const ImportStudentsModal = ({
+  show,
+  classes = [],
+  onClose,
+  onImport
 }) => {
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
@@ -13,7 +13,7 @@ const ImportStudentsModal = ({
 
   const handleClassChange = (e) => {
     setSelectedClass(e.target.value);
-    
+
     // Effacer l'erreur si elle existe
     if (errors.class) {
       setErrors(prev => {
@@ -27,7 +27,7 @@ const ImportStudentsModal = ({
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setSelectedFile(file);
-    
+
     // Effacer l'erreur si elle existe
     if (errors.file) {
       setErrors(prev => {
@@ -38,21 +38,74 @@ const ImportStudentsModal = ({
     }
   };
 
-  const handleSubmit = (e) => {
+  const [result, setResult] = useState(null);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     const newErrors = {};
     if (!selectedClass) newErrors.class = "Veuillez sélectionner une classe";
     if (!selectedFile) newErrors.file = "Veuillez sélectionner un fichier";
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-    
+
     setIsUploading(true);
-    onImport(selectedFile, selectedClass);
+    setResult(null);
+    setErrors({});
+
+    try {
+      const response = await onImport(selectedFile, selectedClass);
+      setResult(response);
+      if (response.failedImports && response.failedImports.length === 0) {
+        setTimeout(() => {
+          onClose();
+          // Reset state for next time
+          setSelectedFile(null);
+          setSelectedClass('');
+          setResult(null);
+        }, 2000);
+      }
+    } catch (error) {
+      setErrors({ submit: error.message || "Une erreur est survenue lors de l'importation." });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDownloadTemplate = () => {
+    // Create CSV content with headers and example row
+    const headers = ['Matricule', 'Nom', 'Email', 'Téléphone', 'Date de naissance', 'Lieu de naissance'];
+    const exampleRow = ['STU2024001', 'Dupont Jean', 'jean.dupont@example.com', '+237600000000', '2000-01-15', 'Yaoundé'];
+
+  const emptyRow = Array(headers.length).fill('').join(',');
+
+const csvContent = [
+  headers.join(','),
+  exampleRow.join(','),
+  emptyRow,
+  emptyRow,
+  emptyRow
+].join('\n');
+
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'modele_import_etudiants.csv');
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
   };
 
   if (!show) return null;
@@ -78,7 +131,7 @@ const ImportStudentsModal = ({
             </button>
           </div>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="px-4 py-5 sm:p-6">
           <div className="space-y-6">
             <div>
@@ -103,7 +156,7 @@ const ImportStudentsModal = ({
               </select>
               {errors.class && <p className="mt-1 text-sm text-red-500">{errors.class}</p>}
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Fichier Excel <span className="text-red-500">*</span>
@@ -116,11 +169,11 @@ const ImportStudentsModal = ({
                   <div className="flex text-sm text-gray-600">
                     <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-[#7c3aed] hover:text-[#6d28d9] focus-within:outline-none">
                       <span>Télécharger un fichier</span>
-                      <input 
-                        id="file-upload" 
-                        name="file-upload" 
-                        type="file" 
-                        className="sr-only" 
+                      <input
+                        id="file-upload"
+                        name="file-upload"
+                        type="file"
+                        className="sr-only"
                         accept=".xlsx,.xls,.csv"
                         onChange={handleFileChange}
                         disabled={isUploading}
@@ -140,7 +193,7 @@ const ImportStudentsModal = ({
               </div>
               {errors.file && <p className="mt-1 text-sm text-red-500">{errors.file}</p>}
             </div>
-            
+
             <div className="bg-gray-50 p-4 rounded-md">
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -152,15 +205,62 @@ const ImportStudentsModal = ({
                   <h3 className="font-medium">Format du fichier</h3>
                   <p>Le fichier doit contenir les colonnes suivantes : Matricule, Nom, Email, Téléphone, Date de naissance, Lieu de naissance.</p>
                   <p className="mt-1">
-                    <a href="#" className="font-medium underline hover:text-blue-800">
+                    <button
+                      type="button"
+                      onClick={handleDownloadTemplate}
+                      className="font-medium underline hover:text-blue-800 cursor-pointer"
+                    >
                       Télécharger un modèle
-                    </a>
+                    </button>
                   </p>
                 </div>
               </div>
             </div>
           </div>
-          
+
+          <div className="mt-5 text-sm">
+            {result && (
+              <div className={`p-4 rounded-md ${result.successCount > 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    {result.successCount > 0 ? (
+                      <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="ml-3">
+                    <h3 className={`text-sm font-medium ${result.successCount > 0 ? 'text-green-800' : 'text-red-800'}`}>
+                      Importation terminée
+                    </h3>
+                    <div className={`mt-2 text-sm ${result.successCount > 0 ? 'text-green-700' : 'text-red-700'}`}>
+                      <p>{result.successCount} étudiant(s) importé(s) avec succès.</p>
+                      {result.failedImports && result.failedImports.length > 0 && (
+                        <div className="mt-2 text-red-700">
+                          <p className="font-medium">{result.failedImports.length} échec(s) :</p>
+                          <ul className="list-disc pl-5 mt-1 max-h-32 overflow-y-auto text-xs">
+                            {result.failedImports.map((fail, idx) => (
+                              <li key={idx}>Ligne {fail.lineNumber}: {fail.reason}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {errors.submit && (
+              <div className="p-4 rounded-md bg-red-50 text-red-700">
+                {errors.submit}
+              </div>
+            )}
+          </div>
+
           <div className="mt-5 sm:mt-6 sm:flex sm:flex-row-reverse">
             <button
               type="submit"

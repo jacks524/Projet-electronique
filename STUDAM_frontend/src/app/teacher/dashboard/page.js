@@ -5,17 +5,19 @@ import Link from 'next/link';
 import { useAuthContext } from '../../../context/authContext';
 import subjectService from '../../../services/subjectService';
 import timetableService from '../../../services/timetableService';
+import reportService from '../../../services/reportService';
 import toast from 'react-hot-toast';
-
 
 export default function TeacherDashboard() {
     const { user, loading: authLoading } = useAuthContext();
     const [subjects, setSubjects] = useState([]);
+    const [todaySchedules, setTodaySchedules] = useState([]);
+    const [recentActivity, setRecentActivity] = useState([]);
     const [stats, setStats] = useState({
         totalCourses: 0,
         pendingAttendance: 0,
         todayClasses: 0,
-        recentActivity: 0
+        recentActivity: 0,
     });
     const [loading, setLoading] = useState(true);
 
@@ -24,72 +26,182 @@ export default function TeacherDashboard() {
         loadTeacherData();
     }, [user, authLoading]);
 
+    const dayKeys = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+
+    const formatTime = (timeValue) => {
+        if (!timeValue) return '';
+        if (typeof timeValue === 'string') return timeValue.slice(0, 5);
+        if (typeof timeValue === 'object' && typeof timeValue.hour === 'number') {
+            const hours = String(timeValue.hour).padStart(2, '0');
+            const minutes = String(timeValue.minute || 0).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+        return '';
+    };
+
     const loadTeacherData = async () => {
         try {
             setLoading(true);
-            const subjectsData = await subjectService.getByTeacher(user.id);
 
-            setSubjects(subjectsData);
+            const [subjectsData, timetableData, activityData] = await Promise.all([
+                subjectService.getByTeacher(user.id),
+                timetableService.getByTeacher(user.id),
+                reportService.getRecentActivity(6),
+            ]);
 
-            setStats(prev => ({
-                ...prev,
-                totalCourses: subjectsData.length,
-            }));
+            const normalizedSubjects = Array.isArray(subjectsData) ? subjectsData : [];
+            const timetables = Array.isArray(timetableData) ? timetableData : (timetableData ? [timetableData] : []);
 
+            const schedules = timetables.flatMap((timetable) => {
+                const timetableSchedules = Array.isArray(timetable?.schedules) ? timetable.schedules : [];
+                return timetableSchedules.map((schedule) => ({
+                    id: schedule.scheduleId || schedule.id,
+                    day: schedule.day,
+                    start: formatTime(schedule.startHour),
+                    end: formatTime(schedule.endHour),
+                    subject: schedule.subject,
+                    classe: schedule.classe,
+                }));
+            });
+
+            const todayKey = dayKeys[new Date().getDay()];
+            const todays = schedules.filter((schedule) => schedule.day === todayKey);
+
+            // Calculate pending attendance based on current time
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            const currentTimeInMinutes = currentHour * 60 + currentMinute;
+
+            const pendingClasses = todays.filter((schedule) => {
+                if (!schedule.start) return false;
+                const [startHour, startMinute] = schedule.start.split(':').map(Number);
+                const scheduleTimeInMinutes = startHour * 60 + startMinute;
+                // Consider a class pending if it hasn't started yet or is currently ongoing
+                return scheduleTimeInMinutes > currentTimeInMinutes;
+            });
+
+            setSubjects(normalizedSubjects);
+            setTodaySchedules(todays);
+
+            // Filter recent activity to show only teacher's activities
+            const teacherActivities = Array.isArray(activityData)
+                ? activityData.filter(activity =>
+                    !activity.userId || activity.userId === user.id
+                )
+                : [];
+            setRecentActivity(teacherActivities);
+
+            setStats({
+                totalCourses: normalizedSubjects.length,
+                pendingAttendance: pendingClasses.length,
+                todayClasses: todays.length,
+                recentActivity: teacherActivities.length,
+            });
         } catch (error) {
-            toast.error(error.message);
+            toast.error(error.message || 'Erreur lors du chargement du tableau de bord.');
         } finally {
             setLoading(false);
         }
     };
 
-    const StatCard = ({ title, value, description, icon, color, href }) => (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-sm font-medium text-gray-600">{title}</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-                    <p className="text-xs text-gray-500 mt-2">{description}</p>
+    const StatCard = ({ title, value, icon, color, href, trend }) => {
+        const Card = (
+            <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-slate-100 overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 opacity-5">
+                    <div className={`w-full h-full rounded-full bg-gradient-to-br ${color} transform translate-x-8 -translate-y-8`}></div>
                 </div>
-                <div className={`p-3 rounded-lg ${color}`}>
-                    {icon}
+
+                <div className="relative">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center text-white shadow-lg`}>
+                            {icon}
+                        </div>
+                        {trend && (
+                            <div className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                </svg>
+                                {trend}%
+                            </div>
+                        )}
+                    </div>
+                    <div className="text-3xl font-bold text-slate-800 mb-1">
+                        {Number.isFinite(value) ? value.toLocaleString() : 0}
+                    </div>
+                    <div className="text-sm text-slate-500 font-medium">{title}</div>
                 </div>
             </div>
-            {href && (
-                <Link href={href} className="inline-flex items-center text-sm text-violet-600 hover:text-violet-500 font-medium mt-4">
-                    Voir détails
-                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </Link>
-            )}
-        </div>
-    );
+        );
 
-    const QuickAction = ({ title, description, icon, href, color }) => (
-        <Link href={href} className="block">
-            <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md hover:border-violet-200 transition-all group">
-                <div className={`w-12 h-12 rounded-lg ${color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                    {icon}
+        if (href) {
+            return (
+                <Link href={href} className="group">
+                    {Card}
+                </Link>
+            );
+        }
+
+        return Card;
+    };
+
+    const QuickActionCard = ({ title, description, icon, color, href }) => (
+        <Link href={href}>
+            <div className={`bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all duration-200 border-l-4 ${color} group cursor-pointer`}>
+                <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-xl bg-gradient-to-br ${color.replace('border-', 'from-').replace('-500', '-100')} ${color.replace('border-', 'to-').replace('-500', '-200')}`}>
+                        {icon}
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="font-semibold text-slate-800 mb-1 group-hover:text-violet-600 transition-colors">{title}</h3>
+                        <p className="text-xs text-slate-500">{description}</p>
+                    </div>
+                    <svg className="w-5 h-5 text-slate-400 group-hover:text-violet-600 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                    </svg>
                 </div>
-                <h3 className="font-semibold text-gray-900 group-hover:text-violet-600 transition-colors">{title}</h3>
-                <p className="text-sm text-gray-600 mt-1">{description}</p>
             </div>
         </Link>
     );
 
-    const recentActivities = [
-        { id: 1, type: 'attendance', description: 'Présence enregistrée pour "Algorithmique"', time: 'Il y a 2 heures', icon: '✅' },
-        { id: 2, type: 'comment', description: 'Commentaire ajouté sur la fiche de Jean Dupont', time: 'Il y a 5 heures', icon: '💬' },
-        { id: 3, type: 'course', description: 'Cours "Base de données" planifié', time: 'Hier', icon: '📚' },
-    ];
+    const getActivityMeta = (activity) => {
+        const type = (activity?.type || activity?.action || activity?.category || activity?.description || '').toString().toLowerCase();
+
+        if (type.includes('attendance') || type.includes('presence') || type.includes('session')) {
+            return {
+                bg: 'bg-violet-100 text-violet-600', icon: (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+                    </svg>
+                )
+            };
+        }
+
+        if (type.includes('class') || type.includes('classe')) {
+            return {
+                bg: 'bg-blue-100 text-blue-600', icon: (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21h18M4 21V4a1 1 0 011-1h14a1 1 0 011 1v17" />
+                    </svg>
+                )
+            };
+        }
+
+        return {
+            bg: 'bg-slate-100 text-slate-600', icon: (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5h10M11 9h7M11 13h10M11 17h7M6 7h.01M6 11h.01M6 15h.01M6 19h.01" />
+                </svg>
+            )
+        };
+    };
 
     if (loading || authLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="flex items-center justify-center h-64">
                 <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-600">Chargement de votre tableau de bord...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 mx-auto"></div>
+                    <p className="mt-4 text-slate-600">Chargement des donnees...</p>
                 </div>
             </div>
         );
@@ -97,184 +209,230 @@ export default function TeacherDashboard() {
 
     return (
         <div className="space-y-6">
-            {/* En-tête */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-                        Dashboard Enseignant
-                    </h1>
-                    <p className="text-gray-600 mt-1">
-                        Bienvenue, {user?.name}.
-                    </p>
+                    <h1 className="text-2xl font-bold text-slate-800">Tableau de bord</h1>
+                    <p className="text-sm text-slate-500 mt-1">Enseignant {user?.name}</p>
                 </div>
-                <div className="mt-4 md:mt-0 flex space-x-3">
-                    <Link
-                        href="/teacher/timetable"
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                    >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                        Emploi du temps
+                <div className="flex items-center gap-3">
+                    <Link href="/teacher/timetable" className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                        <span className="flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Emploi du temps
+                        </span>
                     </Link>
-                    <Link
-                        href="/teacher/attendance"
-                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 transition-colors"
-                    >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        Gérer les présences
+                    <Link href="/teacher/attendance" className="px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700 transition-colors">
+                        Gerer presences
                     </Link>
                 </div>
             </div>
 
-            {/* Statistiques */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
-                    title="Total des cours"
+                    title="Cours assignes"
                     value={stats.totalCourses}
-                    description="Cours assignés"
-                    icon={<svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>}
-                    color="bg-blue-500"
+                    icon={
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                    }
+                    color="from-violet-500 to-purple-600"
                     href="/teacher/courses"
                 />
                 <StatCard
-                    title="Présences en attente"
+                    title="Presences en attente"
                     value={stats.pendingAttendance}
-                    description="À valider/corriger"
-                    icon={<svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>}
-                    color="bg-amber-500"
+                    icon={
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    }
+                    color="from-amber-500 to-orange-600"
                     href="/teacher/attendance"
                 />
                 <StatCard
                     title="Cours aujourd'hui"
                     value={stats.todayClasses}
-                    description="Séances programmées"
-                    icon={<svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>}
-                    color="bg-green-500"
+                    icon={
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    }
+                    color="from-emerald-500 to-green-600"
                     href="/teacher/timetable"
                 />
                 <StatCard
-                    title="Activité récente"
+                    title="Activite recente"
                     value={stats.recentActivity}
-                    description="Actions cette semaine"
-                    icon={<svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>}
-                    color="bg-purple-500"
+                    icon={
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    }
+                    color="from-blue-500 to-indigo-600"
                     href="/teacher/reports"
                 />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Actions rapides */}
-                <div className="lg:col-span-1">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions rapides</h2>
-                        <div className="space-y-3">
-                            <QuickAction
-                                title="Valider les présences"
-                                description="Corriger et valider les fiches de présence automatiques"
-                                icon={<svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>}
-                                href="/teacher/attendance"
-                                color="bg-violet-500"
-                            />
-                            <QuickAction
-                                title="Consulter l'emploi du temps"
-                                description="Voir votre planning de cours"
-                                icon={<svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>}
-                                href="/teacher/timetable"
-                                color="bg-blue-500"
-                            />
-                            <QuickAction
-                                title="Générer un rapport"
-                                description="Exporter les statistiques de présence"
-                                icon={<svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>}
-                                href="/teacher/reports"
-                                color="bg-green-500"
-                            />
-                        </div>
-                    </div>
-                </div>
+                <QuickActionCard
+                    title="Valider les presences"
+                    description="Corriger et valider les feuilles en attente"
+                    icon={
+                        <svg className="w-5 h-5 text-violet-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    }
+                    color="border-violet-500"
+                    href="/teacher/attendance"
+                />
+                <QuickActionCard
+                    title="Consulter l'emploi du temps"
+                    description="Voir votre planning de cours"
+                    icon={
+                        <svg className="w-5 h-5 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    }
+                    color="border-amber-500"
+                    href="/teacher/timetable"
+                />
+                <QuickActionCard
+                    title="Voir mes cours"
+                    description="Acceder aux details de vos cours"
+                    icon={
+                        <svg className="w-5 h-5 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                    }
+                    color="border-emerald-500"
+                    href="/teacher/courses"
+                />
+            </div>
 
-                {/* Activité récente */}
-                <div className="lg:col-span-2">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-lg font-semibold text-gray-900">Activité récente</h2>
-                            <Link href="/teacher/reports" className="text-sm text-violet-600 hover:text-violet-500 font-medium">
-                                Voir tout
-                            </Link>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-lg font-bold text-slate-800">Cours aujourd'hui</h2>
+                        <Link href="/teacher/timetable" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
+                            Voir le planning
+                        </Link>
+                    </div>
+                    {todaySchedules.length === 0 ? (
+                        <div className="text-sm text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-6 text-center">
+                            Aucun cours prevu pour aujourd'hui.
                         </div>
-                        <div className="space-y-4">
-                            {recentActivities.map((activity) => (
-                                <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                                    <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm">
-                                        {activity.icon}
+                    ) : (
+                        <div className="space-y-3">
+                            {todaySchedules.map((schedule) => (
+                                <div key={schedule.id} className="flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors border border-slate-100">
+                                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-violet-100 text-violet-600">
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0" />
+                                        </svg>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm text-gray-900">{activity.description}</p>
-                                        <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+                                        <p className="text-sm text-slate-800 font-medium">{schedule.subject?.name || 'Cours'}</p>
+                                        <p className="text-xs text-slate-500 mt-1">{schedule.start} - {schedule.end}</p>
+                                        <p className="text-xs text-slate-500 mt-1">{schedule.classe?.name || 'Classe'} </p>
                                     </div>
+                                    {schedule.subject?.subjectId && (
+                                        <Link href={`/teacher/courses/${schedule.subject.subjectId}`} className="text-sm text-violet-600 hover:text-violet-700 font-medium">
+                                            Details
+                                        </Link>
+                                    )}
                                 </div>
                             ))}
                         </div>
+                    )}
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-lg font-bold text-slate-800">Activite recente</h2>
+                        <Link href="/teacher/reports" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
+                            Voir tout
+                        </Link>
                     </div>
-
-                    {/* Vos cours */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-lg font-semibold text-gray-900">Vos Cours</h2>
-                            <Link href="/teacher/courses" className="text-sm text-violet-600 hover:text-violet-500 font-medium">
-                                Voir tous les cours
-                            </Link>
+                    {recentActivity.length === 0 ? (
+                        <div className="text-sm text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-6 text-center">
+                            Aucune activite recente disponible.
                         </div>
-
-                        {subjects.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {subjects.slice(0, 4).map(subject => (
-                                    <div key={subject.subjectId} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                                        <div className="flex items-start justify-between">
-                                            <div>
-                                                <h3 className="font-semibold text-gray-900">{subject.name}</h3>
-                                                <p className="text-sm text-gray-600 mt-1">{subject.code}</p>
-                                                {subject.description && (
-                                                    <p className="text-sm text-gray-500 mt-2 line-clamp-2">{subject.description}</p>
-                                                )}
-                                            </div>
-                                            <div className="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                                </svg>
-                                            </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {recentActivity.map((activity) => {
+                                const meta = getActivityMeta(activity);
+                                return (
+                                    <div key={activity.id || `${activity.description}-${activity.timestamp}`} className="flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors border border-slate-100">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${meta.bg} flex-shrink-0`}>
+                                            {meta.icon}
                                         </div>
-                                        <div className="flex space-x-2 mt-4">
-                                            <Link
-                                                href={`/teacher/courses/${subject.subjectId}`}
-                                                className="flex-1 text-center px-3 py-2 text-sm font-medium text-violet-600 bg-violet-50 hover:bg-violet-100 rounded-lg transition-colors"
-                                            >
-                                                Détails
-                                            </Link>
-                                            <Link
-                                                href={`/teacher/attendance?course=${subject.subjectId}`}
-                                                className="flex-1 text-center px-3 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors"
-                                            >
-                                                Présences
-                                            </Link>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm text-slate-800 font-medium">{activity.description || 'Activite recente'}</p>
+                                            <p className="text-xs text-slate-500 mt-1">{activity.timestamp || ''}</p>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-8">
-                                <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                </svg>
-                                <p className="text-gray-500">Aucun cours ne vous est assigné pour le moment.</p>
-                                <p className="text-sm text-gray-400 mt-1">Contactez votre chef de département.</p>
-                            </div>
-                        )}
-                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-bold text-slate-800">Vos cours</h2>
+                    <Link href="/teacher/courses" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
+                        Voir tous
+                    </Link>
+                </div>
+
+                {subjects.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {subjects.slice(0, 4).map((subject) => (
+                            <div key={subject.subjectId} className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <h3 className="font-semibold text-slate-900">{subject.name}</h3>
+                                        <p className="text-sm text-slate-600 mt-1">{subject.code}</p>
+                                        {subject.description && (
+                                            <p className="text-sm text-slate-500 mt-2 line-clamp-2">{subject.description}</p>
+                                        )}
+                                    </div>
+                                    <div className="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div className="flex space-x-2 mt-4">
+                                    <Link
+                                        href={`/teacher/courses/${subject.subjectId}`}
+                                        className="flex-1 text-center px-3 py-2 text-sm font-medium text-violet-600 bg-violet-50 hover:bg-violet-100 rounded-lg transition-colors"
+                                    >
+                                        Details
+                                    </Link>
+                                    <Link
+                                        href={`/teacher/attendance?course=${subject.subjectId}`}
+                                        className="flex-1 text-center px-3 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors"
+                                    >
+                                        Presences
+                                    </Link>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-8">
+                        <svg className="w-12 h-12 text-slate-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <p className="text-slate-500">Aucun cours assigne pour le moment.</p>
+                        <p className="text-sm text-slate-400 mt-1">Contactez votre chef de departement.</p>
+                    </div>
+                )}
             </div>
         </div>
     );

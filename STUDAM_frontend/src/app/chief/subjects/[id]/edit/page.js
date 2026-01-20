@@ -9,6 +9,7 @@ import { useAuthContext } from '@/context/authContext';
 import subjectService from '@/services/subjectService';
 import departmentService from '@/services/departmentService';
 import userService from '@/services/userService';
+import classService from '@/services/classService';
 
 export default function EditSubjectPage() {
     const params = useParams();
@@ -23,11 +24,13 @@ export default function EditSubjectPage() {
         credits: '',
         heuresCoursParSemaine: '',
         departmentId: '',
-        teacherId: ''
+        teacherId: '',
+        classes: []
     });
 
     const [departments, setDepartments] = useState([]);
     const [teachers, setTeachers] = useState([]);
+    const [classes, setClasses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState({});
@@ -57,17 +60,26 @@ export default function EditSubjectPage() {
                 departmentService.getAll(),
             ]);
 
-            const departmentsList = Array.isArray(departmentsData) ? departmentsData : [];
-            const chiefDepartment = resolveDepartment(departmentsList);
+            const chiefDepartment = resolveDepartment(Array.isArray(departmentsData) ? departmentsData : []);
 
             if (!chiefDepartment) {
                 throw new Error("Aucun departement n'est assigne a votre compte.");
             }
 
-            const teachersData = await userService.getUsersByRoleAndDepartment('TEACHER', chiefDepartment.departmentId);
+            // Load teachers and classes for the department
+            const [teachersData, classesData] = await Promise.all([
+                userService.getUsersByRoleAndDepartment('TEACHER', chiefDepartment.departmentId),
+                classService.getByDepartment(chiefDepartment.departmentId)
+            ]);
+
+            setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
 
             setDepartments([{ id: chiefDepartment.departmentId, name: chiefDepartment.name }]);
             setTeachers(Array.isArray(teachersData) ? teachersData : []);
+            setClasses(Array.isArray(classesData) ? classesData : []);
+
+            // Extract class IDs from subjectData if available
+            const assignedClassIds = subjectData?.classes ? subjectData.classes.map(c => c.id || c.classId) : [];
 
             setFormData({
                 libelle: subjectData?.name || subjectData?.libelle || '',
@@ -77,6 +89,7 @@ export default function EditSubjectPage() {
                 heuresCoursParSemaine: subjectData?.heuresCoursParSemaine ? subjectData.heuresCoursParSemaine.toString() : '',
                 departmentId: chiefDepartment.departmentId.toString(),
                 teacherId: subjectData?.teacher?.id ? subjectData.teacher.id.toString() : (subjectData?.teacherId ? subjectData.teacherId.toString() : ''),
+                classes: assignedClassIds
             });
 
         } catch (error) {
@@ -153,7 +166,8 @@ export default function EditSubjectPage() {
                 credits: parseInt(formData.credits, 10) || 0,
                 heuresCoursParSemaine: parseInt(formData.heuresCoursParSemaine, 10) || 0,
                 departmentId: parseInt(formData.departmentId, 10),
-                teacherId: parseInt(formData.teacherId, 10)
+                teacherId: parseInt(formData.teacherId, 10),
+                classes: formData.classes
             });
 
             toast.success("Matiere modifiee avec succes");
@@ -185,7 +199,7 @@ export default function EditSubjectPage() {
                 <Link href={`/chief/subjects/${subjectId}`}>
                     <Button variant="secondary">
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                         Retour
                     </Button>
@@ -274,6 +288,33 @@ export default function EditSubjectPage() {
                             {errors.teacherId && (
                                 <p className="mt-1 text-sm text-red-600">{errors.teacherId}</p>
                             )}
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label htmlFor="classes" className="block text-sm font-medium text-gray-700 mb-1">
+                                Classes assignées
+                            </label>
+                            <select
+                                id="classes"
+                                name="classes"
+                                multiple
+                                value={formData.classes}
+                                onChange={(e) => {
+                                    const selected = Array.from(e.target.selectedOptions, option => parseInt(option.value));
+                                    setFormData(prev => ({ ...prev, classes: selected }));
+                                }}
+                                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
+                                size="4"
+                            >
+                                {classes.map((classe) => (
+                                    <option key={classe.classId} value={classe.classId}>
+                                        {classe.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="mt-1 text-xs text-gray-500">
+                                Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs classes.
+                            </p>
                         </div>
 
                         <div>

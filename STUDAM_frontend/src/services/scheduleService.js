@@ -20,9 +20,19 @@ const update = async (scheduleId, payload) => {
     }
 };
 
+const remove = async (scheduleId) => {
+    try {
+        await apiClient.delete(`/schedule/${scheduleId}`);
+    } catch (error) {
+        console.error('Erreur API [deleteSchedule]:', error);
+        throw new Error(error.response?.data?.message || "La suppression du cours a echoue.");
+    }
+};
+
 const scheduleService = {
     create,
     update,
+    remove,
 };
 
 export default scheduleService;

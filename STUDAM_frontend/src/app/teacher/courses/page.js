@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthContext } from '../../../context/authContext';
 import subjectService from '../../../services/subjectService';
+import timetableService from '../../../services/timetableService';
 import toast from 'react-hot-toast';
 
 export default function TeacherCoursesPage() {
@@ -25,12 +26,24 @@ export default function TeacherCoursesPage() {
     const loadTeacherData = async (teacherId) => {
         try {
             setLoading(true);
-            const subjectsData = await subjectService.getByTeacher(teacherId);
-            setSubjects(subjectsData);
-            setStats(prev => ({
-                ...prev,
-                totalCourses: subjectsData.length,
-            }));
+            const [subjectsData, timetableData] = await Promise.all([
+                subjectService.getByTeacher(teacherId),
+                timetableService.getByTeacher(teacherId),
+            ]);
+
+            const normalizedSubjects = Array.isArray(subjectsData) ? subjectsData : [];
+            const timetables = Array.isArray(timetableData) ? timetableData : (timetableData ? [timetableData] : []);
+            const scheduleSubjects = timetables.flatMap((timetable) => {
+                const schedules = Array.isArray(timetable?.schedules) ? timetable.schedules : [];
+                return schedules.map((schedule) => schedule.subject).filter((subject) => subject && subject.subjectId);
+            });
+
+            const merged = [...normalizedSubjects, ...scheduleSubjects];
+            const uniqueSubjects = Array.from(
+                new Map(merged.map((subject) => [subject.subjectId, subject])).values()
+            );
+
+            setSubjects(uniqueSubjects);
         } catch (error) {
             toast.error(error.message || "Impossible de charger les cours.");
         } finally {
@@ -60,7 +73,7 @@ export default function TeacherCoursesPage() {
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Mes Cours</h1>
                         <p className="text-gray-600 mt-1">
-                            Liste de tous les cours qui vous sont assignés
+                            Liste de tous les cours qui vous sont assignes
                         </p>
                     </div>
                     <div className="mt-4 md:mt-0 flex space-x-3">
@@ -95,9 +108,9 @@ export default function TeacherCoursesPage() {
                     <div className="px-6 py-4 border-b border-gray-200">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h2 className="text-lg font-semibold text-gray-900">Vos Cours Assignés</h2>
+                                <h2 className="text-lg font-semibold text-gray-900">Vos Cours Assignes</h2>
                                 <p className="text-sm text-gray-600 mt-1">
-                                    {subjects.length} cours trouvés
+                                    {subjects.length} cours trouves
                                 </p>
                             </div>
                             <div className="flex items-center space-x-2">
@@ -116,9 +129,9 @@ export default function TeacherCoursesPage() {
                             <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                             </svg>
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun cours assigné</h3>
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun cours assigne</h3>
                             <p className="text-gray-500 max-w-md mx-auto">
-                                Aucun cours ne vous est actuellement assigné. Contactez votre chef de département pour obtenir des cours.
+                                Aucun cours ne vous est actuellement assigne. Contactez votre chef de departement pour obtenir des cours.
                             </p>
                         </div>
                     ) : (
@@ -141,7 +154,7 @@ export default function TeacherCoursesPage() {
                                             </div>
                                         </div>
 
-                                        {/* Informations supplémentaires */}
+                                        {/* Informations supplementaires */}
                                         <div className="space-y-2 mb-4">
                                             {subject.department && (
                                                 <div className="flex items-center text-sm text-gray-600">
@@ -156,7 +169,7 @@ export default function TeacherCoursesPage() {
                                                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
                                                     </svg>
-                                                    {subject.credits} crédits
+                                                    {subject.credits} credits
                                                 </div>
                                             )}
                                         </div>
@@ -167,13 +180,13 @@ export default function TeacherCoursesPage() {
                                                 href={`/teacher/courses/${subject.subjectId}`}
                                                 className="flex-1 text-center px-3 py-2 text-sm font-medium text-violet-600 bg-violet-50 hover:bg-violet-100 rounded-lg transition-colors"
                                             >
-                                                Détails du cours
+                                                Details du cours
                                             </Link>
                                             <Link
                                                 href={`/teacher/attendance?course=${subject.subjectId}`}
                                                 className="flex-1 text-center px-3 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors"
                                             >
-                                                Présences
+                                                Presences
                                             </Link>
                                         </div>
                                     </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthContext } from '../../context/authContext';
+import reportService from '../../services/reportService';
 import { getRoleLabel } from '../../lib/roles';
 
 const BiometricLogo = ({ className = "w-10 h-10" }) => (
@@ -69,13 +70,25 @@ export default function TeacherLayout({ children }) {
 
     if (!isAllowed) {
       router.push('/auth/login');
+      return;
     }
 
-    setRecentActivity([
-      { id: 1, description: 'Nouvelle session de presence enregistree', timestamp: 'Il y a 2 heures', icon: 'attendance' },
-      { id: 2, description: 'Mise a jour de votre emploi du temps', timestamp: 'Hier', icon: 'timetable' },
-      { id: 3, description: 'Rapport hebdo genere', timestamp: 'Il y a 3 jours', icon: 'reports' },
-    ]);
+    const loadRecentActivity = async () => {
+      try {
+        const activities = await reportService.getRecentActivity(6);
+        const normalized = Array.isArray(activities) ? activities.map((activity) => ({
+          id: activity.id,
+          description: activity.description,
+          timestamp: activity.timestamp,
+          icon: activity.type || 'attendance',
+        })) : [];
+        setRecentActivity(normalized);
+      } catch (error) {
+        setRecentActivity([]);
+      }
+    };
+
+    loadRecentActivity();
   }, [user, isAuthenticated, authLoading, router]);
 
   const getGreeting = () => {
@@ -169,7 +182,9 @@ export default function TeacherLayout({ children }) {
                     <svg className="w-6 h-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                     </svg>
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                    {recentActivity.length > 0 && (
+                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                    )}
                   </button>
 
                   {showNotifications && (

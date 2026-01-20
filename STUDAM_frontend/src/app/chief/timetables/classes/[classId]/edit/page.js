@@ -172,7 +172,19 @@ export default function EditClassTimetablePage() {
     };
 
     const handleDelete = async (scheduleId) => {
-        toast.error("La suppression de cours n'est pas encore disponible.");
+        if (!window.confirm("Voulez-vous vraiment supprimer ce cours ?")) {
+            return;
+        }
+
+        try {
+            await scheduleService.remove(scheduleId);
+            toast.success("Cours supprimé avec succès");
+            setShowModal(false);
+            await loadData();
+        } catch (error) {
+            toast.error(error.message || "Erreur lors de la suppression du cours");
+            console.error(error);
+        }
     };
 
     const findSchedule = (day, time) => {
@@ -203,45 +215,45 @@ export default function EditClassTimetablePage() {
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
-                        <tr>
-                            <th className="w-20 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Horaire</th>
-                            {daysOfWeek.map((day) => (
-                                <th key={day} className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                                    {day}
-                                </th>
-                            ))}
-                        </tr>
+                            <tr>
+                                <th className="w-20 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Horaire</th>
+                                {daysOfWeek.map((day) => (
+                                    <th key={day} className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                                        {day}
+                                    </th>
+                                ))}
+                            </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                        {timeSlots.map((time) => (
-                            <tr key={time}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-gray-50">
-                                    {time}
-                                </td>
-                                {daysOfWeek.map((day) => {
-                                    const schedule = findSchedule(day, time);
-                                    return (
-                                        <td
-                                            key={`${day}-${time}`}
-                                            className={`px-1 py-1 text-sm ${schedule ? 'cursor-pointer hover:bg-violet-50' : 'cursor-pointer hover:bg-gray-50'}`}
-                                            onClick={() => handleCellClick(day, time, schedule)}
-                                        >
-                                            {schedule ? (
-                                                <div className="p-2 rounded-md bg-violet-100 border border-violet-200 h-full min-h-[80px]">
-                                                    <div className="font-medium text-[#312e81]">{schedule.matiere?.libelle}</div>
-                                                    <div className="text-xs text-gray-500">Code: {schedule.matiere?.code}</div>
-                                                    <div className="text-xs text-gray-500">Prof: {schedule.matiere?.enseignant?.nom || '---'}</div>
-                                                </div>
-                                            ) : (
-                                                <div className="p-2 rounded-md bg-gray-50 border border-gray-100 h-full min-h-[80px] flex items-center justify-center">
-                                                    <span className="text-gray-400 text-xs">Cliquez pour ajouter</span>
-                                                </div>
-                                            )}
-                                        </td>
-                                    );
-                                })}
-                            </tr>
-                        ))}
+                            {timeSlots.map((time) => (
+                                <tr key={time}>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-gray-50">
+                                        {time}
+                                    </td>
+                                    {daysOfWeek.map((day) => {
+                                        const schedule = findSchedule(day, time);
+                                        return (
+                                            <td
+                                                key={`${day}-${time}`}
+                                                className={`px-1 py-1 text-sm ${schedule ? 'cursor-pointer hover:bg-violet-50' : 'cursor-pointer hover:bg-gray-50'}`}
+                                                onClick={() => handleCellClick(day, time, schedule)}
+                                            >
+                                                {schedule ? (
+                                                    <div className="p-2 rounded-md bg-violet-100 border border-violet-200 h-full min-h-[80px]">
+                                                        <div className="font-medium text-[#312e81]">{schedule.matiere?.libelle}</div>
+                                                        <div className="text-xs text-gray-500">Code: {schedule.matiere?.code}</div>
+                                                        <div className="text-xs text-gray-500">Prof: {schedule.matiere?.enseignant?.nom || '---'}</div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-2 rounded-md bg-gray-50 border border-gray-100 h-full min-h-[80px] flex items-center justify-center">
+                                                        <span className="text-gray-400 text-xs">Cliquez pour ajouter</span>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>

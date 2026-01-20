@@ -1,10 +1,11 @@
 import React from 'react';
 import Link from 'next/link';
 
-const StudentsList = ({ 
-  students = [], 
+const StudentsList = ({
+  students = [],
   onEdit,
-  onToggleStatus
+  onToggleStatus,
+  onDelete
 }) => {
   return (
     <div className="overflow-x-auto">
@@ -39,7 +40,7 @@ const StudentsList = ({
               </td>
             </tr>
           )}
-          
+
           {students.map((student) => (
             <tr key={student.id} className={student.status === 'inactive' ? 'bg-gray-50' : ''}>
               <td className="px-6 py-4 whitespace-nowrap">
@@ -74,19 +75,18 @@ const StudentsList = ({
                 <div className="text-sm text-gray-500">{student.lieuNaissance}</div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <span 
-                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    student.status === 'active' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}
+                <span
+                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${student.status === 'active'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                    }`}
                 >
                   {student.status === 'active' ? 'Actif' : 'Inactif'}
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <div className="flex space-x-2">
-                  <Link 
+                  <Link
                     href={`/chief/students/${student.id}`}
                     className="text-blue-600 hover:text-blue-800"
                   >
@@ -107,11 +107,10 @@ const StudentsList = ({
                   </button>
                   <button
                     onClick={() => onToggleStatus(student.id)}
-                    className={`${
-                      student.status === 'active' 
-                        ? 'text-red-600 hover:text-red-800' 
-                        : 'text-green-600 hover:text-green-800'
-                    }`}
+                    className={`${student.status === 'active'
+                      ? 'text-red-600 hover:text-red-800'
+                      : 'text-green-600 hover:text-green-800'
+                      }`}
                   >
                     <span className="sr-only">
                       {student.status === 'active' ? 'Désactiver' : 'Activer'}
@@ -126,6 +125,18 @@ const StudentsList = ({
                       </svg>
                     )}
                   </button>
+                  {onDelete && (
+                    <button
+                      onClick={() => onDelete(student.id, student.nom)}
+                      className="text-red-600 hover:text-red-800 ml-2"
+                      title="Supprimer"
+                    >
+                      <span className="sr-only">Supprimer</span>
+                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>
