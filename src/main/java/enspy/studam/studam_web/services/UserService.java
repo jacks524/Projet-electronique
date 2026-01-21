@@ -20,6 +20,7 @@ import enspy.studam.studam_web.models.Subject;
 import enspy.studam.studam_web.models.User;
 import enspy.studam.studam_web.models.UserRole;
 import enspy.studam.studam_web.repositories.DepartmentRepository;
+import enspy.studam.studam_web.repositories.StudentRepository;
 import enspy.studam.studam_web.repositories.UserRepository;
 import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
 import enspy.studam.studam_web.services.lookup.SubjectLookupService;
@@ -40,6 +41,7 @@ public class UserService implements UserDetailsService {
   private SubjectLookupService subjectLookupService;
   private DepartmentLookupService departmentLookupService;
   private final StudentLookupService studentLookupService;
+  private final StudentRepository studentRepository;
   private final WebSocketEventPublisher webSocketEventPublisher;
 
   @Override
@@ -88,7 +90,27 @@ public class UserService implements UserDetailsService {
     }
 
     return users.stream().map(user -> {
-      return TeacherResponseDTO.toDTO(user, user.getSubjects());
+      TeacherResponseDTO dto = TeacherResponseDTO.toDTO(user, user.getSubjects());
+
+      // Calculate class count and student count
+      java.util.Set<Integer> classIds = new java.util.HashSet<>();
+      int totalStudents = 0;
+
+      // For each subject the teacher teaches
+      for (Subject subject : user.getSubjects()) {
+        if (subject.getClasses() != null) {
+          for (enspy.studam.studam_web.models.Class cls : subject.getClasses()) {
+            classIds.add(cls.getClassId());
+            // Count students in this class
+            totalStudents += (int) studentRepository.countByClasses_ClassId(cls.getClassId());
+          }
+        }
+      }
+
+      dto.setClassCount(classIds.size());
+      dto.setStudentCount(totalStudents);
+
+      return dto;
     }).toList();
   }
 
@@ -133,7 +155,8 @@ public class UserService implements UserDetailsService {
     int totalAdmins = this.userLookupService.countUsersByRole(UserRoleEnum.ADMIN);
     int totalStudents = this.studentLookupService.countStudents();
     int totalDepartments = this.departmentLookupService.countDepartments();
-    return new UsersResponseStatictics(totalUsers, totalTeachers, totalStudents, totalDepartments, totalDepartmentsManagers, totalAdmins);
+    return new UsersResponseStatictics(totalUsers, totalTeachers, totalStudents, totalDepartments,
+        totalDepartmentsManagers, totalAdmins);
   }
 
   public User removeSubjetToTeacher(int teacherId, int subjectId) {

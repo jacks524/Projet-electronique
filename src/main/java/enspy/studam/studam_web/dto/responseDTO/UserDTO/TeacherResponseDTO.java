@@ -18,6 +18,8 @@ public class TeacherResponseDTO {
   private String username;
   private String matricule;
   private List<SubjectResponseDTO> subjects; // Assuming subjects are represented as a list of strings
+  private int classCount; // Number of classes the teacher is assigned to
+  private int studentCount; // Total number of students in all classes
 
   public static TeacherResponseDTO toDTO(User user, Set<Subject> subjects) {
     TeacherResponseDTO dto = new TeacherResponseDTO();

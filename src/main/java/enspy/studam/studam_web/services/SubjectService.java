@@ -66,12 +66,22 @@ public class SubjectService {
 
     subject = subjectRepository.save(subject);
 
+    // Assign teacher (enforce one teacher per subject)
     if (subjectRequestDTO.getTeacherId() != null) {
-      User teacher = userLookupService.getUserById(subjectRequestDTO.getTeacherId());
-      if (!subjectLookupService.isTeacherAssignToSubject(teacher, subject)) {
-        teacher.addSubject(subject);
-        userRepository.save(teacher);
+      User newTeacher = userLookupService.getUserById(subjectRequestDTO.getTeacherId());
+
+      // Remove all existing teachers from this subject first
+      if (subject.getTeachers() != null && !subject.getTeachers().isEmpty()) {
+        for (User oldTeacher : new ArrayList<>(subject.getTeachers())) {
+          oldTeacher.getSubjects().remove(subject);
+          userRepository.save(oldTeacher);
+        }
+        subject.getTeachers().clear();
       }
+
+      // Add the new teacher
+      newTeacher.addSubject(subject);
+      userRepository.save(newTeacher);
     }
 
     return subject;
@@ -101,12 +111,22 @@ public class SubjectService {
 
     subject = subjectRepository.save(subject);
 
+    // Update teacher assignment (enforce one teacher per subject)
     if (subjectRequestDTO.getTeacherId() != null) {
-      User teacher = userLookupService.getUserById(subjectRequestDTO.getTeacherId());
-      if (!subjectLookupService.isTeacherAssignToSubject(teacher, subject)) {
-        teacher.addSubject(subject);
-        userRepository.save(teacher);
+      User newTeacher = userLookupService.getUserById(subjectRequestDTO.getTeacherId());
+
+      // Remove all existing teachers from this subject first
+      if (subject.getTeachers() != null && !subject.getTeachers().isEmpty()) {
+        for (User oldTeacher : new ArrayList<>(subject.getTeachers())) {
+          oldTeacher.getSubjects().remove(subject);
+          userRepository.save(oldTeacher);
+        }
+        subject.getTeachers().clear();
       }
+
+      // Add the new teacher
+      newTeacher.addSubject(subject);
+      userRepository.save(newTeacher);
     }
 
     return subject;
@@ -123,7 +143,8 @@ public class SubjectService {
 
   public List<Subject> getSubjectsByTeacherId(int teacherId) {
     User teacher = userLookupService.getUserById(teacherId);
-    Set<Subject> subjects = new LinkedHashSet<>(this.subjectRepository.findByTeachers(Collections.singletonList(teacher)));
+    Set<Subject> subjects = new LinkedHashSet<>(
+        this.subjectRepository.findByTeachers(Collections.singletonList(teacher)));
 
     if (subjects.isEmpty()) {
       // Fallback: infer subjects from scheduled courses for this teacher
