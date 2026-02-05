@@ -58,6 +58,7 @@ public class AttendanceService {
     attendanceSession.setSubject(subject);
     attendanceSession.setTimetable(
         this.timetableLookupService.getTimetableContainsDate(attendancesRequestDTO.get(0).getDate().toLocalDate()));
+    attendanceSession.setValidated(true);
     attendanceSession = attendanceSessionRepository.save(attendanceSession);
     for (AttendanceRequestDTO attendanceRequestDTO : attendancesRequestDTO) {
       Student student = studentLookupService.getStudentByMatricule(attendanceRequestDTO.getStudentId());
