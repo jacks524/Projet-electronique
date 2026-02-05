@@ -31,6 +31,7 @@ import enspy.studam.studam_web.services.AttendanceService;
 import enspy.studam.studam_web.services.FingerprintTextStore;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
 import enspy.studam.studam_web.services.lookup.SubjectLookupService;
+import enspy.studam.studam_web.websocket.WebSocketEventPublisher;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -54,6 +55,7 @@ public class FingerPrintController {
   private final SubjectLookupService subjectLookupService;
   private final UserLookupService userLookupService;
   private final FingerprintTextStore fingerprintTextStore;
+  private final WebSocketEventPublisher webSocketEventPublisher;
 
   @Hidden
   @PostMapping("/saveBySchedule")
@@ -117,6 +119,10 @@ public class FingerPrintController {
       ParsedAttendance parsed = parsePresenceText(rawText, sessionDate);
       this.attendanceService.saveAttendance(parsed.attendances, parsed.sessionDate);
       fingerprintTextStore.save(rawText, sessionDate);
+      java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+      payload.put("records", parsed.attendances.size());
+      payload.put("sessionDate", parsed.sessionDate);
+      webSocketEventPublisher.publish("fingerprint.text.received", payload);
       return ResponseEntity.ok("Parsed successfully: " + parsed.attendances.size() + " records");
     } catch (IOException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error parsing text payload");

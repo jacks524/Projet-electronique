@@ -248,6 +248,45 @@ public class ReportController {
     return ResponseEntity.ok(results);
   }
 
+  @GetMapping("/teacher/{teacherId}/validated")
+  public ResponseEntity<List<TeacherAttendanceReportDTO>> getValidatedReports(
+      @PathVariable int teacherId,
+      @RequestParam(required = false) String status) {
+    User currentUser = SecurityUtils.getCurrentUser();
+    boolean isAdmin = hasRole(currentUser, UserRoleEnum.ADMIN);
+    boolean isManager = hasRole(currentUser, UserRoleEnum.DEPARTMENT_MANAGER);
+    User teacher = userLookupService.getUserById(teacherId);
+
+    if (!isAdmin && !isManager) {
+      if (currentUser == null || currentUser.getId() != teacherId) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied for this teacher");
+      }
+    }
+
+    String normalizedStatus = status != null ? status.trim().toUpperCase() : "VALIDATED";
+    List<AttendanceSession> sessions = attendanceSessionRepository.findByTeacher(teacher);
+    List<TeacherAttendanceReportDTO> results = new ArrayList<>();
+    for (AttendanceSession session : sessions) {
+      boolean validated = session.isValidated();
+      String sessionStatus = validated ? "VALIDATED" : "PENDING";
+      if (!"ALL".equals(normalizedStatus) && !sessionStatus.equals(normalizedStatus)) {
+        continue;
+      }
+      String departmentName = session.getSubject() != null && session.getSubject().getDepartment() != null
+          ? session.getSubject().getDepartment().getName()
+          : null;
+      results.add(new TeacherAttendanceReportDTO(
+          session.getAttendanceSessionId(),
+          session.getTeacher() != null ? session.getTeacher().getName() : null,
+          departmentName,
+          session.getDate(),
+          session.getSubject() != null ? session.getSubject().getName() : null,
+          sessionStatus));
+    }
+
+    return ResponseEntity.ok(results);
+  }
+
   private boolean hasRole(User user, UserRoleEnum role) {
     if (user == null || user.getRoles() == null) {
       return false;
