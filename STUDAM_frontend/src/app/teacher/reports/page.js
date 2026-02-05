@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthContext } from '../../../context/authContext';
 import reportService from '../../../services/reportService';
+import attendanceService from '../../../services/attendanceService';
 import toast from 'react-hot-toast';
 
 export default function TeacherReportsPage() {
@@ -13,6 +14,7 @@ export default function TeacherReportsPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [authError, setAuthError] = useState('');
 
     useEffect(() => {
         if (authLoading || !user) return;
@@ -26,11 +28,16 @@ export default function TeacherReportsPage() {
     const loadReports = async () => {
         try {
             setLoading(true);
+            setAuthError('');
             const data = await reportService.getValidatedReports(user.id);
             setReports(data);
         } catch (error) {
+            if (error.message === 'UNAUTHORIZED') {
+                setAuthError("Accès refusé. Vérifiez que vous êtes bien connecté avec le bon compte.");
+                toast.error("Accès refusé aux rapports validés.");
+                return;
+            }
             toast.error('Erreur lors du chargement des rapports');
-            console.error(error);
         } finally {
             setLoading(false);
         }
@@ -72,6 +79,44 @@ export default function TeacherReportsPage() {
             'REJECTED': 'Rejeté',
         };
         return labels[status] || status;
+    };
+
+    const sanitizeSegment = (value) => {
+        if (!value) return '';
+        return value.toString().replace(/[^A-Za-z0-9]+/g, '_');
+    };
+
+    const downloadReportCsv = (report) => {
+        if (!report?.id) {
+            toast.error('Impossible de télécharger : identifiant de session manquant.');
+            return;
+        }
+
+        const downloadPromise = (async () => {
+            const fileBlob = await attendanceService.downloadSessionCsv(report.id);
+            const subjectPart = sanitizeSegment(report.subject?.name || report.subject?.label || 'presence');
+            const classPart = sanitizeSegment(report.class?.name || 'classe');
+            const datePart = report.date
+                ? new Date(report.date).toISOString().split('T')[0]
+                : 'date-inconnue';
+            const fileName = `${subjectPart}_${classPart}_${datePart}.csv`;
+
+            const url = window.URL.createObjectURL(fileBlob);
+            const anchor = document.createElement('a');
+            anchor.style.display = 'none';
+            anchor.href = url;
+            anchor.download = fileName;
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
+            window.URL.revokeObjectURL(url);
+        })();
+
+        toast.promise(downloadPromise, {
+            loading: `Téléchargement de la fiche ${report.subject?.name || 'de présence'}...`,
+            success: 'Fichier CSV téléchargé.',
+            error: (err) => (err?.response?.status === 404 ? 'Fichier introuvable.' : 'Le téléchargement a échoué.'),
+        });
     };
 
     if (authLoading || loading) {
@@ -195,7 +240,12 @@ export default function TeacherReportsPage() {
                         Fiches de présence ({filteredReports.length})
                     </h2>
                 </div>
-                {filteredReports.length === 0 ? (
+                {authError && (
+                    <div className="px-6 py-6 text-center text-sm text-amber-700 bg-amber-50">
+                        {authError}
+                    </div>
+                )}
+                {!loading && !authError && filteredReports.length === 0 ? (
                     <div className="p-12 text-center">
                         <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -209,59 +259,62 @@ export default function TeacherReportsPage() {
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-200">
-                        {filteredReports.map((report, index) => (
-                            <div key={index} className="p-6 hover:bg-gray-50 transition-colors">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center space-x-3 mb-2">
-                                            <h3 className="text-lg font-semibold text-gray-900">
-                                                {report.subject?.name || 'Matière non spécifiée'}
-                                            </h3>
-                                            <span className={`px-2 py-1 text-xs font-medium rounded ${getStatusBadge(report.status)}`}>
-                                                {getStatusLabel(report.status)}
-                                            </span>
+                        {filteredReports.map((report, index) => {
+                            const reportKey = report.id ?? report.raw?.attendanceSessionId ?? report.raw?.id ?? index;
+                            return (
+                                <div key={reportKey} className="p-6 hover:bg-gray-50 transition-colors">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <div className="flex items-center space-x-3 mb-2">
+                                                <h3 className="text-lg font-semibold text-gray-900">
+                                                    {report.subject?.name || 'Matière non spécifiée'}
+                                                </h3>
+                                                <span className={`px-2 py-1 text-xs font-medium rounded ${getStatusBadge(report.status)}`}>
+                                                    {getStatusLabel(report.status)}
+                                                </span>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                                                <div className="flex items-center">
+                                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                                    </svg>
+                                                    {report.class?.name || 'Classe non spécifiée'}
+                                                </div>
+                                                <div className="flex items-center">
+                                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                    </svg>
+                                                    {report.date ? new Date(report.date).toLocaleDateString('fr-FR') : 'Date non spécifiée'}
+                                                </div>
+                                                <div className="flex items-center">
+                                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                                    </svg>
+                                                    {report.presentCount || 0} présents / {report.totalStudents || 0} étudiants
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-                                            <div className="flex items-center">
+                                        <div className="ml-4 flex space-x-2">
+                                            <button
+                                                onClick={() => downloadReportCsv(report)}
+                                                className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                                            >
                                                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                                 </svg>
-                                                {report.class?.name || 'Classe non spécifiée'}
-                                            </div>
-                                            <div className="flex items-center">
-                                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                                </svg>
-                                                {report.date ? new Date(report.date).toLocaleDateString('fr-FR') : 'Date non spécifiée'}
-                                            </div>
-                                            <div className="flex items-center">
-                                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                                                </svg>
-                                                {report.presentCount || 0} présents / {report.totalStudents || 0} étudiants
-                                            </div>
+                                                Télécharger CSV
+                                            </button>
+                                            <Link
+                                                href={`/teacher/attendance/history/${report.id}`}
+                                                className="inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 transition-colors"
+                                            >
+                                                Voir détails
+                                            </Link>
                                         </div>
-                                    </div>
-                                    <div className="ml-4 flex space-x-2">
-                                        <button
-                                            onClick={() => window.open(`/api/reports/${report.id}/pdf`, '_blank')}
-                                            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                                        >
-                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                            </svg>
-                                            Télécharger
-                                        </button>
-                                        <Link
-                                            href={`/teacher/reports/${report.id}`}
-                                            className="inline-flex items-center px-3 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 transition-colors"
-                                        >
-                                            Voir détails
-                                        </Link>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>

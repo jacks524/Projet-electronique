@@ -35,20 +35,45 @@ export default function AttendanceHistoryPage() {
     const loadInitialData = async () => {
         try {
             setLoading(true);
-
-            const [teacherSubjects, teacherClasses] = await Promise.all([
+            const [teacherSubjects, teacherClasses, teacherSessions] = await Promise.all([
                 subjectService.getByTeacher(user.id),
-                classService.getByTeacher(user.id)
+                classService.getByTeacher(user.id),
+                attendanceService.getSessionsByTeacher(user.id)
             ]);
 
-            setSubjects(teacherSubjects);
-            setClasses(teacherClasses);
+            setSubjects(Array.isArray(teacherSubjects) ? teacherSubjects : []);
+            setClasses(Array.isArray(teacherClasses) ? teacherClasses : []);
 
-            const mockSessions = [
-                { id: 1, date: "2024-01-15", time: "10:00-13:00", courseName: "Algorithmique Avancée", courseCode: "ALG-401", className: "4GI-A", classId: 101, present: 25, absent: 2, late: 1, totalStudents: 28, method: "automatic" },
-            ];
-            setAttendanceSessions(mockSessions);
-            setFilteredSessions(mockSessions);
+            const mappedSessions = (Array.isArray(teacherSessions) ? teacherSessions : []).map((session) => {
+                const sessionDate = session.date || session.sessionDate || session.createdAt;
+                const subjectName = session.subjectName || session.subject?.name || session.courseName || 'Cours';
+                const subjectCode = session.subjectCode || session.subject?.code || session.courseCode || '';
+                const className = session.className || session.clazzName || session.timetable?.clazz?.name || '';
+                const classId = session.classId || session.timetable?.clazz?.id || session.timetable?.clazz?.classId || '';
+                const present = session.present || session.totalPresent || session.presentCount || 0;
+                const absent = session.absent || session.absentCount || 0;
+                const late = session.late || session.lateCount || 0;
+                const totalStudents = session.totalStudents || session.total || (present + absent + late) || 0;
+                const method = session.method || session.attendanceMethod || 'automatic';
+
+                return {
+                    id: session.attendanceSessionId || session.sessionId || session.id,
+                    date: sessionDate,
+                    time: sessionDate ? new Date(sessionDate).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '',
+                    courseName: subjectName,
+                    courseCode: subjectCode,
+                    className,
+                    classId,
+                    present,
+                    absent,
+                    late,
+                    totalStudents,
+                    method,
+                };
+            });
+
+            setAttendanceSessions(mappedSessions);
+            setFilteredSessions(mappedSessions);
 
         } catch (error) {
             toast.error('Erreur lors du chargement des données initiales.');
@@ -128,12 +153,15 @@ export default function AttendanceHistoryPage() {
     const handleExport = async (sessionId, format) => {
         const exportPromise = new Promise(async (resolve, reject) => {
             try {
-                const fileBlob = await attendanceService.exportSession(sessionId, format);
+                const fileBlob = await attendanceService.downloadSessionCsv(sessionId);
                 const url = window.URL.createObjectURL(fileBlob);
+                const session = attendanceSessions.find((item) => item.id === sessionId);
+                const safeCourse = (session?.courseName || 'presence').replace(/[^A-Za-z0-9]+/g, '_');
+                const datePart = session?.date ? new Date(session.date).toISOString().split('T')[0] : 'unknown-date';
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                a.download = `presence_session_${sessionId}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+                a.download = `${safeCourse}_${datePart}.csv`;
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
@@ -145,8 +173,8 @@ export default function AttendanceHistoryPage() {
         });
 
         toast.promise(exportPromise, {
-            loading: `Génération du fichier ${format.toUpperCase()}...`,
-            success: `Fichier téléchargé avec succès !`,
+            loading: `Génération du fichier CSV...`,
+            success: `Fichier CSV téléchargé avec succès !`,
             error: `Le téléchargement a échoué.`,
         });
     };
@@ -159,6 +187,7 @@ export default function AttendanceHistoryPage() {
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     const getAttendanceRate = (session) => {
+        if (!session.totalStudents) return 0;
         return Math.round((session.present / session.totalStudents) * 100);
     };
 
@@ -408,30 +437,15 @@ export default function AttendanceHistoryPage() {
                                                 >
                                                     Voir / Corriger
                                                 </Link>
-                                                <div className="relative group">
-                                                    <button className="text-gray-600 hover:text-gray-900 px-3 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center">
-                                                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                                        </svg>
-                                                        Exporter
-                                                    </button>
-                                                    <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                                                        <div className="py-1">
-                                                            <button
-                                                                onClick={() => handleExport(session.id, 'pdf')}
-                                                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                                            >
-                                                                📄 Télécharger en PDF
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleExport(session.id, 'excel')}
-                                                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                                            >
-                                                                📊 Télécharger en Excel
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                <button
+                                                    onClick={() => handleExport(session.id, 'csv')}
+                                                    className="text-gray-600 hover:text-gray-900 px-3 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center"
+                                                >
+                                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                    </svg>
+                                                    Télécharger CSV
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>

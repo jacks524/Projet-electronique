@@ -30,23 +30,48 @@ export default function AttendanceSessionDetailPage() {
     const loadSessionDetails = async () => {
         try {
             setLoading(true);
-            const data = await attendanceService.getSessionDetails(sessionId);
+            const [sessionAttendances, teacherSessions] = await Promise.all([
+                attendanceService.getSessionDetails(sessionId),
+                attendanceService.getSessionsByTeacher(user.id)
+            ]);
 
+            const sessionMeta = (Array.isArray(teacherSessions) ? teacherSessions : [])
+                .find((session) => String(session.attendanceSessionId || session.sessionId || session.id) === String(sessionId));
 
-            setSessionDetails({
-                id: data.id,
-                date: data.date,
-                time: data.time,
-                courseName: data.courseName,
-                // ... et tous les autres champs
+            const sessionDate = sessionMeta?.date || sessionMeta?.sessionDate || sessionMeta?.createdAt;
+            const subjectName = sessionMeta?.subjectName || sessionMeta?.subject?.name || sessionMeta?.courseName || 'Cours';
+            const subjectCode = sessionMeta?.subjectCode || sessionMeta?.subject?.code || sessionMeta?.courseCode || '';
+            const className = sessionMeta?.className || sessionMeta?.clazzName || sessionMeta?.timetable?.clazz?.name || '';
+            const totalStudents = sessionMeta?.totalStudents || sessionMeta?.total || (sessionMeta?.totalPresent || 0);
+
+            const mappedAttendances = (Array.isArray(sessionAttendances) ? sessionAttendances : []).map((attendance) => {
+                const student = attendance.student || attendance.studentDTO || attendance.studentResponse || {};
+                return {
+                    id: attendance.attendanceId || attendance.id,
+                    matricule: student.matricule || attendance.studentMatricule || '',
+                    name: student.name || attendance.studentName || '',
+                    email: student.email || '',
+                    status: attendance.attendanceStatus || attendance.status,
+                    notes: attendance.notes || '',
+                    timestamp: attendance.presenceLoggedAt || attendance.loggedAt || sessionDate,
+                };
             });
 
-            setStudentsAttendance(data.attendances);
+            setSessionDetails({
+                id: sessionMeta?.attendanceSessionId || sessionMeta?.sessionId || sessionMeta?.id || parseInt(sessionId, 10),
+                date: sessionDate,
+                time: sessionDate ? new Date(sessionDate).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '',
+                courseName: subjectName,
+                courseCode: subjectCode,
+                className,
+                method: sessionMeta?.method || sessionMeta?.attendanceMethod || 'automatic',
+                totalStudents: totalStudents || mappedAttendances.length,
+            });
+
+            setStudentsAttendance(mappedAttendances);
 
         } catch (error) {
             toast.error('Erreur lors du chargement des détails de la session');
-            setSessionDetails({ id: parseInt(sessionId), courseName: 'Cours de Test', ... });
-            setStudentsAttendance([ { id: 1, studentId: 101, name: 'Étudiant Test', ... } ]);
         } finally {
             setLoading(false);
         }

@@ -24,10 +24,31 @@ const getMyRecent = async (limit = 3) => {
 
 const getSessionDetails = async (sessionId) => {
     try {
-        const { data } = await apiClient.get(`/attendance-sessions/${sessionId}/details`);
+        const { data } = await apiClient.get(`/attendance-session/${sessionId}`);
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        throw new Error("Impossible de charger les présences de la session.");
+    }
+};
+
+const getSessionsByTeacher = async (teacherId) => {
+    try {
+        const { data } = await apiClient.get(`/attendance-session/teacher/${teacherId}`);
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        throw new Error("Impossible de charger les sessions de présence.");
+    }
+};
+
+const downloadSessionCsv = async (sessionId) => {
+    try {
+        const { data } = await apiClient.get(`/attendance-session/${sessionId}/csv`, {
+            responseType: 'blob',
+            headers: { Accept: 'text/csv' }
+        });
         return data;
     } catch (error) {
-        throw new Error("Impossible de charger les détails de la session.");
+        throw new Error("Le téléchargement du CSV a échoué.");
     }
 };
 
@@ -44,5 +65,7 @@ const attendanceService = {
     getMyRecent,
     updateAttendance,
     getSessionDetails,
+    getSessionsByTeacher,
+    downloadSessionCsv,
 };
 export default attendanceService;
