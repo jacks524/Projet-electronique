@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuthContext } from '../../../context/authContext';
 import subjectService from '../../../services/subjectService';
 import timetableService from '../../../services/timetableService';
-import reportService from '../../../services/reportService';
+import attendanceService from '../../../services/attendanceService';
 import toast from 'react-hot-toast';
 
 export default function TeacherDashboard() {
@@ -43,10 +43,10 @@ export default function TeacherDashboard() {
         try {
             setLoading(true);
 
-            const [subjectsData, timetableData, activityData] = await Promise.all([
+            const [subjectsData, timetableData, myRecentAttendance] = await Promise.all([
                 subjectService.getByTeacher(user.id),
                 timetableService.getByTeacher(user.id),
-                reportService.getRecentActivity(6),
+                attendanceService.getMyRecent(6, user.id),
             ]);
 
             const normalizedSubjects = Array.isArray(subjectsData) ? subjectsData : [];
@@ -84,12 +84,12 @@ export default function TeacherDashboard() {
             setSubjects(normalizedSubjects);
             setTodaySchedules(todays);
 
-            // Filter recent activity to show only teacher's activities
-            const teacherActivities = Array.isArray(activityData)
-                ? activityData.filter(activity =>
-                    !activity.userId || activity.userId === user.id
-                )
-                : [];
+            const teacherActivities = (Array.isArray(myRecentAttendance) ? myRecentAttendance : []).map((item) => ({
+                id: item.id || item.attendanceSessionId || item.sessionId,
+                description: `${item.subjectName || item.courseName || 'Cours'} - ${item.className || 'Classe'}`,
+                timestamp: item.date || item.sessionDate || item.createdAt || '',
+                type: 'attendance',
+            }));
             setRecentActivity(teacherActivities);
 
             setStats({
@@ -315,14 +315,14 @@ export default function TeacherDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-bold text-slate-800">Cours aujourd'hui</h2>
+                        <h2 className="text-lg font-bold text-slate-800">Cours aujourd&apos;hui</h2>
                         <Link href="/teacher/timetable" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
                             Voir le planning
                         </Link>
                     </div>
                     {todaySchedules.length === 0 ? (
                         <div className="text-sm text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-6 text-center">
-                            Aucun cours prevu pour aujourd'hui.
+                            Aucun cours prevu pour aujourd&apos;hui.
                         </div>
                     ) : (
                         <div className="space-y-3">

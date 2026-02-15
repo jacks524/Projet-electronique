@@ -1,10 +1,10 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthContext } from '../../context/authContext';
-import reportService from '../../services/reportService';
+import attendanceService from '../../services/attendanceService';
 import { getRoleLabel } from '../../lib/roles';
 
 const BiometricLogo = ({ className = "w-10 h-10" }) => (
@@ -75,15 +75,15 @@ export default function TeacherLayout({ children }) {
 
     const loadRecentActivity = async () => {
       try {
-        const activities = await reportService.getRecentActivity(6);
+        const activities = await attendanceService.getMyRecent(6, user?.id);
         const normalized = Array.isArray(activities) ? activities.map((activity) => ({
-          id: activity.id,
-          description: activity.description,
-          timestamp: activity.timestamp,
-          icon: activity.type || 'attendance',
+          id: activity.id || activity.attendanceSessionId || activity.sessionId,
+          description: `${activity.subjectName || activity.courseName || 'Cours'} - ${activity.className || 'Classe'}`,
+          timestamp: activity.date || activity.sessionDate || activity.createdAt || '',
+          icon: 'attendance',
         })) : [];
         setRecentActivity(normalized);
-      } catch (error) {
+      } catch {
         setRecentActivity([]);
       }
     };
@@ -272,7 +272,7 @@ export default function TeacherLayout({ children }) {
             </div>
             <div className="flex items-center gap-4">
               <Link href="/privacy" className="hover:text-violet-600">Politique de confidentialite</Link>
-              <Link href="/terms" className="hover:text-violet-600">Conditions d'utilisation</Link>
+              <Link href="/terms" className="hover:text-violet-600">Conditions d&apos;utilisation</Link>
               <Link href="/help" className="hover:text-violet-600">Aide</Link>
             </div>
           </div>

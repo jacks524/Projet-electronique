@@ -467,7 +467,7 @@ export default function ProfilePage() {
           let mapped = [];
 
           if (role === 'TEACHER') {
-            const recent = await attendanceService.getMyRecent(10);
+            const recent = await attendanceService.getMyRecent(10, user.id);
             mapped = (Array.isArray(recent) ? recent : []).map((item, index) => normalizeTeacherItem(item, index));
           } else if (role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'DEPARTMENT_MANAGER') {
             const departmentId =
