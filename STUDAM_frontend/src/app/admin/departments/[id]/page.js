@@ -672,7 +672,7 @@ export default function DepartmentDetails() {
                 </Link>
 
                 <Link
-                  href={`/admin/reports/departments?dept=${department.id}`}
+                  href={`/admin/reports/departments?departmentId=${department.id}`}
                   className="w-full inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                 >
                   <svg

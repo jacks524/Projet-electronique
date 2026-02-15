@@ -319,9 +319,6 @@ export default function HomePage() {
                 <Link href="/contact" className="px-8 py-4 bg-white text-violet-700 rounded-xl font-bold hover:bg-indigo-50 transition-colors shadow-lg">
                   Contacter l'équipe
                 </Link>
-                <Link href="/auth/register" className="px-8 py-4 bg-indigo-800/50 text-white border border-indigo-400/30 rounded-xl font-bold hover:bg-indigo-800 transition-colors backdrop-blur-sm">
-                  Créer un compte admin
-                </Link>
               </div>
             </div>
           </div>

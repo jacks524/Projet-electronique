@@ -100,7 +100,7 @@ export default function ChiefLayout({ children }) {
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Bonjour';
-    if (hour < 18) return 'Bon apres-midi';
+    if (hour < 18) return 'Bon après-midi';
     return 'Bonsoir';
   };
 
@@ -150,8 +150,8 @@ export default function ChiefLayout({ children }) {
           <div className="bg-gradient-to-br from-violet-600/20 to-purple-600/20 rounded-xl p-4 border border-violet-500/30">
             {isSidebarOpen ? (
               <>
-                <p className="text-xs text-violet-300 font-medium mb-1">Chef de departement</p>
-                <p className="text-xs text-slate-400">STUDAM (C) 2025</p>
+                <p className="text-xs text-violet-300 font-medium mb-1">Chef de département</p>
+                <p className="text-xs text-slate-400">STUDAM (C) 2026</p>
               </>
             ) : (
               <p className="text-xs text-violet-300 text-center">CHEF</p>
@@ -174,8 +174,8 @@ export default function ChiefLayout({ children }) {
                   </svg>
                 </button>
                 <div>
-                  <h1 className="text-2xl font-bold text-slate-800">{getGreeting()}, {user?.name?.split(' ')[0]}</h1>
-                  <p className="text-sm text-slate-500 mt-1">Espace chef de departement</p>
+                  <h1 className="text-2xl font-bold text-slate-800">{getGreeting()}, {user?.name?.split(' ')[0]}👋</h1>
+                  <p className="text-sm text-slate-500 mt-1">Espace chef de département</p>
                 </div>
               </div>
 
@@ -255,7 +255,7 @@ export default function ChiefLayout({ children }) {
                         <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                         </svg>
-                        <span className="text-sm text-red-600 font-medium">Deconnexion</span>
+                        <span className="text-sm text-red-600 font-medium">Déconnexion</span>
                       </button>
                     </div>
                   )}
@@ -272,7 +272,7 @@ export default function ChiefLayout({ children }) {
         <footer className="bg-white border-t border-slate-200 py-4 px-6">
           <div className="flex items-center justify-between text-sm text-slate-500">
             <div>
-              (C) 2025 STUDAM. Tous droits reserves.
+              (C) 2026 STUDAM. Tous droits réservés.
             </div>
             <div className="flex items-center gap-4">
               <Link href="/privacy" className="hover:text-violet-600">Politique de confidentialite</Link>

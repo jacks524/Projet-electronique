@@ -8,6 +8,9 @@ import reportService from '../../../services/reportService';
 import departmentService from '../../../services/departmentService';
 import userService from '../../../services/userService';
 import classService from '../../../services/classService';
+import attendanceService from '../../../services/attendanceService';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import toast from 'react-hot-toast';
 
 export default function ChiefDashboard() {
@@ -23,6 +26,74 @@ export default function ChiefDashboard() {
         topClasses: []
     });
     const [recentActivity, setRecentActivity] = useState([]);
+
+    const getDefaultDateRange = () => {
+        const today = new Date();
+        const monthAgo = new Date();
+        monthAgo.setDate(today.getDate() - 30);
+        return {
+            startDate: monthAgo.toISOString().split('T')[0],
+            endDate: today.toISOString().split('T')[0],
+        };
+    };
+
+    const getSessionId = (row) => row?.attendanceSessionId || row?.sessionId || row?.id || null;
+
+    const toSafeNumber = (value, fallback = 0) => {
+        if (typeof value === 'number') return value;
+        if (typeof value === 'string') {
+            const parsed = Number.parseInt(value, 10);
+            if (!Number.isNaN(parsed)) return parsed;
+        }
+        return fallback;
+    };
+
+    const calculateAttendanceRate = async (departmentId) => {
+        try {
+            const range = getDefaultDateRange();
+            const rows = await reportService.getTeacherAttendanceList({
+                departmentId,
+                startDate: range.startDate,
+                endDate: range.endDate,
+                status: 'all',
+            });
+
+            const sessions = Array.isArray(rows) ? rows : [];
+            if (sessions.length === 0) return 0;
+
+            let present = 0;
+            let late = 0;
+            let total = 0;
+
+            await Promise.all(
+                sessions.slice(0, 120).map(async (row) => {
+                    const sessionId = getSessionId(row);
+                    if (!sessionId) return;
+                    try {
+                        const details = await attendanceService.getSessionDetails(sessionId);
+                        const list = Array.isArray(details) ? details : [];
+                        const p = list.filter((d) => (d.attendanceStatus || d.status || '').toUpperCase() === 'PRESENT').length;
+                        const l = list.filter((d) => (d.attendanceStatus || d.status || '').toUpperCase() === 'LATE').length;
+                        present += p;
+                        late += l;
+                        total += list.length;
+                    } catch {
+                        const p = toSafeNumber(row.presentCount ?? row.totalPresent ?? row.present, 0);
+                        const l = toSafeNumber(row.lateCount ?? row.totalLate ?? row.late, 0);
+                        const t = toSafeNumber(row.totalStudents ?? row.total, p + l);
+                        present += p;
+                        late += l;
+                        total += t;
+                    }
+                })
+            );
+
+            if (total === 0) return 0;
+            return Math.round(((present + late) / total) * 100);
+        } catch {
+            return 0;
+        }
+    };
 
     useEffect(() => {
         if (authLoading) return;
@@ -57,10 +128,11 @@ export default function ChiefDashboard() {
                 throw new Error("Aucun departement n'est assigne a votre compte.");
             }
 
-            const [teachers, classes, recent] = await Promise.all([
+            const [teachers, classes, recent, attendanceRate] = await Promise.all([
                 userService.getUsersByRoleAndDepartment('TEACHER', targetDepartment.departmentId),
                 classService.getByDepartment(targetDepartment.departmentId),
                 reportService.getRecentActivity(5, targetDepartment.departmentId),
+                calculateAttendanceRate(targetDepartment.departmentId),
             ]);
 
             const classesList = Array.isArray(classes) ? classes : [];
@@ -93,7 +165,7 @@ export default function ChiefDashboard() {
                     teachers: teachersList.length,
                     students: totalStudents,
                     classes: classesList.length,
-                    attendanceRate: 0
+                    attendanceRate
                 },
                 recentTeachers,
                 topClasses
@@ -205,7 +277,7 @@ export default function ChiefDashboard() {
             <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 mx-auto"></div>
-                    <p className="mt-4 text-slate-600">Chargement des donnees...</p>
+                    <p className="mt-4 text-slate-600">Chargement des données...</p>
                 </div>
             </div>
         );
@@ -216,10 +288,34 @@ export default function ChiefDashboard() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800">Tableau de bord</h1>
-                    <p className="text-sm text-slate-500 mt-1">Departement {departmentInfo.name}</p>
+                    <p className="text-sm text-slate-500 mt-1">Département {departmentInfo.name}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                    <button
+                        onClick={() => {
+                            const header = ['Indicateur', 'Valeur'];
+                            const rows = [
+                                ['Departement', departmentInfo.name || '---'],
+                                ['Enseignants', String(departmentInfo.stats.teachers || 0)],
+                                ['Etudiants', String(departmentInfo.stats.students || 0)],
+                                ['Classes', String(departmentInfo.stats.classes || 0)],
+                                ['Taux de presence', `${departmentInfo.stats.attendanceRate || 0}%`],
+                            ];
+                            const csv = [header, ...rows]
+                                .map((line) => line.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
+                                .join('\n');
+                            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                            const link = document.createElement('a');
+                            link.href = URL.createObjectURL(blob);
+                            link.download = `dashboard-chef-${new Date().toISOString().split('T')[0]}.csv`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(link.href);
+                            toast.success('Export CSV termine.');
+                        }}
+                        className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
                         <span className="flex items-center gap-2">
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -227,8 +323,40 @@ export default function ChiefDashboard() {
                             Exporter
                         </span>
                     </button>
-                    <button className="px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700 transition-colors">
-                        Generer rapport
+                    <button
+                        onClick={() => {
+                            const doc = new jsPDF();
+                            doc.setFontSize(16);
+                            doc.text('Rapport du departement', 14, 16);
+                            doc.setFontSize(10);
+                            doc.text(`Genere le ${new Date().toLocaleString('fr-FR')}`, 14, 22);
+                            autoTable(doc, {
+                                startY: 28,
+                                head: [['Indicateur', 'Valeur']],
+                                body: [
+                                    ['Département', departmentInfo.name || '---'],
+                                    ['Enseignants', String(departmentInfo.stats.teachers || 0)],
+                                    ['Etudiants', String(departmentInfo.stats.students || 0)],
+                                    ['Classes', String(departmentInfo.stats.classes || 0)],
+                                    ['Taux de presence', `${departmentInfo.stats.attendanceRate || 0}%`],
+                                ],
+                                headStyles: { fillColor: [124, 58, 237] },
+                            });
+                            autoTable(doc, {
+                                startY: doc.lastAutoTable.finalY + 8,
+                                head: [['Activite recente', 'Date']],
+                                body: (recentActivity || []).map((item) => [
+                                    item.description || 'Activite',
+                                    item.timestamp || '-',
+                                ]),
+                                headStyles: { fillColor: [49, 46, 129] },
+                            });
+                            doc.save(`rapport-chef-${new Date().toISOString().split('T')[0]}.pdf`);
+                            toast.success('Rapport PDF généré.');
+                        }}
+                        className="px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700 transition-colors"
+                    >
+                        Générer rapport
                     </button>
                 </div>
             </div>
@@ -271,7 +399,7 @@ export default function ChiefDashboard() {
                     trend={5}
                 />
                 <StatCard
-                    title="Taux de presence"
+                    title="Taux de présence"
                     value={departmentInfo.stats.attendanceRate}
                     icon={
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -321,14 +449,14 @@ export default function ChiefDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-bold text-slate-800">Derniers enseignants ajoutes</h2>
+                        <h2 className="text-lg font-bold text-slate-800">Derniers enseignants ajoutés</h2>
                         <Link href="/chief/teachers" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
                             Voir tout
                         </Link>
                     </div>
                     {departmentInfo.recentTeachers.length === 0 ? (
                         <div className="text-sm text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-6 text-center">
-                            Aucun enseignant recemment ajoute.
+                            Aucun enseignant récemment ajouté.
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -344,7 +472,7 @@ export default function ChiefDashboard() {
                                         <p className="text-xs text-slate-500 mt-1">{teacher.email}</p>
                                     </div>
                                     <Link href={`/chief/teachers/${teacher.id}`} className="text-sm text-violet-600 hover:text-violet-700 font-medium">
-                                        Voir details
+                                        Voir détails
                                     </Link>
                                 </div>
                             ))}
@@ -374,10 +502,10 @@ export default function ChiefDashboard() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm text-slate-800 font-medium">{classe.nom}</p>
-                                        <p className="text-xs text-slate-500 mt-1">{classe.etudiantsCount} etudiants</p>
+                                        <p className="text-xs text-slate-500 mt-1">{classe.etudiantsCount} étudiants</p>
                                     </div>
                                     <Link href={`/chief/classes/${classe.id}`} className="text-sm text-violet-600 hover:text-violet-700 font-medium">
-                                        Gerer
+                                        Gérer
                                     </Link>
                                 </div>
                             ))}
@@ -388,14 +516,14 @@ export default function ChiefDashboard() {
 
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-bold text-slate-800">Activite recente</h2>
+                    <h2 className="text-lg font-bold text-slate-800">Activité récente</h2>
                     <Link href="/chief/reports" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
                         Voir tout
                     </Link>
                 </div>
                 {recentActivity.length === 0 ? (
                     <div className="text-sm text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-6 text-center">
-                        Aucune activite recente disponible.
+                        Aucune activité récente disponible.
                     </div>
                 ) : (
                     <div className="space-y-3">

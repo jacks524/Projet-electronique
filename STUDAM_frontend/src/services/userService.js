@@ -57,19 +57,31 @@ const searchUsers = async (searchTerm, type = "name") => {
 
 const update = async (userId, userData) => {
     try {
+        const providedDepartmentIds = Array.isArray(userData.departmentIds)
+            ? userData.departmentIds
+            : Array.isArray(userData.departmentsIds)
+                ? userData.departmentsIds
+                : null;
+
+        const hasDepartmentPayload =
+            providedDepartmentIds !== null ||
+            userData.departmentId !== undefined && userData.departmentId !== null;
+
+        const normalizedDepartmentIds = providedDepartmentIds
+            ? providedDepartmentIds.map((id) => parseInt(id, 10))
+            : userData.departmentId !== undefined && userData.departmentId !== null
+                ? [parseInt(userData.departmentId, 10)]
+                : undefined;
+
         const payload = {
-            name: userData.name,
-            email: userData.email,
-            phoneNumber: userData.phoneNumber,
-            username: userData.username,
-            matricule: userData.matricule,
-            role: userData.role ? userData.role.toUpperCase() : undefined,
-            active: typeof userData.active === 'boolean' ? userData.active : undefined,
-            departmentsIds: Array.isArray(userData.departmentIds)
-                ? userData.departmentIds.map((id) => parseInt(id))
-                : userData.departmentId
-                ? [parseInt(userData.departmentId)]
-                : [],
+            ...(userData.name !== undefined ? { name: userData.name } : {}),
+            ...(userData.email !== undefined ? { email: userData.email } : {}),
+            ...(userData.phoneNumber !== undefined ? { phoneNumber: userData.phoneNumber } : {}),
+            ...(userData.username !== undefined ? { username: userData.username } : {}),
+            ...(userData.matricule !== undefined ? { matricule: userData.matricule } : {}),
+            ...(userData.role ? { role: userData.role.toUpperCase() } : {}),
+            ...(typeof userData.active === 'boolean' ? { active: userData.active } : {}),
+            ...(hasDepartmentPayload ? { departmentsIds: normalizedDepartmentIds || [] } : {}),
         };
         const { data } = await apiClient.put(`/user/${userId}`, payload);
         return data;
@@ -179,7 +191,7 @@ const getById = async (userId) => {
   try {
     const { data } = await apiClient.get(`/user/${userId}`);
     return data;
-  } catch (error) {
+  } catch {
     throw new Error("Impossible de charger les donnees de l'utilisateur.");
   }
 };
@@ -187,7 +199,7 @@ const getById = async (userId) => {
 const assignToDepartments = async (teacherId, departmentIds) => {
   try {
     await apiClient.put(`/user/${teacherId}/assign-to-departments`, departmentIds);
-  } catch (error) {
+  } catch {
     throw new Error("L'assignation de l'enseignant a echoue.");
   }
 };

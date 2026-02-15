@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useAuthContext } from '../../context/authContext';
 import authService from '../../services/authService';
 import userService from '../../services/userService';
+import reportService from '../../services/reportService';
+import attendanceService from '../../services/attendanceService';
 import toast from 'react-hot-toast';
 
 export default function ProfilePage() {
@@ -39,7 +41,22 @@ export default function ProfilePage() {
       e.preventDefault();
       setLoading(true);
       try {
-        const updatedUserData = await userService.update(user.id, formData);
+        const normalizedPhone = (formData.phoneNumber || '').replace(/\D/g, '');
+        if (normalizedPhone.length < 9 || normalizedPhone.length > 12) {
+          throw new Error('Le numero de telephone doit contenir entre 9 et 12 chiffres.');
+        }
+
+        const profilePayload = {
+          name: formData.name,
+          email: formData.email,
+          phoneNumber: normalizedPhone,
+          username: formData.username,
+          matricule: formData.matricule || user?.matricule || '',
+          role: user?.role,
+          active: typeof user?.active === 'boolean' ? user.active : undefined,
+          departmentsIds: Array.isArray(user?.departmentsIds) ? user.departmentsIds : undefined,
+        };
+        const updatedUserData = await userService.update(user.id, profilePayload);
         setUserInContext(prevUser => ({ ...prevUser, ...updatedUserData }));
         toast.success('Profil mis à jour avec succès !');
       } catch (error) {
@@ -108,9 +125,10 @@ export default function ProfilePage() {
                   name="matricule"
                   id="matricule"
                   value={formData.matricule}
-                  onChange={handleInputChange}
-                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:z-10 sm:text-sm transition-colors"
-                  placeholder="Entrez votre matricule"
+                  readOnly
+                  disabled
+                  className="appearance-none relative block w-full px-3 py-3 border border-gray-200 bg-gray-100 text-gray-500 rounded-lg sm:text-sm"
+                  placeholder="Matricule non modifiable"
               />
             </div>
 
@@ -378,32 +396,112 @@ export default function ProfilePage() {
 
   // Composant ActivityLog
   const ActivityLog = () => {
-    const mockActivities = [
-      {
-        id: 1,
-        action: 'Connexion',
-        description: 'Connexion à la plateforme',
-        timestamp: '2024-01-15 14:30:00',
-        ip: '192.168.1.100',
-        icon: 'login'
-      },
-      {
-        id: 2,
-        action: 'Mise à jour profil',
-        description: 'Modification des informations personnelles',
-        timestamp: '2024-01-14 09:15:00',
-        ip: '192.168.1.100',
-        icon: 'edit'
-      },
-      {
-        id: 3,
-        action: 'Prise de présence',
-        description: 'Enregistrement des présences - Cours de Programmation Web',
-        timestamp: '2024-01-13 10:00:00',
-        ip: '192.168.1.100',
-        icon: 'check'
-      }
-    ];
+    const [activities, setActivities] = useState([]);
+    const [loadingActivities, setLoadingActivities] = useState(true);
+
+    const formatTimestamp = (value) => {
+      if (!value) return '-';
+      const dt = new Date(value);
+      if (Number.isNaN(dt.getTime())) return String(value);
+      return dt.toLocaleString('fr-FR');
+    };
+
+    useEffect(() => {
+      let isMounted = true;
+
+      const toMillis = (value) => {
+        const dt = new Date(value || 0);
+        return Number.isNaN(dt.getTime()) ? 0 : dt.getTime();
+      };
+
+      const normalizeIcon = (rawType = '') => {
+        const type = String(rawType).toLowerCase();
+        if (type.includes('login') || type.includes('connexion') || type.includes('signin')) return 'login';
+        if (type.includes('edit') || type.includes('update') || type.includes('profile')) return 'edit';
+        if (type.includes('attendance') || type.includes('presence') || type.includes('check')) return 'check';
+        return 'time';
+      };
+
+      const normalizeAdminItem = (item, index) => {
+        const timestamp = item?.timestamp || item?.createdAt || item?.date || item?.activityDate || '';
+        const rawType = item?.type || item?.action || item?.icon || '';
+        return {
+          id: item?.id || `activity-admin-${index}`,
+          action: item?.action || 'Activite systeme',
+          description: item?.description || item?.message || 'Action effectuee.',
+          timestamp,
+          ip: item?.ip || item?.ipAddress || item?.sourceIp || '',
+          icon: normalizeIcon(rawType),
+          sortKey: toMillis(timestamp),
+        };
+      };
+
+      const normalizeTeacherItem = (item, index) => {
+        const className = item?.className || item?.class?.name || item?.classroomName || 'Classe non precisee';
+        const subjectName = item?.subjectName || item?.courseName || item?.subject?.name || 'Cours';
+        const status = item?.status || item?.attendanceStatus || '';
+        const timestamp = item?.date || item?.sessionDate || item?.createdAt || item?.recordedAt || '';
+        return {
+          id: item?.id || item?.attendanceSessionId || item?.sessionId || `activity-teacher-${index}`,
+          action: status ? `Presence ${String(status).toLowerCase()}` : 'Presence enregistree',
+          description: `${subjectName} - ${className}`,
+          timestamp,
+          ip: '',
+          icon: 'check',
+          sortKey: toMillis(timestamp),
+        };
+      };
+
+      const loadActivities = async () => {
+        if (!user?.id) {
+          if (isMounted) {
+            setActivities([]);
+            setLoadingActivities(false);
+          }
+          return;
+        }
+
+        setLoadingActivities(true);
+        try {
+          const role = String(user?.role || '').toUpperCase();
+          let mapped = [];
+
+          if (role === 'TEACHER') {
+            const recent = await attendanceService.getMyRecent(10);
+            mapped = (Array.isArray(recent) ? recent : []).map((item, index) => normalizeTeacherItem(item, index));
+          } else if (role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'DEPARTMENT_MANAGER') {
+            const departmentId =
+              role === 'DEPARTMENT_MANAGER'
+                ? user?.departmentIdIfChief || (Array.isArray(user?.departmentsIds) ? user.departmentsIds[0] : undefined)
+                : undefined;
+            const recent = await reportService.getRecentActivity(10, departmentId);
+            mapped = (Array.isArray(recent) ? recent : []).map((item, index) => normalizeAdminItem(item, index));
+          } else {
+            const details = await userService.getById(user.id);
+            const recent = details?.recentActivities || details?.activities || [];
+            mapped = (Array.isArray(recent) ? recent : []).map((item, index) => normalizeAdminItem(item, index));
+          }
+
+          mapped.sort((a, b) => b.sortKey - a.sortKey);
+          if (isMounted) {
+            setActivities(mapped);
+          }
+        } catch {
+          if (isMounted) {
+            setActivities([]);
+          }
+        } finally {
+          if (isMounted) {
+            setLoadingActivities(false);
+          }
+        }
+      };
+
+      loadActivities();
+      return () => {
+        isMounted = false;
+      };
+    }, []);
 
     const getIcon = (iconType) => {
       switch (iconType) {
@@ -438,8 +536,13 @@ export default function ProfilePage() {
         <div className="space-y-4">
           <div className="bg-gray-50 rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-6">Activité récente</h3>
-            <div className="space-y-4">
-              {mockActivities.map((activity) => (
+            {loadingActivities ? (
+              <div className="py-6 text-sm text-gray-500 text-center">Chargement des activités...</div>
+            ) : activities.length === 0 ? (
+              <div className="py-6 text-sm text-gray-500 text-center">Aucune activité récente trouvée.</div>
+            ) : (
+              <div className="space-y-4">
+              {activities.map((activity) => (
                   <div key={activity.id} className="flex items-start space-x-4 p-4 bg-white rounded-lg border border-gray-200 hover:border-[#7c3aed] transition-colors">
                     <div className="flex-shrink-0">
                       <div className="w-10 h-10 bg-gradient-to-r from-[#7c3aed] to-[#a855f7] rounded-full flex items-center justify-center">
@@ -457,17 +560,22 @@ export default function ProfilePage() {
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/>
                         </svg>
-                        <span>{activity.timestamp}</span>
-                        <span>•</span>
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clipRule="evenodd"/>
-                        </svg>
-                        <span>IP: {activity.ip}</span>
+                        <span>{formatTimestamp(activity.timestamp)}</span>
+                        {activity.ip ? (
+                          <>
+                            <span>-</span>
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clipRule="evenodd"/>
+                            </svg>
+                            <span>IP: {activity.ip}</span>
+                          </>
+                        ) : null}
                       </div>
                     </div>
                   </div>
               ))}
-            </div>
+              </div>
+            )}
           </div>
         </div>
     );
@@ -617,3 +725,5 @@ export default function ProfilePage() {
       </div>
   );
 }
+
+

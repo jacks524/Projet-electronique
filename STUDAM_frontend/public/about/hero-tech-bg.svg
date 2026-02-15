@@ -1,0 +1,56 @@
+﻿<svg width="1440" height="900" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#312e81"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(980 420) rotate(90) scale(420 420)">
+      <stop stop-color="#f59e0b" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(330 650) rotate(90) scale(340 340)">
+      <stop stop-color="#22d3ee" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1440" height="900" fill="url(#bg)"/>
+  <rect width="1440" height="900" fill="url(#glowA)"/>
+  <rect width="1440" height="900" fill="url(#glowB)"/>
+
+  <g opacity="0.45" stroke="#67e8f9" stroke-width="3" stroke-linecap="round">
+    <circle cx="740" cy="470" r="170"/>
+    <circle cx="740" cy="470" r="210" stroke-dasharray="14 14"/>
+    <circle cx="1080" cy="280" r="98" stroke-dasharray="16 18"/>
+    <circle cx="1160" cy="600" r="78" stroke-dasharray="10 12"/>
+    <circle cx="350" cy="320" r="90" stroke-dasharray="12 12"/>
+    <circle cx="270" cy="620" r="74" stroke-dasharray="11 10"/>
+  </g>
+
+  <g stroke="#dbeafe" stroke-width="4" fill="none" opacity="0.72">
+    <rect x="640" y="400" width="200" height="135" rx="18"/>
+    <rect x="660" y="555" width="160" height="18" rx="9"/>
+    <line x1="690" y1="575" x2="790" y2="575"/>
+
+    <rect x="250" y="560" width="110" height="70" rx="10"/>
+    <line x1="275" y1="595" x2="335" y2="595"/>
+
+    <rect x="1015" y="565" width="130" height="75" rx="12"/>
+    <line x1="1040" y1="600" x2="1117" y2="600"/>
+
+    <rect x="1030" y="220" width="84" height="120" rx="16"/>
+    <line x1="1050" y1="305" x2="1094" y2="305"/>
+
+    <rect x="300" y="250" width="60" height="100" rx="12"/>
+    <line x1="320" y1="320" x2="340" y2="320"/>
+  </g>
+
+  <g opacity="0.18">
+    <rect x="0" y="130" width="1440" height="2" fill="#e2e8f0"/>
+    <rect x="0" y="290" width="1440" height="2" fill="#e2e8f0"/>
+    <rect x="0" y="450" width="1440" height="2" fill="#e2e8f0"/>
+    <rect x="0" y="610" width="1440" height="2" fill="#e2e8f0"/>
+    <rect x="0" y="770" width="1440" height="2" fill="#e2e8f0"/>
+  </g>
+</svg>

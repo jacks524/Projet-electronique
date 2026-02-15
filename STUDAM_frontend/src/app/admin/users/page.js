@@ -59,7 +59,7 @@ export default function AdminUsers() {
             setDepartments(Array.isArray(departmentsResponse) ? departmentsResponse : []);
 
         } catch (error) {
-            toast.error(error.message || "Erreur lors du chargement des donnees.");
+            toast.error(error.message || "Erreur lors du chargement des données.");
         } finally {
             setLoading(false);
         }
@@ -86,12 +86,12 @@ export default function AdminUsers() {
             : userService.deactivate(userToToggle.id);
 
         await toast.promise(actionPromise, {
-            loading: 'Mise a jour du statut...',
+            loading: 'Mise à jour du statut...',
             success: async () => {
                 await loadData();
-                return "Statut mis a jour avec succes !";
+                return "Statut mis à jour avec succès !";
             },
-            error: (err) => err.message || "La mise a jour a echoue.",
+            error: (err) => err.message || "La mise à jour a échoué.",
         });
     };
 
@@ -228,7 +228,7 @@ export default function AdminUsers() {
 
                         {/* Filtre departement */}
                         <div>
-                            <label htmlFor="department-filter" className="sr-only">Filtrer par departement</label>
+                            <label htmlFor="department-filter" className="sr-only">Filtrer par département</label>
                             <select
                                 id="department-filter"
                                 name="department-filter"

@@ -179,7 +179,7 @@ export default function AdminChiefsPage() {
                                 </svg>
                             </div>
                             <div className="ml-4">
-                                <p className="text-sm font-medium text-gray-500">DÃ©partements</p>
+                                <p className="text-sm font-medium text-gray-500">Départements</p>
                                 <p className="text-2xl font-bold text-gray-900">{departments.length}</p>
                             </div>
                         </div>
@@ -271,7 +271,7 @@ export default function AdminChiefsPage() {
                             </button>
                         </div>
                         <span className="text-sm text-gray-500">
-                            {filteredAndSortedChiefs.length} rÃ©sultat(s)
+                            {filteredAndSortedChiefs.length} résultat(s)
                         </span>
                     </div>
                 </div>
@@ -382,9 +382,9 @@ export default function AdminChiefsPage() {
                                                             ? 'bg-red-50 text-red-700 hover:bg-red-100'
                                                             : 'bg-green-50 text-green-700 hover:bg-green-100'
                                                     }`}
-                                                    title={chief.active ? 'DÃ©sactiver' : 'Activer'}
+                                                    title={chief.active ? 'Désactiver' : 'Activer'}
                                                 >
-                                                    {chief.active ? 'DÃ©sactiver' : 'Activer'}
+                                                    {chief.active ? 'Désactiver' : 'Activer'}
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(chief.id, chief.name)}

@@ -229,7 +229,7 @@ export default function Login() {
           <div className="mt-10 flex items-center justify-between text-sm">
             <p className="text-slate-400">Don't have an account?</p>
             <Link 
-              href="/auth/register" 
+              href="/contact" 
               className="inline-flex items-center justify-center px-6 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-medium text-slate-300 hover:text-white transition-all duration-200"
             >
               Sign up
@@ -239,7 +239,7 @@ export default function Login() {
           {/* Bouton démo dev */}
           {process.env.NODE_ENV === 'development' && (
             <button type="button" className="mt-8 w-full text-center text-sm text-slate-500 hover:text-violet-400">
-               Mode Développeur : Remplir auto
+              
             </button>
           )}
         </div>
@@ -259,7 +259,7 @@ export default function Login() {
             <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-12 shadow-2xl">
               <div className="text-center mb-8">
                 <h2 className="text-5xl font-bold text-white mb-3">
-                  Welcome to<br />student portal
+                  Welcome to<br />STUDAM
                 </h2>
                 <p className="text-purple-100 text-lg">
                   Login to access your account

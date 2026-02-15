@@ -9,6 +9,8 @@ import userService from "../../../services/userService";
 import departmentService from "../../../services/departmentService";
 import studentService from "../../../services/studentService";
 import toast from "react-hot-toast";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -22,6 +24,8 @@ export default function AdminDashboard() {
     totalStudents: 0,
   });
   const [recentActivity, setRecentActivity] = useState([]);
+  const [isReportBusy, setIsReportBusy] = useState(false);
+  const [generatedReport, setGeneratedReport] = useState(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -87,6 +91,139 @@ export default function AdminDashboard() {
       toast.error(error.message || "Impossible de charger les statistiques.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const buildSchoolReportData = async () => {
+    const [dashboardStats, recent, departmentsRaw] = await Promise.all([
+      reportService.getDashboardStats(),
+      reportService.getRecentActivity(10),
+      departmentService.getAll(),
+    ]);
+
+    let nextStats = { ...dashboardStats };
+
+    if (
+      dashboardStats.totalUsers === 0 ||
+      dashboardStats.totalDepartments === 0 ||
+      dashboardStats.totalTeachers === 0 ||
+      dashboardStats.totalStudents === 0
+    ) {
+      const [usersPage, students] = await Promise.all([
+        userService.getAllWithPagination(0, 2000),
+        studentService.getAll(),
+      ]);
+
+      const users = Array.isArray(usersPage?.content) ? usersPage.content : [];
+      const studentsList = Array.isArray(students) ? students : [];
+      const departmentsList = Array.isArray(departmentsRaw) ? departmentsRaw : [];
+
+      nextStats = {
+        totalUsers: dashboardStats.totalUsers || users.length,
+        totalTeachers: dashboardStats.totalTeachers || getRoleCount(users, "TEACHER"),
+        totalStudents: dashboardStats.totalStudents || studentsList.length || getRoleCount(users, "STUDENT"),
+        totalDepartments: dashboardStats.totalDepartments || departmentsList.length,
+      };
+    }
+
+    const normalizedDepartments = (Array.isArray(departmentsRaw) ? departmentsRaw : []).map((dept) => ({
+      name: dept.name || "Departement",
+      code: dept.code || "-",
+      totalTeachers: dept?.stats?.totalTeachers || 0,
+      totalStudents: dept?.stats?.totalStudents || 0,
+      totalClasses: dept?.stats?.totalClasses || 0,
+      attendanceRate: dept?.stats?.attendanceRate || 0,
+    }));
+
+    return {
+      generatedAt: new Date().toISOString(),
+      summary: nextStats,
+      departments: normalizedDepartments,
+      recentActivities: Array.isArray(recent) ? recent : [],
+    };
+  };
+
+  const exportSchoolReportPdf = (reportData) => {
+    const doc = new jsPDF();
+    const generatedDate = new Date(reportData.generatedAt).toLocaleString("fr-FR");
+
+    doc.setFontSize(18);
+    doc.text("Rapport global - Etat de l'ecole", 14, 18);
+    doc.setFontSize(10);
+    doc.setTextColor(90);
+    doc.text(`Genere le ${generatedDate}`, 14, 25);
+
+    autoTable(doc, {
+      startY: 32,
+      head: [["Indicateur", "Valeur"]],
+      body: [
+        ["Total utilisateurs", String(reportData.summary.totalUsers || 0)],
+        ["Total enseignants", String(reportData.summary.totalTeachers || 0)],
+        ["Total etudiants", String(reportData.summary.totalStudents || 0)],
+        ["Total departements", String(reportData.summary.totalDepartments || 0)],
+      ],
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [124, 58, 237] },
+    });
+
+    const departmentsTableBody = reportData.departments.map((dept) => [
+      dept.name,
+      dept.code,
+      String(dept.totalTeachers),
+      String(dept.totalStudents),
+      String(dept.totalClasses),
+      `${dept.attendanceRate}%`,
+    ]);
+
+    autoTable(doc, {
+      startY: doc.lastAutoTable.finalY + 10,
+      head: [["Departement", "Code", "Ens.", "Etud.", "Classes", "Presence"]],
+      body: departmentsTableBody.length > 0 ? departmentsTableBody : [["Aucune donnee", "-", "-", "-", "-", "-"]],
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [49, 46, 129] },
+    });
+
+    const activitiesTableBody = reportData.recentActivities.slice(0, 8).map((activity) => [
+      activity.description || activity.type || "Activite",
+      activity.timestamp || "-",
+    ]);
+
+    autoTable(doc, {
+      startY: doc.lastAutoTable.finalY + 10,
+      head: [["Activite recente", "Date"]],
+      body: activitiesTableBody.length > 0 ? activitiesTableBody : [["Aucune activite recente", "-"]],
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [5, 150, 105] },
+    });
+
+    const exportDate = new Date().toISOString().split("T")[0];
+    doc.save(`rapport-etat-ecole-${exportDate}.pdf`);
+  };
+
+  const handleGenerateReport = async () => {
+    try {
+      setIsReportBusy(true);
+      const reportData = await buildSchoolReportData();
+      setGeneratedReport(reportData);
+      toast.success("Rapport genere avec succes.");
+    } catch (error) {
+      toast.error(error.message || "Impossible de generer le rapport.");
+    } finally {
+      setIsReportBusy(false);
+    }
+  };
+
+  const handleExportReport = async () => {
+    try {
+      setIsReportBusy(true);
+      const reportData = generatedReport || (await buildSchoolReportData());
+      setGeneratedReport(reportData);
+      exportSchoolReportPdf(reportData);
+      toast.success("Export PDF termine.");
+    } catch (error) {
+      toast.error(error.message || "Impossible d'exporter le rapport.");
+    } finally {
+      setIsReportBusy(false);
     }
   };
 
@@ -197,22 +334,36 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Tableau de bord</h1>
-          <p className="text-sm text-slate-500 mt-1">Apercu complet de votre systeme</p>
+          <p className="text-sm text-slate-500 mt-1">Aperçu complet de l&apos;&eacute;tat de votre &eacute;cole</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+          <button
+            onClick={handleExportReport}
+            disabled={isReportBusy}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-60"
+          >
             <span className="flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
               </svg>
-              Exporter
+              {isReportBusy ? "Traitement..." : "Exporter"}
             </span>
           </button>
-          <button className="px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700 transition-colors">
-            Generer rapport
+          <button
+            onClick={handleGenerateReport}
+            disabled={isReportBusy}
+            className="px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700 transition-colors disabled:opacity-60"
+          >
+            {isReportBusy ? "Traitement..." : "Generer rapport"}
           </button>
         </div>
       </div>
+
+      {generatedReport && (
+        <div className="bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-sm text-violet-800">
+          Rapport disponible. Derniere generation: {new Date(generatedReport.generatedAt).toLocaleString("fr-FR")}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
@@ -267,7 +418,7 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <QuickActionCard
-          title="Creer un utilisateur"
+          title="Créer un utilisateur"
           description="Ajouter un admin, chef ou enseignant"
           icon={
             <svg className="w-5 h-5 text-violet-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -278,7 +429,7 @@ export default function AdminDashboard() {
           href="/admin/users/create"
         />
         <QuickActionCard
-          title="Creer un departement"
+          title="Créer un département"
           description="Structurer les equipes et les filieres"
           icon={
             <svg className="w-5 h-5 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -303,14 +454,14 @@ export default function AdminDashboard() {
 
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-slate-800">Activite recente</h2>
-          <Link href="/admin/system/logs" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
-            Voir tout
+          <h2 className="text-lg font-bold text-slate-800">Activité récente</h2>
+          <Link href="/admin/system" className="text-sm text-violet-600 hover:text-violet-700 font-medium">
+            Parametres
           </Link>
         </div>
         {recentActivity.length === 0 ? (
           <div className="text-sm text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-4 py-6 text-center">
-            Aucune activite recente disponible.
+            Aucune activité récente disponible.
           </div>
         ) : (
           <div className="space-y-3">
@@ -334,7 +485,7 @@ export default function AdminDashboard() {
 
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-slate-800">Apercu systeme</h2>
+          <h2 className="text-lg font-bold text-slate-800">Apercu système</h2>
           <div className="text-sm text-green-600 font-medium flex items-center gap-1">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             Tout fonctionne normalement

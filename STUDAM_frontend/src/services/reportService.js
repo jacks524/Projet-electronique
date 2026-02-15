@@ -37,10 +37,10 @@ const getRecentActivity = async (limit = 5, departmentId) => {
   }
 };
 
-const getTeacherAttendanceList = async ({ departmentId, teacherId, startDate, endDate, status } = {}) => {
+const getTeacherAttendanceList = async ({ departmentId, teacherId, classId, startDate, endDate, status } = {}) => {
   try {
     const { data } = await apiClient.get("/reports/teachers-attendance", {
-      params: { departmentId, teacherId, startDate, endDate, status },
+      params: { departmentId, teacherId, classId, startDate, endDate, status },
     });
     return Array.isArray(data) ? data : [];
   } catch (error) {
@@ -166,7 +166,7 @@ const getValidatedReports = async (teacherId) => {
       return Array.isArray(allReports)
         ? allReports.filter(r => r.teacherId === teacherId && r.status === 'VALIDATED')
         : [];
-    } catch (fallbackError) {
+    } catch {
       return [];
     }
   }

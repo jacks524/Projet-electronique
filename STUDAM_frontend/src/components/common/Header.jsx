@@ -67,7 +67,7 @@ const Header = () => {
               {!isAuthenticated ? (
                   <>
                     <Link href="/features" className={navLinkClass}>Fonctionnalités</Link>
-                    <Link href="/about" className={navLinkClass}>A propos</Link>
+                    <Link href="/about" className={navLinkClass}>À propos</Link>
                     <Link href="/contact" className={navLinkClass}>Contact</Link>
                   </>
               ) : (
@@ -85,9 +85,6 @@ const Header = () => {
                   <>
                     <Link href="/auth/login" className="text-slate-600 hover:text-violet-600 font-medium text-sm px-4">
                       Se connecter
-                    </Link>
-                    <Link href="/auth/register" className="bg-slate-900 text-white px-5 py-2.5 rounded-xl font-medium text-sm hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
-                      Essai gratuit
                     </Link>
                   </>
               ) : (

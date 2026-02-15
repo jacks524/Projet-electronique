@@ -2,6 +2,21 @@
 
 import Link from 'next/link';
 
+const BiometricLogo = ({ className = "w-10 h-10" }) => (
+  <svg className={className} viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="35" cy="35" r="30" stroke="url(#gradient-logo-footer)" strokeWidth="3" opacity="0.9"/>
+    <path d="M35 15 Q45 25, 45 35 Q45 45, 35 55" stroke="url(#gradient-logo-footer)" strokeWidth="2.5" opacity="0.8" fill="none"/>
+    <path d="M35 20 Q40 27, 40 35 Q40 43, 35 50" stroke="url(#gradient-logo-footer)" strokeWidth="2" opacity="0.7" fill="none"/>
+    <path d="M35 25 Q37 30, 37 35 Q37 40, 35 45" stroke="url(#gradient-logo-footer)" strokeWidth="2" opacity="0.6" fill="none"/>
+    <defs>
+      <linearGradient id="gradient-logo-footer" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style={{ stopColor: '#8b5cf6' }} />
+        <stop offset="100%" style={{ stopColor: '#6366f1' }} />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
 export default function ModernFooter() {
   const currentYear = new Date().getFullYear();
 
@@ -12,12 +27,12 @@ export default function ModernFooter() {
             
             {/* Colonne Brand */}
             <div className="col-span-1 md:col-span-1">
-              <div className="flex items-center space-x-2 mb-6">
-                <div className="h-8 w-8 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                   <span className="text-white font-bold text-sm">S</span>
-                </div>
-                <span className="text-xl font-bold text-white">STUDAM</span>
-              </div>
+              <Link href="/" className="flex items-center space-x-3 group mb-6">
+                <BiometricLogo className="w-10 h-10" />
+                <span className="text-2xl font-bold text-white">
+                  STUDAM<span className="text-violet-600">.</span>
+                </span>
+              </Link>
               <p className="text-sm text-slate-400 mb-6 leading-relaxed">
                 La solution biométrique n°1 pour sécuriser et simplifier la gestion des présences des élèves en milieu académique.
               </p>

@@ -54,40 +54,45 @@ export default function TeacherDetailPage() {
 
             setSubjects(subjectsData || []);
 
-            // Calculate unique classes from subjects and classes data
-            const uniqueClassIds = new Set();
+            const schedulesList = Array.isArray(timetableData?.schedules) ? timetableData.schedules :
+                (Array.isArray(timetableData) ? timetableData.flatMap(t => t.schedules || []) : []);
+            setSchedules(schedulesList);
+
             const classesMap = new Map();
 
-            // Add classes from direct class assignments
-            (classesData || []).forEach(c => {
-                uniqueClassIds.add(c.classId);
-                classesMap.set(c.classId, {
-                    id: c.classId,
-                    name: c.name,
+            (Array.isArray(classesData) ? classesData : []).forEach((c) => {
+                const classId = c.classId || c.id;
+                if (!classId) return;
+                classesMap.set(classId, {
+                    id: classId,
+                    name: c.name || c.className || 'Classe',
                     level: c.code || '---',
                     studentCount: c.studentNumber || c.studentCount || 0
                 });
             });
 
-            // Map classes for display
-            const mappedClasses = Array.from(classesMap.values());
+            for (const schedule of schedulesList) {
+                const classId = schedule?.classResponseDTO?.classId || schedule?.classId || schedule?.classe?.classId || schedule?.class?.classId;
+                if (!classId || classesMap.has(classId)) continue;
+                try {
+                    const classDetails = await classService.getById(classId);
+                    classesMap.set(classId, {
+                        id: classDetails.classId || classId,
+                        name: classDetails.name || classDetails.className || 'Classe',
+                        level: classDetails.code || '---',
+                        studentCount: classDetails.studentNumber || classDetails.studentCount || 0
+                    });
+                } catch {
+                    classesMap.set(classId, {
+                        id: classId,
+                        name: `Classe ${classId}`,
+                        level: '---',
+                        studentCount: 0
+                    });
+                }
+            }
 
-            console.log('Classes data received:', classesData);
-            console.log('Mapped classes:', mappedClasses);
-            console.log('Total students:', mappedClasses.reduce((sum, c) => sum + c.studentCount, 0));
-
-            setClasses(mappedClasses);
-
-            // Get schedules and filter for today
-            const schedulesList = Array.isArray(timetableData?.schedules) ? timetableData.schedules :
-                (Array.isArray(timetableData) ? timetableData.flatMap(t => t.schedules || []) : []);
-
-            setSchedules(schedulesList);
-
-            // Calculate today's sessions
-            const dayKeys = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-            const today = dayKeys[new Date().getDay()];
-            const todaysSessions = schedulesList.filter(schedule => schedule.day === today);
+            setClasses(Array.from(classesMap.values()));
 
         } catch (error) {
             toast.error("Erreur lors du chargement des donnees");
@@ -286,7 +291,7 @@ export default function TeacherDetailPage() {
                                 <p className="text-base text-gray-900">{teacher.phoneNumber || '---'}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Nom d'utilisateur</p>
+                                <p className="text-sm text-gray-500">Nom d&apos;utilisateur</p>
                                 <p className="text-base text-gray-900">{teacher.username}</p>
                             </div>
                             <div>

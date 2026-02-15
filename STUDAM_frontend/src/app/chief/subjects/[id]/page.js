@@ -6,6 +6,8 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import subjectService from '@/services/subjectService';
+import classService from '@/services/classService';
+import timetableService from '@/services/timetableService';
 
 export default function SubjectDetailPage() {
     const params = useParams();
@@ -41,8 +43,47 @@ export default function SubjectDetailPage() {
         try {
             setLoading(true);
             const subjectData = await subjectService.getById(subjectId);
-            setSubject(normalizeSubject(subjectData));
-            setClasses([]);
+            const normalizedSubject = normalizeSubject(subjectData);
+            setSubject(normalizedSubject);
+
+            const departmentId =
+                subjectData?.department?.departmentId ||
+                subjectData?.department?.id ||
+                subjectData?.departement?.departmentId ||
+                null;
+
+            if (!departmentId) {
+                setClasses([]);
+                return;
+            }
+
+            const departmentClasses = await classService.getByDepartment(departmentId);
+            const classesList = Array.isArray(departmentClasses) ? departmentClasses : [];
+
+            const matchedClasses = [];
+            await Promise.all(classesList.map(async (classe) => {
+                const classId = classe.classId || classe.id;
+                if (!classId) return;
+                try {
+                    const timetable = await timetableService.getByClass(classId);
+                    const schedules = Array.isArray(timetable?.schedules) ? timetable.schedules : [];
+                    const containsSubject = schedules.some((schedule) => {
+                        const sid = schedule?.subject?.subjectId || schedule?.subject?.id;
+                        return String(sid) === String(normalizedSubject.id);
+                    });
+                    if (containsSubject) {
+                        matchedClasses.push({
+                            id: classId,
+                            name: classe.name || classe.className || `Classe ${classId}`,
+                            code: classe.code || '---',
+                        });
+                    }
+                } catch {
+                    // Ignore one class failure and continue
+                }
+            }));
+
+            setClasses(matchedClasses);
         } catch (error) {
             toast.error(error.message || "Erreur lors du chargement des donnees");
         } finally {
@@ -82,10 +123,6 @@ export default function SubjectDetailPage() {
         );
     }
 
-    const progressPercentage = subject.totalSessions > 0
-        ? Math.round((subject.completedSessions / subject.totalSessions) * 100)
-        : 0;
-
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-start">
@@ -119,7 +156,7 @@ export default function SubjectDetailPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white shadow rounded-lg p-6">
                     <div className="text-sm text-gray-500">Credits</div>
                     <div className="mt-2 text-2xl font-semibold text-gray-900">{subject.credits}</div>
@@ -127,10 +164,6 @@ export default function SubjectDetailPage() {
                 <div className="bg-white shadow rounded-lg p-6">
                     <div className="text-sm text-gray-500">Heures / semaine</div>
                     <div className="mt-2 text-2xl font-semibold text-gray-900">{subject.heuresCoursParSemaine}h</div>
-                </div>
-                <div className="bg-white shadow rounded-lg p-6">
-                    <div className="text-sm text-gray-500">Avancement</div>
-                    <div className="mt-2 text-2xl font-semibold text-gray-900">{progressPercentage}%</div>
                 </div>
             </div>
 

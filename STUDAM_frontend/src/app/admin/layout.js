@@ -76,7 +76,7 @@ export default function AdminLayout({ children }) {
     { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
     { icon: Users, label: "Utilisateurs", href: "/admin/users" },
     { icon: Building2, label: "Départements", href: "/admin/departments" },
-    { icon: FileBarChart2, label: "Rapports", href: "/admin/reports" },
+    { icon: FileBarChart2, label: "Rapports", href: "/admin/reports/attendance" },
     { icon: Settings, label: "Paramètres", href: "/admin/system" },
   ];
 
@@ -278,7 +278,7 @@ export default function AdminLayout({ children }) {
                     {getGreeting()}, {user?.name?.split(" ")[0]} 👋
                   </h1>
                   <p className="text-sm text-slate-500 mt-1">
-                    Voici un aperçu de votre système
+                    Voici un aperçu de votre école
                   </p>
                 </div>
               </div>

@@ -82,28 +82,45 @@ export default function TeachersPage() {
                 }
             }));
 
-            const mappedTeachers = teachersData.map(teacher => ({
-                id: teacher.id,
-                name: teacher.name,
-                email: teacher.email,
-                matricule: teacher.matricule,
-                phoneNumber: teacher.phoneNumber,
-                status: teacher.active ? 'active' : 'inactive',
-                active: !!teacher.active,
-                dateEmbauche: teacher.createdDate || new Date().toISOString(),
-                departement: {
-                    id: targetDepartment.departmentId,
-                    nom: targetDepartment.name
+            const normalizedTeachers = await Promise.all((Array.isArray(teachersData) ? teachersData : []).map(async (teacher) => {
+                let resolvedActive = typeof teacher.active === 'boolean' ? teacher.active : null;
+                if (resolvedActive === null) {
+                    try {
+                        const teacherDetails = await userService.getById(teacher.id);
+                        resolvedActive = typeof teacherDetails?.active === 'boolean' ? teacherDetails.active : null;
+                    } catch {
+                        resolvedActive = null;
+                    }
                 }
+                if (resolvedActive === null) resolvedActive = true;
+
+                return {
+                    id: teacher.id,
+                    name: teacher.name,
+                    email: teacher.email,
+                    matricule: teacher.matricule,
+                    phoneNumber: teacher.phoneNumber,
+                    status: resolvedActive ? 'active' : 'inactive',
+                    active: resolvedActive,
+                    dateEmbauche: teacher.createdDate || new Date().toISOString(),
+                    departement: {
+                        id: targetDepartment.departmentId,
+                        nom: targetDepartment.name
+                    }
+                };
             }));
 
             const classAssignments = {};
-            await Promise.all(mappedTeachers.map(async (teacher) => {
-                const teacherClasses = await classService.getByTeacher(teacher.id);
-                classAssignments[teacher.id] = teacherClasses.map(cls => cls.classId);
+            await Promise.all(normalizedTeachers.map(async (teacher) => {
+                try {
+                    const teacherClasses = await classService.getByTeacher(teacher.id);
+                    classAssignments[teacher.id] = (Array.isArray(teacherClasses) ? teacherClasses : []).map(cls => cls.classId);
+                } catch {
+                    classAssignments[teacher.id] = [];
+                }
             }));
 
-            setTeachers(mappedTeachers);
+            setTeachers(normalizedTeachers);
             setClasses(mappedClasses);
             setTeacherClassesMap(classAssignments);
         } catch (error) {

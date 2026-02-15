@@ -63,6 +63,25 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const setUserAndPersist = (nextUserOrUpdater) => {
+        setUser((prevUser) => {
+            const nextUser =
+                typeof nextUserOrUpdater === "function"
+                    ? nextUserOrUpdater(prevUser)
+                    : nextUserOrUpdater;
+
+            if (typeof window !== "undefined") {
+                if (nextUser) {
+                    localStorage.setItem("user", JSON.stringify(nextUser));
+                } else {
+                    localStorage.removeItem("user");
+                }
+            }
+
+            return nextUser;
+        });
+    };
+
     const logout = () => {
         authService.logout();
         setUser(null);
@@ -76,6 +95,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         logout,
+        setUser: setUserAndPersist,
     };
 
     return (

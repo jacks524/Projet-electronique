@@ -19,6 +19,7 @@ export default function SubjectsPage() {
     const [classes, setClasses] = useState([]);
     const [selectedClass, setSelectedClass] = useState('');
     const [classSubjectIds, setClassSubjectIds] = useState(null);
+    const [subjectClassesMap, setSubjectClassesMap] = useState({});
     const [error, setError] = useState('');
     const [department, setDepartment] = useState(null);
 
@@ -93,6 +94,29 @@ export default function SubjectsPage() {
             setDepartment(targetDepartment);
             setSubjects(normalizedSubjects);
             setClasses(mappedClasses);
+
+            const nextSubjectClassesMap = {};
+            await Promise.all(mappedClasses.map(async (classe) => {
+                try {
+                    const timetableData = await timetableService.getByClass(classe.id);
+                    const schedules = Array.isArray(timetableData?.schedules) ? timetableData.schedules : [];
+                    schedules.forEach((schedule) => {
+                        const subjectId = schedule?.subject?.subjectId || schedule?.subject?.id;
+                        if (!subjectId) return;
+                        if (!nextSubjectClassesMap[subjectId]) nextSubjectClassesMap[subjectId] = [];
+                        if (!nextSubjectClassesMap[subjectId].some((existing) => existing.id === classe.id)) {
+                            nextSubjectClassesMap[subjectId].push({
+                                id: classe.id,
+                                name: classe.name,
+                                code: classe.code,
+                            });
+                        }
+                    });
+                } catch {
+                    // Keep loading other classes
+                }
+            }));
+            setSubjectClassesMap(nextSubjectClassesMap);
 
         } catch (error) {
             console.error('Erreur lors du chargement des matieres:', error);
@@ -245,14 +269,14 @@ export default function SubjectsPage() {
                                                         </svg>
                                                         {subject.department?.name || 'Departement'}
                                                     </span>
-                                                    {subject.classe && (
-                                                        <span className="flex items-center">
-                                                            <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                                            </svg>
-                                                            Classe: {subject.classe.name || subject.classe.nom || 'Non assignée'}
-                                                        </span>
-                                                    )}
+                                                    <span className="flex items-center">
+                                                        <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21h18M4 21V4a1 1 0 011-1h14a1 1 0 011 1v17" />
+                                                        </svg>
+                                                        Classes: {(subjectClassesMap[subject.id] || []).length > 0
+                                                            ? subjectClassesMap[subject.id].map((c) => c.name).join(', ')
+                                                            : 'Aucune'}
+                                                    </span>
                                                 </div>
 
                                                 <div className="flex gap-4 text-sm">
@@ -290,3 +314,5 @@ export default function SubjectsPage() {
         </div>
     );
 }
+
+
