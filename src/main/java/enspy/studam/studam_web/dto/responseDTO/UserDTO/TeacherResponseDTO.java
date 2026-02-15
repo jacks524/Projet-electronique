@@ -17,6 +17,7 @@ public class TeacherResponseDTO {
   private String phoneNumber;
   private String username;
   private String matricule;
+  private boolean active;
   private List<SubjectResponseDTO> subjects; // Assuming subjects are represented as a list of strings
   private int classCount; // Number of classes the teacher is assigned to
   private int studentCount; // Total number of students in all classes
@@ -29,6 +30,7 @@ public class TeacherResponseDTO {
     dto.setPhoneNumber(user.getPhoneNumber());
     dto.setUsername(user.getUsername());
     dto.setMatricule(user.getMatricule());
+    dto.setActive(user.isActive());
     dto.setSubjects(subjects.stream()
         .map(SubjectResponseDTO::toDTO)
         .toList()); // Convert each Subject to SubjectResponseDTO
