@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AttendanceFilter from '@/components/attendance/AttendanceFilter';
-import AttendanceTable from '@/components/attendance/AttendanceTable';
-import AttendanceStats from '@/components/attendance/AttendanceStats';
+import AttendanceFilter from '@/components/presence/AttendanceFilter';
+import AttendanceTable from '@/components/presence/AttendanceTable';
+import AttendanceStats from '@/components/presence/AttendanceStats';
 
 export default function AttendancePage() {
     const router = useRouter();

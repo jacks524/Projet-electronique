@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuthContext } from '../../../context/authContext';
 import toast from 'react-hot-toast';
@@ -102,7 +103,7 @@ const BiometricIllustration = () => (
   </svg>
 );
 
-export default function Login() {
+function LoginContent() {
   const { login } = useAuthContext();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -275,5 +276,13 @@ export default function Login() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-900" />}>
+      <LoginContent />
+    </Suspense>
   );
 }
