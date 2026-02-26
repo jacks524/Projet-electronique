@@ -48,6 +48,10 @@ export default function AdminUsers() {
         return subject?.name || subject?.libelle || subject?.code || null;
     };
 
+    const extractSubjectSemester = (subject) => {
+        return subject?.semester || subject?.semestre || subject?.timetable?.semester || null;
+    };
+
     const normalizeTeacherConfigRow = async (teacherUser) => {
         const [teacherDetails, teacherClasses, teacherSubjects] = await Promise.all([
             userService.getById(teacherUser.id),
@@ -61,6 +65,9 @@ export default function AdminUsers() {
         const subjects = [...new Set((Array.isArray(teacherSubjects) ? teacherSubjects : [])
             .map(extractSubjectName)
             .filter(Boolean))];
+        const semesters = [...new Set((Array.isArray(teacherSubjects) ? teacherSubjects : [])
+            .map(extractSubjectSemester)
+            .filter(Boolean))];
         const departments = Array.isArray(teacherDetails?.departmentsNames) ? teacherDetails.departmentsNames : [];
 
         return {
@@ -68,6 +75,7 @@ export default function AdminUsers() {
             matricule: teacherDetails?.matricule || '',
             nom: teacherDetails?.name || teacherUser.name || '',
             departement: departments.length > 0 ? departments.join(', ') : (teacherUser.departement || ''),
+            semestres: semesters,
             niveaux: levels,
             matieres: subjects,
             status: teacherDetails?.active ? 'active' : 'inactive',
@@ -93,6 +101,7 @@ export default function AdminUsers() {
                             matricule: '',
                             nom: teacherUser.name || '',
                             departement: teacherUser.departement || '',
+                            semestres: [],
                             niveaux: [],
                             matieres: [],
                             status: teacherUser.status || 'inactive',
@@ -173,6 +182,7 @@ export default function AdminUsers() {
             row.nom.toLowerCase().includes(normalizedSearch) ||
             row.matricule.toLowerCase().includes(normalizedSearch) ||
             row.departement.toLowerCase().includes(normalizedSearch) ||
+            row.semestres.some((semester) => semester.toLowerCase().includes(normalizedSearch)) ||
             row.niveaux.some((level) => level.toLowerCase().includes(normalizedSearch)) ||
             row.matieres.some((subject) => subject.toLowerCase().includes(normalizedSearch));
 
@@ -198,6 +208,7 @@ export default function AdminUsers() {
                 "Matricule de l'enseignant",
                 "Nom de l'enseignant",
                 "Departement de l'enseignant",
+                "Semestre",
                 "Niveaux dans lesquels il enseigne",
                 "Matiere enseignee",
             ];
@@ -206,6 +217,7 @@ export default function AdminUsers() {
                 row.matricule,
                 row.nom,
                 row.departement,
+                row.semestres.join(' | '),
                 row.niveaux.join(' | '),
                 row.matieres.join(' | '),
             ]));
@@ -459,7 +471,7 @@ export default function AdminUsers() {
                 <div className="px-6 py-4 border-b border-gray-100 bg-emerald-50/40">
                     <h2 className="text-sm font-semibold text-emerald-800 uppercase tracking-wider">Configuration export ESP32</h2>
                     <p className="text-sm text-emerald-700 mt-1">
-                        Format: matricule, nom, departement, niveaux enseignes, matiere enseignee.
+                        Format: matricule, nom, departement, semestre, niveaux enseignes, matiere enseignee.
                     </p>
                 </div>
                 <div className="overflow-x-auto">
@@ -469,6 +481,7 @@ export default function AdminUsers() {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matricule</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom enseignant</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Departement</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semestre</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Niveaux enseignes</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matiere enseignee</th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -482,6 +495,7 @@ export default function AdminUsers() {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.matricule || '-'}</td>
                                         <td className="px-6 py-4 text-sm text-gray-900">{row.nom || '-'}</td>
                                         <td className="px-6 py-4 text-sm text-gray-900">{row.departement || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-900">{row.semestres.length > 0 ? row.semestres.join(', ') : '-'}</td>
                                         <td className="px-6 py-4 text-sm text-gray-900">{row.niveaux.length > 0 ? row.niveaux.join(', ') : '-'}</td>
                                         <td className="px-6 py-4 text-sm text-gray-900">{row.matieres.length > 0 ? row.matieres.join(', ') : '-'}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -587,4 +601,3 @@ export default function AdminUsers() {
         </div>
     );
 }
-

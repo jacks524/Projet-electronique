@@ -19,6 +19,7 @@ export default function CreateSubjectPage() {
         libelle: '',
         code: '',
         description: '',
+        semester: '',
         credits: '',
         heuresCoursParSemaine: '',
         departmentId: '',
@@ -112,6 +113,10 @@ export default function CreateSubjectPage() {
             newErrors.teacherId = "L'enseignant est requis";
         }
 
+        if (!formData.semester) {
+            newErrors.semester = "Le semestre est requis";
+        }
+
         if (formData.credits && (isNaN(formData.credits) || formData.credits < 1)) {
             newErrors.credits = "Le nombre de credits doit etre un nombre positif";
         }
@@ -139,6 +144,7 @@ export default function CreateSubjectPage() {
                 name: formData.libelle,
                 code: formData.code.toUpperCase(),
                 description: formData.description,
+                semester: formData.semester,
                 credits: parseInt(formData.credits, 10) || 0,
                 heuresCoursParSemaine: parseInt(formData.heuresCoursParSemaine, 10) || 0,
                 departmentId: parseInt(formData.departmentId, 10),
@@ -281,6 +287,26 @@ export default function CreateSubjectPage() {
                             <p className="mt-1 text-xs text-gray-500">
                                 Une matière ne peut être assignée qu'à une seule classe.
                             </p>
+                        </div>
+
+                        <div>
+                            <label htmlFor="semester" className="block text-sm font-medium text-gray-700 mb-1">
+                                Semestre <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                id="semester"
+                                name="semester"
+                                value={formData.semester}
+                                onChange={handleChange}
+                                className={`block w-full px-3 py-2 border ${errors.semester ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm`}
+                            >
+                                <option value="">Selectionner un semestre</option>
+                                <option value="S1">S1</option>
+                                <option value="S2">S2</option>
+                            </select>
+                            {errors.semester && (
+                                <p className="mt-1 text-sm text-red-600">{errors.semester}</p>
+                            )}
                         </div>
 
                         <div>

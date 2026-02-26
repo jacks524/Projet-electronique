@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuthContext } from "../../context/authContext";
 import reportService from "../../services/reportService";
+import systemSettingsService from "../../services/systemSettingsService";
 
 import {
   LayoutDashboard,
@@ -70,6 +71,7 @@ export default function AdminLayout({ children }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [recentActivity, setRecentActivity] = useState([]);
+  const [currentSemester, setCurrentSemester] = useState("");
 
   // Menu items pour l'admin
   const menuItems = [
@@ -93,10 +95,15 @@ export default function AdminLayout({ children }) {
 
     const loadRecentActivity = async () => {
       try {
-        const data = await reportService.getRecentActivity(5);
+        const [data, settings] = await Promise.all([
+          reportService.getRecentActivity(5),
+          systemSettingsService.getAdminSettings().catch(() => ({})),
+        ]);
         setRecentActivity(Array.isArray(data) ? data : []);
+        setCurrentSemester(settings?.currentSemester || settings?.semester || inferSemester());
       } catch (error) {
         setRecentActivity([]);
+        setCurrentSemester(inferSemester());
       }
     };
 
@@ -167,6 +174,12 @@ export default function AdminLayout({ children }) {
     if (hour < 12) return "Bonjour";
     if (hour < 18) return "Bon après-midi";
     return "Bonsoir";
+  };
+
+  const inferSemester = () => {
+    const month = new Date().getMonth() + 1;
+    if (month >= 8 || month <= 1) return "S1";
+    return "S2";
   };
 
   if (authLoading || !user) {
@@ -278,7 +291,7 @@ export default function AdminLayout({ children }) {
                     {getGreeting()}, {user?.name?.split(" ")[0]} 👋
                   </h1>
                   <p className="text-sm text-slate-500 mt-1">
-                    Voici un aperçu de votre école
+                    Voici un aperçu de votre école • Semestre en cours: {currentSemester || inferSemester()}
                   </p>
                 </div>
               </div>
@@ -364,7 +377,9 @@ export default function AdminLayout({ children }) {
                       <p className="text-sm font-medium text-slate-700">
                         {user?.name}
                       </p>
-                      <p className="text-xs text-slate-500">Administrateur</p>
+                      <p className="text-xs text-slate-500">
+                        Administrateur • {currentSemester || inferSemester()}
+                      </p>
                     </div>
                     <svg
                       className={`w-4 h-4 text-slate-400 transition-transform ${
