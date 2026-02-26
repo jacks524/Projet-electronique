@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 
 import lombok.AllArgsConstructor;
 
@@ -39,6 +40,8 @@ public class Configurations {
                   .requestMatchers("/user/forgot-password", "/api/user/forgot-password").permitAll()
                   .requestMatchers("/user/reset-password", "/api/user/reset-password").permitAll()
                   .requestMatchers("/fingerprint/text", "/api/fingerprint/text").permitAll()
+                  .requestMatchers(HttpMethod.GET, "/fingerprint/config/published", "/api/fingerprint/config/published")
+                  .permitAll()
                   .requestMatchers("/public/time", "/api/public/time").permitAll()
                   .requestMatchers("/public/time/**", "/api/public/time/**").permitAll()
                   .requestMatchers("/ws", "/ws/**").permitAll()

@@ -25,10 +25,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import enspy.studam.studam_web.dto.requestDTO.AttendanceRequestDTO;
+import enspy.studam.studam_web.enumeration.UserRoleEnum;
+import enspy.studam.studam_web.models.Department;
 import enspy.studam.studam_web.models.Subject;
 import enspy.studam.studam_web.models.User;
 import enspy.studam.studam_web.services.AttendanceService;
 import enspy.studam.studam_web.services.FingerprintTextStore;
+import enspy.studam.studam_web.services.TeacherConfigFileService;
+import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
+import enspy.studam.studam_web.security.SecurityUtils;
 import enspy.studam.studam_web.services.lookup.UserLookupService;
 import enspy.studam.studam_web.services.lookup.SubjectLookupService;
 import enspy.studam.studam_web.websocket.WebSocketEventPublisher;
@@ -54,7 +59,9 @@ public class FingerPrintController {
   private final AttendanceService attendanceService;
   private final SubjectLookupService subjectLookupService;
   private final UserLookupService userLookupService;
+  private final DepartmentLookupService departmentLookupService;
   private final FingerprintTextStore fingerprintTextStore;
+  private final TeacherConfigFileService teacherConfigFileService;
   private final WebSocketEventPublisher webSocketEventPublisher;
 
   @Hidden
@@ -138,6 +145,47 @@ public class FingerPrintController {
         .contentType(MediaType.TEXT_PLAIN)
         .header(HttpHeaders.LAST_MODIFIED, stored.getReceivedAt().toString())
         .header("X-Session-Date", stored.getSessionDate() != null ? stored.getSessionDate() : "")
+        .body(stored.getRawText());
+  }
+
+  @PostMapping(value = "/config/publish", produces = "text/plain")
+  @Operation(summary = "Publish teacher configuration TXT for ESP32", description = "Generates (or stores manually) a TXT config for one department, then publishes it for device download.")
+  public ResponseEntity<String> publishTeacherConfig(
+      @RequestParam(name = "departmentId") int departmentId,
+      @RequestBody(required = false) String rawText) {
+    User currentUser = SecurityUtils.getCurrentUser();
+    ensureDepartmentAccess(currentUser, departmentId);
+
+    TeacherConfigFileService.StoredTeacherConfig published = (rawText != null && !rawText.isBlank())
+        ? teacherConfigFileService.publishRawConfig(departmentId, rawText)
+        : teacherConfigFileService.publishGeneratedConfig(departmentId);
+
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+    payload.put("departmentId", departmentId);
+    payload.put("source", published.getSource());
+    payload.put("publishedAt", published.getPublishedAt());
+    webSocketEventPublisher.publish("fingerprint.config.published", payload);
+
+    return ResponseEntity.ok()
+        .contentType(MediaType.TEXT_PLAIN)
+        .header("X-Config-Source", published.getSource())
+        .header(HttpHeaders.LAST_MODIFIED, published.getPublishedAt().toString())
+        .body(published.getRawText());
+  }
+
+  @GetMapping(value = "/config/published", produces = "text/plain")
+  @Operation(summary = "Download published teacher configuration TXT", description = "Used by ESP32 to download the latest published config for a department.")
+  public ResponseEntity<String> getPublishedTeacherConfig(@RequestParam(name = "departmentId") int departmentId) {
+    TeacherConfigFileService.StoredTeacherConfig stored = teacherConfigFileService.getPublishedConfig(departmentId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "No published configuration for departmentId=" + departmentId));
+
+    String fileName = "config_department_" + departmentId + ".txt";
+    return ResponseEntity.ok()
+        .contentType(MediaType.TEXT_PLAIN)
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+        .header("X-Config-Source", stored.getSource())
+        .header(HttpHeaders.LAST_MODIFIED, stored.getPublishedAt().toString())
         .body(stored.getRawText());
   }
 
@@ -268,6 +316,28 @@ public class FingerPrintController {
       LOGGER.warn("Unknown subject name received in fingerprint text: {}", subjectName);
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown subject name: " + subjectName);
     }
+  }
+
+  private void ensureDepartmentAccess(User currentUser, int departmentId) {
+    boolean isAdmin = hasRole(currentUser, UserRoleEnum.ADMIN);
+    if (isAdmin) {
+      departmentLookupService.getDepartmentById(departmentId);
+      return;
+    }
+
+    boolean isManager = hasRole(currentUser, UserRoleEnum.DEPARTMENT_MANAGER);
+    if (!isManager) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only admin or department manager can publish config");
+    }
+
+    Department managed = departmentLookupService.getDepartmentByUserIfManager(currentUser);
+    if (managed.getDepartmentId() != departmentId) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied for this department");
+    }
+  }
+
+  private boolean hasRole(User user, UserRoleEnum role) {
+    return user.getRoles() != null && user.getRoles().stream().anyMatch(r -> r.getRole() == role);
   }
 
   private static final class ParsedAttendance {

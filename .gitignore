@@ -13,3 +13,7 @@ target/
 # OS
 .DS_Store
 Thumbs.db
+
+# JS / Next build artifacts
+node_modules/
+.next/
