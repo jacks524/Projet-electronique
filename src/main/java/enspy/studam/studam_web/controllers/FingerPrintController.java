@@ -115,7 +115,7 @@ public class FingerPrintController {
   }
 
   @PostMapping(value = "/text", consumes = "text/plain")
-  @Operation(summary = "Save attendance from a text file", description = "Receives raw text lines stored on the ESP32 and saves attendance records. Each line uses comma or semicolon delimiter: millis,teacherMatricule,subjectName,studentMatricule.")
+  @Operation(summary = "Save attendance from a text file", description = "Receives raw text lines stored on the ESP32 and saves attendance records. Header supports: millis,teacherMatricule,subjectName[,semester]. Student lines: millis,studentMatricule.")
   public ResponseEntity<String> saveAttendanceFromText(
       @RequestBody String rawText,
       @RequestParam(name = "sessionDate", required = false) String sessionDate) {
@@ -202,6 +202,7 @@ public class FingerPrintController {
 
     String headerTeacher = null;
     String headerSubjectName = null;
+    String headerSemester = null;
     Integer subjectId = null;
     Long headerMillis = null;
     boolean footerSeen = false;
@@ -238,9 +239,10 @@ public class FingerPrintController {
         headerMillis = parseMillis(parts[0].trim(), lineNumber);
         headerTeacher = parts[1].trim();
         headerSubjectName = parts[2].trim();
+        headerSemester = parts.length >= 4 ? normalizeSemester(parts[3].trim()) : null;
 
         User teacher = resolveTeacher(headerTeacher);
-        Subject subject = resolveSubject(headerSubjectName);
+        Subject subject = resolveSubject(headerSubjectName, headerSemester);
         subjectId = subject.getSubjectId();
         if (teacher == null || subjectId == null) {
           throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown teacher or subject in header");
@@ -305,13 +307,34 @@ public class FingerPrintController {
     }
   }
 
-  private Subject resolveSubject(String subjectName) {
+  private Subject resolveSubject(String subjectName, String semester) {
     try {
+      if (semester != null && !semester.isBlank()) {
+        return subjectLookupService.getSubjectByNameAndSemester(subjectName, semester);
+      }
       return subjectLookupService.getSubjectByName(subjectName);
     } catch (ResponseStatusException ex) {
-      LOGGER.warn("Unknown subject name received in fingerprint text: {}", subjectName);
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown subject name: " + subjectName);
+      LOGGER.warn("Unknown subject received in fingerprint text: {} ({})", subjectName, semester);
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Unknown subject: " + subjectName + (semester != null ? " for semester " + semester : ""));
     }
+  }
+
+  private String normalizeSemester(String semester) {
+    if (semester == null || semester.isBlank()) {
+      return null;
+    }
+    String normalized = semester.trim().toUpperCase();
+    if ("S1".equals(normalized) || "S2".equals(normalized)) {
+      return normalized;
+    }
+    if (normalized.contains("1")) {
+      return "S1";
+    }
+    if (normalized.contains("2")) {
+      return "S2";
+    }
+    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid semester value in TXT header");
   }
 
   private void ensureAdminAccess(User currentUser) {

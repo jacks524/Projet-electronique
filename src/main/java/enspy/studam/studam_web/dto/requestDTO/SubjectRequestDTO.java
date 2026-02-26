@@ -2,20 +2,26 @@ package enspy.studam.studam_web.dto.requestDTO;
 
 import java.util.List;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Data
 public class SubjectRequestDTO {
 
-  @NotNull(message = "Name is required")
+  @NotBlank(message = "Name is required")
   private String name;
 
-  @NotNull(message = "Description is required")
+  @NotBlank(message = "Description is required")
   private String description;
 
-  @NotNull(message = "Code is required")
+  @NotBlank(message = "Code is required")
   private String code;
+
+  @NotBlank(message = "Semester is required")
+  @Pattern(regexp = "^(?i)(S1|S2)$", message = "Semester must be S1 or S2")
+  private String semester;
 
   private Integer credits;
 

@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -29,6 +30,8 @@ public class Subject {
   private String description;
 
   private String code;
+
+  private String semester;
 
   private int credits;
 
@@ -64,5 +67,12 @@ public class Subject {
   @Override
   public int hashCode() {
     return Objects.hash(this.subjectId);
+  }
+
+  @PrePersist
+  public void ensureSemester() {
+    if (semester == null || semester.isBlank()) {
+      semester = "S1";
+    }
   }
 }

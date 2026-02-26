@@ -8,6 +8,7 @@ import lombok.Data;
 public class SubjectTeacherAssignmentDTO {
   private int subjectId;
   private String subjectName;
+  private String semester;
   private int teacherId;
   private String teacherName;
   private String teacherMatricule;
@@ -16,6 +17,7 @@ public class SubjectTeacherAssignmentDTO {
     SubjectTeacherAssignmentDTO dto = new SubjectTeacherAssignmentDTO();
     dto.setSubjectId(subject.getSubjectId());
     dto.setSubjectName(subject.getName());
+    dto.setSemester(subject.getSemester());
     dto.setTeacherId(teacher.getId());
     dto.setTeacherName(teacher.getName());
     dto.setTeacherMatricule(teacher.getMatricule());

@@ -27,6 +27,12 @@ public class SubjectLookupService {
             "Subject not found with name: " + name));
   }
 
+  public Subject getSubjectByNameAndSemester(String name, String semester) {
+    return this.subjectRepository.findByNameIgnoreCaseAndSemesterIgnoreCase(name, semester)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "Subject not found with name: " + name + " and semester: " + semester));
+  }
+
   public boolean isTeacherAssignToSubject(User teacher, Subject subject) {
     return this.subjectRepository.existsBySubjectIdAndTeachers(subject.getSubjectId(), Collections.singleton(teacher));
   }

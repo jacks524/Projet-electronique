@@ -163,7 +163,8 @@ public class ReportController {
       @RequestParam(required = false) String teacherId,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-      @RequestParam(required = false) String status) {
+      @RequestParam(required = false) String status,
+      @RequestParam(required = false) String semester) {
 
     if (startDate == null || endDate == null) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "startDate and endDate are required");
@@ -210,6 +211,7 @@ public class ReportController {
         endDateTime);
 
     String normalizedStatus = status != null ? status.trim().toUpperCase() : null;
+    String normalizedSemester = normalizeSemester(semester);
     if (normalizedStatus != null && !normalizedStatus.isEmpty()
         && !normalizedStatus.equals("ALL")
         && !normalizedStatus.equals("VALIDATED")
@@ -221,9 +223,13 @@ public class ReportController {
     for (AttendanceSession session : sessions) {
       boolean validated = session.isValidated();
       String sessionStatus = validated ? "VALIDATED" : "PENDING";
+      String sessionSemester = resolveSemester(session);
       if (normalizedStatus != null && !normalizedStatus.isEmpty()
           && !normalizedStatus.equals("ALL")
           && !sessionStatus.equals(normalizedStatus)) {
+        continue;
+      }
+      if (normalizedSemester != null && !normalizedSemester.equals(sessionSemester)) {
         continue;
       }
       String departmentName = session.getSubject() != null && session.getSubject().getDepartment() != null
@@ -235,6 +241,7 @@ public class ReportController {
           departmentName,
           session.getDate(),
           session.getSubject() != null ? session.getSubject().getName() : null,
+          sessionSemester,
           sessionStatus));
     }
 
@@ -244,6 +251,7 @@ public class ReportController {
     payload.put("startDate", startDate);
     payload.put("endDate", endDate);
     payload.put("status", normalizedStatus != null ? normalizedStatus : "ALL");
+    payload.put("semester", normalizedSemester != null ? normalizedSemester : "ALL");
     payload.put("total", results.size());
     webSocketEventPublisher.publish("report.teachers-attendance.generated", payload);
     return ResponseEntity.ok(results);
@@ -252,7 +260,8 @@ public class ReportController {
   @GetMapping("/teacher/{teacherId}/validated")
   public ResponseEntity<List<TeacherAttendanceReportDTO>> getValidatedReports(
       @PathVariable int teacherId,
-      @RequestParam(required = false) String status) {
+      @RequestParam(required = false) String status,
+      @RequestParam(required = false) String semester) {
     User currentUser = SecurityUtils.getCurrentUser();
     boolean isAdmin = hasRole(currentUser, UserRoleEnum.ADMIN);
     boolean isManager = hasRole(currentUser, UserRoleEnum.DEPARTMENT_MANAGER);
@@ -265,12 +274,17 @@ public class ReportController {
     }
 
     String normalizedStatus = status != null ? status.trim().toUpperCase() : "VALIDATED";
+    String normalizedSemester = normalizeSemester(semester);
     List<AttendanceSession> sessions = attendanceSessionRepository.findByTeacher(teacher);
     List<TeacherAttendanceReportDTO> results = new ArrayList<>();
     for (AttendanceSession session : sessions) {
       boolean validated = session.isValidated();
       String sessionStatus = validated ? "VALIDATED" : "PENDING";
+      String sessionSemester = resolveSemester(session);
       if (!"ALL".equals(normalizedStatus) && !sessionStatus.equals(normalizedStatus)) {
+        continue;
+      }
+      if (normalizedSemester != null && !normalizedSemester.equals(sessionSemester)) {
         continue;
       }
       String departmentName = session.getSubject() != null && session.getSubject().getDepartment() != null
@@ -282,6 +296,7 @@ public class ReportController {
           departmentName,
           session.getDate(),
           session.getSubject() != null ? session.getSubject().getName() : null,
+          sessionSemester,
           sessionStatus));
     }
 
@@ -308,5 +323,28 @@ public class ReportController {
     } catch (NumberFormatException ex) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid teacherId");
     }
+  }
+
+  private String resolveSemester(AttendanceSession session) {
+    if (session.getTimetable() != null && session.getTimetable().getSemester() != null
+        && !session.getTimetable().getSemester().isBlank()) {
+      return session.getTimetable().getSemester().trim().toUpperCase();
+    }
+    if (session.getSubject() != null && session.getSubject().getSemester() != null
+        && !session.getSubject().getSemester().isBlank()) {
+      return session.getSubject().getSemester().trim().toUpperCase();
+    }
+    return "S1";
+  }
+
+  private String normalizeSemester(String semester) {
+    if (semester == null || semester.isBlank()) {
+      return null;
+    }
+    String normalized = semester.trim().toUpperCase();
+    if (!normalized.equals("S1") && !normalized.equals("S2") && !normalized.equals("ALL")) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid semester value");
+    }
+    return normalized.equals("ALL") ? null : normalized;
   }
 }

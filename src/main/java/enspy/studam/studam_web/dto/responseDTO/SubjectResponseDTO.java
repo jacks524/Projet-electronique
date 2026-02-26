@@ -16,6 +16,8 @@ public class SubjectResponseDTO {
 
   private String code;
 
+  private String semester;
+
   private int credits;
 
   private int heuresCoursParSemaine;
@@ -30,6 +32,7 @@ public class SubjectResponseDTO {
     dto.setName(subject.getName());
     dto.setDescription(subject.getDescription());
     dto.setCode(subject.getCode());
+    dto.setSemester(subject.getSemester());
     dto.setCredits(subject.getCredits());
     dto.setHeuresCoursParSemaine(subject.getHeuresCoursParSemaine());
     dto.setDepartment(DepartementResponseDTO.toDTO(subject.getDepartment()));

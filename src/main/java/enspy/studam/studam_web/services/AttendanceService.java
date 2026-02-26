@@ -85,6 +85,10 @@ public class AttendanceService {
     sessionPayload.put("teacherName", teacher.getName());
     sessionPayload.put("subjectId", subject.getSubjectId());
     sessionPayload.put("subjectName", subject.getName());
+    String semester = attendanceSession.getTimetable() != null
+        ? attendanceSession.getTimetable().getSemester()
+        : subject.getSemester();
+    sessionPayload.put("semester", semester);
     sessionPayload.put("date", attendanceSession.getDate());
     sessionPayload.put("totalPresent", attendancesRequestDTO.size());
     webSocketEventPublisher.publish("attendance.session.created", sessionPayload);

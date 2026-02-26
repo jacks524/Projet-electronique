@@ -56,6 +56,7 @@ public class SubjectService {
     subject.setName(subjectRequestDTO.getName());
     subject.setDescription(subjectRequestDTO.getDescription());
     subject.setCode(subjectRequestDTO.getCode());
+    subject.setSemester(normalizeSemester(subjectRequestDTO.getSemester()));
     subject.setCredits(subjectRequestDTO.getCredits() != null ? subjectRequestDTO.getCredits() : 0);
     subject.setHeuresCoursParSemaine(
         subjectRequestDTO.getHeuresCoursParSemaine() != null ? subjectRequestDTO.getHeuresCoursParSemaine() : 0);
@@ -96,6 +97,7 @@ public class SubjectService {
     subject.setName(subjectRequestDTO.getName());
     subject.setDescription(subjectRequestDTO.getDescription());
     subject.setCode(subjectRequestDTO.getCode());
+    subject.setSemester(normalizeSemester(subjectRequestDTO.getSemester()));
     subject.setCredits(subjectRequestDTO.getCredits() != null ? subjectRequestDTO.getCredits() : 0);
     subject.setHeuresCoursParSemaine(
         subjectRequestDTO.getHeuresCoursParSemaine() != null ? subjectRequestDTO.getHeuresCoursParSemaine() : 0);
@@ -139,6 +141,12 @@ public class SubjectService {
 
     // Get subjects list department
     return this.subjectRepository.findByDepartment(department);
+  }
+
+  public List<Subject> getSubjectsByDepartmentAndSemester(int departmentId, String semester) {
+    Department department = this.departmentRepository.findById(departmentId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
+    return this.subjectRepository.findByDepartmentAndSemesterIgnoreCase(department, normalizeSemester(semester));
   }
 
   public List<Subject> getSubjectsByTeacherId(int teacherId) {
@@ -193,5 +201,16 @@ public class SubjectService {
 
   public Subject getSubjectById(int id) {
     return this.subjectLookupService.getSubjectById(id);
+  }
+
+  private String normalizeSemester(String semester) {
+    if (semester == null || semester.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Semester is required");
+    }
+    String normalized = semester.trim().toUpperCase();
+    if (!"S1".equals(normalized) && !"S2".equals(normalized)) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Semester must be S1 or S2");
+    }
+    return normalized;
   }
 }

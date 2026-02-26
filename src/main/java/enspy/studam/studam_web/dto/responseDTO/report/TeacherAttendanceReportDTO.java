@@ -15,5 +15,6 @@ public class TeacherAttendanceReportDTO {
   private String departmentName;
   private LocalDateTime date;
   private String courseName;
+  private String semester;
   private String status;
 }

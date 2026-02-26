@@ -14,14 +14,20 @@ public class AttendanceSessionResponseDTO {
 
   private ClassResponseDTO clazz;
 
+  private String semester;
+
   private LocalDateTime date;
 
   public static AttendanceSessionResponseDTO toDTO(AttendanceSession attendanceSession) {
     AttendanceSessionResponseDTO dto = new AttendanceSessionResponseDTO();
     dto.setAttendanceSessionId(attendanceSession.getAttendanceSessionId());
     dto.setDate(attendanceSession.getDate());
-    dto.setSubject(MinimalSubjectDTO.toDTO(attendanceSession.getSubject()));
-    dto.setClazz(ClassResponseDTO.toDto(attendanceSession.getTimetable().getClazz()));
+    dto.setSubject(attendanceSession.getSubject() != null ? MinimalSubjectDTO.toDTO(attendanceSession.getSubject()) : null);
+    dto.setClazz(attendanceSession.getTimetable() != null && attendanceSession.getTimetable().getClazz() != null
+        ? ClassResponseDTO.toDto(attendanceSession.getTimetable().getClazz())
+        : null);
+    dto.setSemester(attendanceSession.getTimetable() != null ? attendanceSession.getTimetable().getSemester()
+        : (attendanceSession.getSubject() != null ? attendanceSession.getSubject().getSemester() : null));
     return dto;
   }
 }

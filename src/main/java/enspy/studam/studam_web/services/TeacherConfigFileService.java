@@ -133,6 +133,7 @@ public class TeacherConfigFileService {
 
   private Map<Integer, TreeSet<String>> buildSubjectLevelSemesters(Subject subject, User teacher, int departmentId) {
     Map<Integer, TreeSet<String>> result = new LinkedHashMap<>();
+    String subjectSemester = normalizeSemester(subject.getSemester());
     List<Class> classes = subject.getClasses();
     if (classes != null) {
       for (Class clazz : classes) {
@@ -168,13 +169,13 @@ public class TeacherConfigFileService {
     }
 
     if (result.isEmpty()) {
-      result.put(0, new TreeSet<>(List.of("S1")));
+      result.put(0, new TreeSet<>(List.of(subjectSemester)));
       return result;
     }
 
     for (Map.Entry<Integer, TreeSet<String>> entry : result.entrySet()) {
       if (entry.getValue().isEmpty()) {
-        entry.setValue(new TreeSet<>(List.of("S1")));
+        entry.setValue(new TreeSet<>(List.of(subjectSemester)));
       }
     }
     return result;

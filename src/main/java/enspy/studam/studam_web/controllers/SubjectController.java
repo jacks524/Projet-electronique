@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @AllArgsConstructor
@@ -97,8 +98,12 @@ public class SubjectController {
       @ApiResponse(responseCode = "404", description = "Not Found: Department not found.", content = @Content(mediaType = "application/json")),
       @ApiResponse(responseCode = "500", description = "Internal Server Error: An unexpected error occurred during the retrieval process.", content = @Content(mediaType = "application/json"))
   })
-  public ResponseEntity<List<SubjectResponseDTO>> getSubjectsByDepartment(@PathVariable int departmentId) {
-    List<Subject> subjects = this.subjectService.getSubjectsByDepartment(departmentId);
+  public ResponseEntity<List<SubjectResponseDTO>> getSubjectsByDepartment(
+      @PathVariable int departmentId,
+      @RequestParam(required = false) String semester) {
+    List<Subject> subjects = (semester == null || semester.isBlank())
+        ? this.subjectService.getSubjectsByDepartment(departmentId)
+        : this.subjectService.getSubjectsByDepartmentAndSemester(departmentId, semester);
     return ResponseEntity.ok().body(subjects.stream().map(SubjectResponseDTO::toDTO).toList());
   }
 
