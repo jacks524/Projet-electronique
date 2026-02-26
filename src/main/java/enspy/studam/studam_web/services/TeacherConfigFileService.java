@@ -24,10 +24,10 @@ import enspy.studam.studam_web.models.Schedule;
 import enspy.studam.studam_web.models.Subject;
 import enspy.studam.studam_web.models.User;
 import enspy.studam.studam_web.repositories.UserRepository;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class TeacherConfigFileService {
 
   private static final Pattern LEVEL_PATTERN = Pattern.compile("(?<!\\d)([1-5])(?!\\d)");
