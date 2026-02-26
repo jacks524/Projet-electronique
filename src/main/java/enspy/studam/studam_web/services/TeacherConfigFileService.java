@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,7 +24,6 @@ import enspy.studam.studam_web.models.Schedule;
 import enspy.studam.studam_web.models.Subject;
 import enspy.studam.studam_web.models.User;
 import enspy.studam.studam_web.repositories.UserRepository;
-import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
 import lombok.AllArgsConstructor;
 
 @Service
@@ -32,35 +31,34 @@ import lombok.AllArgsConstructor;
 public class TeacherConfigFileService {
 
   private static final Pattern LEVEL_PATTERN = Pattern.compile("(?<!\\d)([1-5])(?!\\d)");
+  private static final String GENERATED_SOURCE = "GENERATED";
+  private static final String MANUAL_SOURCE = "MANUAL";
 
-  private final DepartmentLookupService departmentLookupService;
   private final UserRepository userRepository;
-  private final ConcurrentHashMap<Integer, StoredTeacherConfig> publishedConfigs = new ConcurrentHashMap<>();
+  private volatile StoredTeacherConfig publishedConfig;
 
-  public StoredTeacherConfig publishGeneratedConfig(int departmentId) {
-    Department department = departmentLookupService.getDepartmentById(departmentId);
-    String rawText = buildDepartmentConfigText(department);
-    StoredTeacherConfig stored = new StoredTeacherConfig(rawText, "GENERATED", OffsetDateTime.now());
-    publishedConfigs.put(departmentId, stored);
+  public StoredTeacherConfig publishGeneratedConfig() {
+    String rawText = buildGlobalConfigText();
+    StoredTeacherConfig stored = new StoredTeacherConfig(rawText, GENERATED_SOURCE, OffsetDateTime.now());
+    publishedConfig = stored;
     return stored;
   }
 
-  public StoredTeacherConfig publishRawConfig(int departmentId, String rawText) {
+  public StoredTeacherConfig publishRawConfig(String rawText) {
     if (rawText == null || rawText.isBlank()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Configuration text is empty");
     }
-    departmentLookupService.getDepartmentById(departmentId);
-    StoredTeacherConfig stored = new StoredTeacherConfig(rawText, "MANUAL", OffsetDateTime.now());
-    publishedConfigs.put(departmentId, stored);
+    StoredTeacherConfig stored = new StoredTeacherConfig(rawText, MANUAL_SOURCE, OffsetDateTime.now());
+    publishedConfig = stored;
     return stored;
   }
 
-  public Optional<StoredTeacherConfig> getPublishedConfig(int departmentId) {
-    return Optional.ofNullable(publishedConfigs.get(departmentId));
+  public Optional<StoredTeacherConfig> getPublishedConfig() {
+    return Optional.ofNullable(publishedConfig);
   }
 
-  private String buildDepartmentConfigText(Department department) {
-    List<User> teachers = userRepository.getUsersByRoleAndDepartment(UserRoleEnum.TEACHER, department);
+  private String buildGlobalConfigText() {
+    List<User> teachers = userRepository.findByRoles(UserRoleEnum.TEACHER);
     teachers.sort(Comparator.comparing(User::getMatricule, String.CASE_INSENSITIVE_ORDER));
 
     StringBuilder builder = new StringBuilder();
@@ -69,17 +67,42 @@ public class TeacherConfigFileService {
     builder.append("#DEPARTEMENTS: GIND=genie_industriel, GI=genie_informatique, GEL=genie_electrique\n");
 
     for (User teacher : teachers) {
-      String teacherLine = buildTeacherLine(teacher, department);
+      String teacherLine = buildTeacherLine(teacher);
       builder.append(teacherLine).append('\n');
     }
     return builder.toString();
   }
 
-  private String buildTeacherLine(User teacher, Department department) {
-    int departmentId = department.getDepartmentId();
-    String departmentCode = cleanField(department.getCode());
+  private String buildTeacherLine(User teacher) {
     String matricule = cleanField(teacher.getMatricule());
     String fullName = cleanField(teacher.getName());
+    List<Department> departments = teacher.getDepartments() == null ? List.of()
+        : teacher.getDepartments().stream()
+            .sorted(Comparator.comparing(Department::getCode, String.CASE_INSENSITIVE_ORDER))
+            .toList();
+
+    List<String> departmentParts = new ArrayList<>();
+    List<String> assignments = new ArrayList<>();
+
+    for (Department department : departments) {
+      DepartmentLineData data = buildDepartmentLineData(teacher, department);
+      departmentParts.add(data.departmentPart());
+      assignments.addAll(data.assignments());
+    }
+
+    String departmentsPart = departmentParts.isEmpty() ? "" : String.join("|", departmentParts);
+    String assignmentsPart = assignments.isEmpty() ? "" : String.join("|", assignments);
+
+    return String.join(";",
+        matricule,
+        fullName,
+        departmentsPart,
+        assignmentsPart);
+  }
+
+  private DepartmentLineData buildDepartmentLineData(User teacher, Department department) {
+    int departmentId = department.getDepartmentId();
+    String departmentCode = cleanField(department.getCode());
 
     List<Subject> subjects = teacher.getSubjects() == null ? List.of()
         : teacher.getSubjects().stream()
@@ -89,7 +112,7 @@ public class TeacherConfigFileService {
             .toList();
 
     Map<Integer, TreeSet<String>> departmentLevelSemesters = new LinkedHashMap<>();
-    List<String> assignments = new ArrayList<>();
+    LinkedHashSet<String> assignments = new LinkedHashSet<>();
     for (Subject subject : subjects) {
       Map<Integer, TreeSet<String>> subjectLevelSemesters = buildSubjectLevelSemesters(subject, teacher, departmentId);
       List<Integer> orderedLevels = new ArrayList<>(subjectLevelSemesters.keySet());
@@ -98,21 +121,14 @@ public class TeacherConfigFileService {
       for (Integer level : orderedLevels) {
         TreeSet<String> semesters = subjectLevelSemesters.get(level);
         departmentLevelSemesters.computeIfAbsent(level, key -> new TreeSet<>()).addAll(semesters);
-
         for (String semester : semesters) {
           assignments.add(departmentCode + ":" + level + ":" + semester + ":" + cleanField(subject.getName()));
         }
       }
     }
 
-    String departmentsPart = buildDepartmentsPart(departmentCode, departmentLevelSemesters);
-    String assignmentsPart = assignments.isEmpty() ? "" : String.join("|", assignments);
-
-    return String.join(";",
-        matricule,
-        fullName,
-        departmentsPart,
-        assignmentsPart);
+    String departmentPart = buildDepartmentsPart(departmentCode, departmentLevelSemesters);
+    return new DepartmentLineData(departmentPart, new ArrayList<>(assignments));
   }
 
   private Map<Integer, TreeSet<String>> buildSubjectLevelSemesters(Subject subject, User teacher, int departmentId) {
@@ -152,13 +168,13 @@ public class TeacherConfigFileService {
     }
 
     if (result.isEmpty()) {
-      result.put(0, new TreeSet<>(List.of("S1", "S2")));
+      result.put(0, new TreeSet<>(List.of("S1")));
       return result;
     }
 
     for (Map.Entry<Integer, TreeSet<String>> entry : result.entrySet()) {
       if (entry.getValue().isEmpty()) {
-        entry.setValue(new TreeSet<>(List.of("S1", "S2")));
+        entry.setValue(new TreeSet<>(List.of("S1")));
       }
     }
     return result;
@@ -186,7 +202,7 @@ public class TeacherConfigFileService {
     List<String> levelParts = new ArrayList<>();
     for (Integer level : levels) {
       TreeSet<String> semesters = levelSemesters.get(level);
-      String semesterPart = (semesters == null || semesters.isEmpty()) ? "S1|S2" : String.join("|", semesters);
+      String semesterPart = (semesters == null || semesters.isEmpty()) ? "S1" : String.join("|", semesters);
       levelParts.add(level + "(" + semesterPart + ")");
     }
 
@@ -218,9 +234,14 @@ public class TeacherConfigFileService {
         .replace(';', ' ')
         .replace('|', ' ')
         .replace(':', ' ')
+        .replace('(', ' ')
+        .replace(')', ' ')
         .replace('\n', ' ')
         .replace('\r', ' ')
         .trim();
+  }
+
+  private record DepartmentLineData(String departmentPart, List<String> assignments) {
   }
 
   public static final class StoredTeacherConfig {
