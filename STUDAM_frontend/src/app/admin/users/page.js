@@ -6,7 +6,9 @@ import Link from 'next/link';
 import { useAuthContext } from '../../../context/authContext';
 import userService from '../../../services/userService';
 import departmentService from '../../../services/departmentService';
-import { ROLES, getRoleLabel } from '../../../lib/roles';
+import classService from '../../../services/classService';
+import subjectService from '../../../services/subjectService';
+import { ROLES } from '../../../lib/roles';
 import toast from 'react-hot-toast';
 
 export default function AdminUsers() {
@@ -19,6 +21,9 @@ export default function AdminUsers() {
     const [statusFilter, setStatusFilter] = useState('all');
     const [departmentFilter, setDepartmentFilter] = useState('all');
     const [departments, setDepartments] = useState([]);
+    const [teacherConfigRows, setTeacherConfigRows] = useState([]);
+    const [configLoading, setConfigLoading] = useState(false);
+    const [isExportingConfig, setIsExportingConfig] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const totalUsers = users.length;
@@ -34,6 +39,72 @@ export default function AdminUsers() {
         }
         loadData();
     }, [user, isAuthenticated, authLoading, router]);
+
+    const extractClassLevel = (classe) => {
+        return classe?.code || classe?.name || classe?.className || null;
+    };
+
+    const extractSubjectName = (subject) => {
+        return subject?.name || subject?.libelle || subject?.code || null;
+    };
+
+    const normalizeTeacherConfigRow = async (teacherUser) => {
+        const [teacherDetails, teacherClasses, teacherSubjects] = await Promise.all([
+            userService.getById(teacherUser.id),
+            classService.getByTeacher(teacherUser.id),
+            subjectService.getByTeacher(teacherUser.id),
+        ]);
+
+        const levels = [...new Set((Array.isArray(teacherClasses) ? teacherClasses : [])
+            .map(extractClassLevel)
+            .filter(Boolean))];
+        const subjects = [...new Set((Array.isArray(teacherSubjects) ? teacherSubjects : [])
+            .map(extractSubjectName)
+            .filter(Boolean))];
+        const departments = Array.isArray(teacherDetails?.departmentsNames) ? teacherDetails.departmentsNames : [];
+
+        return {
+            id: teacherUser.id,
+            matricule: teacherDetails?.matricule || '',
+            nom: teacherDetails?.name || teacherUser.name || '',
+            departement: departments.length > 0 ? departments.join(', ') : (teacherUser.departement || ''),
+            niveaux: levels,
+            matieres: subjects,
+            status: teacherDetails?.active ? 'active' : 'inactive',
+        };
+    };
+
+    const loadTeacherConfigRows = async (usersList) => {
+        const teacherUsers = (Array.isArray(usersList) ? usersList : []).filter((u) => u.role === 'TEACHER');
+        if (teacherUsers.length === 0) {
+            setTeacherConfigRows([]);
+            return;
+        }
+
+        setConfigLoading(true);
+        try {
+            const rows = await Promise.all(
+                teacherUsers.map(async (teacherUser) => {
+                    try {
+                        return await normalizeTeacherConfigRow(teacherUser);
+                    } catch (error) {
+                        return {
+                            id: teacherUser.id,
+                            matricule: '',
+                            nom: teacherUser.name || '',
+                            departement: teacherUser.departement || '',
+                            niveaux: [],
+                            matieres: [],
+                            status: teacherUser.status || 'inactive',
+                        };
+                    }
+                })
+            );
+            setTeacherConfigRows(rows);
+        } finally {
+            setConfigLoading(false);
+        }
+    };
 
     const loadData = async () => {
         try {
@@ -57,9 +128,10 @@ export default function AdminUsers() {
             mappedUsers.sort((a, b) => (b.id || 0) - (a.id || 0));
             setUsers(mappedUsers);
             setDepartments(Array.isArray(departmentsResponse) ? departmentsResponse : []);
+            await loadTeacherConfigRows(mappedUsers);
 
         } catch (error) {
-            toast.error(error.message || "Erreur lors du chargement des données.");
+            toast.error(error.message || "Erreur lors du chargement des donnees.");
         } finally {
             setLoading(false);
         }
@@ -72,9 +144,9 @@ export default function AdminUsers() {
             loading: 'Suppression en cours...',
             success: () => {
                 loadData();
-                return "Utilisateur supprimé avec succès.";
+                return "Utilisateur supprime avec succes.";
             },
-            error: "La suppression a échoué.",
+            error: "La suppression a echoue.",
         });
         setShowDeleteModal(false);
     };
@@ -86,46 +158,77 @@ export default function AdminUsers() {
             : userService.deactivate(userToToggle.id);
 
         await toast.promise(actionPromise, {
-            loading: 'Mise à jour du statut...',
+            loading: 'Mise a jour du statut...',
             success: async () => {
                 await loadData();
-                return "Statut mis à jour avec succès !";
+                return "Statut mis a jour avec succes !";
             },
-            error: (err) => err.message || "La mise à jour a échoué.",
+            error: (err) => err.message || "La mise a jour a echoue.",
         });
     };
 
-    const getRoleColor = (role) => {
-        switch (role?.toUpperCase()) {
-            case 'SUPER_ADMIN': return 'bg-red-100 text-red-800';
-            case 'ADMIN': return 'bg-purple-100 text-purple-800';
-            case 'DEPARTMENT_MANAGER': return 'bg-blue-100 text-blue-800';
-            case 'TEACHER': return 'bg-green-100 text-green-800';
-            case 'STUDENT': return 'bg-amber-100 text-amber-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
+    const filteredTeacherConfigs = teacherConfigRows.filter((row) => {
+        const normalizedSearch = searchTerm.toLowerCase();
+        const matchesSearch = !searchTerm ||
+            row.nom.toLowerCase().includes(normalizedSearch) ||
+            row.matricule.toLowerCase().includes(normalizedSearch) ||
+            row.departement.toLowerCase().includes(normalizedSearch) ||
+            row.niveaux.some((level) => level.toLowerCase().includes(normalizedSearch)) ||
+            row.matieres.some((subject) => subject.toLowerCase().includes(normalizedSearch));
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'active': return 'bg-green-100 text-green-800';
-            case 'inactive': return 'bg-red-100 text-red-800';
-            case 'pending': return 'bg-yellow-100 text-yellow-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
-
-    const filteredUsers = users.filter(u => {
-        const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            u.username.toLowerCase().includes(searchTerm.toLowerCase());
-
-        const matchesRole = roleFilter === 'all' || u.role === roleFilter;
-        const matchesStatus = statusFilter === 'all' || u.status === statusFilter;
-        const matchesDepartment = departmentFilter === 'all' || (u.departement && u.departement.includes(departmentFilter));
+        const matchesRole = roleFilter === 'all' || roleFilter === 'TEACHER';
+        const matchesStatus = statusFilter === 'all' || row.status === statusFilter;
+        const matchesDepartment = departmentFilter === 'all' || row.departement.includes(departmentFilter);
 
         return matchesSearch && matchesRole && matchesStatus && matchesDepartment;
     });
+    const usersById = new Map(users.map((u) => [u.id, u]));
+
+    const toCsvValue = (value) => `"${`${value ?? ''}`.replace(/"/g, '""')}"`;
+
+    const handleExportTeacherConfig = async () => {
+        if (filteredTeacherConfigs.length === 0) {
+            toast.error("Aucune configuration enseignant a exporter.");
+            return;
+        }
+
+        try {
+            setIsExportingConfig(true);
+            const headers = [
+                "Matricule de l'enseignant",
+                "Nom de l'enseignant",
+                "Departement de l'enseignant",
+                "Niveaux dans lesquels il enseigne",
+                "Matiere enseignee",
+            ];
+
+            const rows = filteredTeacherConfigs.map((row) => ([
+                row.matricule,
+                row.nom,
+                row.departement,
+                row.niveaux.join(' | '),
+                row.matieres.join(' | '),
+            ]));
+
+            const csvContent = [headers, ...rows]
+                .map((line) => line.map(toCsvValue).join(','))
+                .join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const fileName = `config-enseignants-esp32-${new Date().toISOString().split('T')[0]}.csv`;
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            link.click();
+            URL.revokeObjectURL(link.href);
+
+            toast.success("Fichier de configuration exporte avec succes.");
+        } catch {
+            toast.error("Echec de l'export du fichier de configuration.");
+        } finally {
+            setIsExportingConfig(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -140,22 +243,33 @@ export default function AdminUsers() {
 
     return (
         <div className="space-y-6">
-            {/* En-tÃªte */}
+            {/* En-tete */}
             <div className="md:flex md:items-center md:justify-between">
                 <div className="flex-1 min-w-0">
                     <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
                         Gestion des Utilisateurs
                     </h1>
                     <p className="mt-1 text-sm text-gray-500">
-                        Gérez tous les utilisateurs du système : admins, chefs de département et enseignants.
+                        Gerez tous les utilisateurs du systeme : admins, chefs de departement et enseignants.
                     </p>
                 </div>
                 <div className="mt-4 flex space-x-3 md:mt-0 md:ml-4">
+                    <button
+                        type="button"
+                        onClick={handleExportTeacherConfig}
+                        disabled={isExportingConfig || configLoading || filteredTeacherConfigs.length === 0}
+                        className="inline-flex items-center px-4 py-2 border border-emerald-300 rounded-md shadow-sm text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+                    >
+                        <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-8m0 8l-3-3m3 3l3-3M4 20h16" />
+                        </svg>
+                        {isExportingConfig ? 'Export en cours...' : 'Exporter config ESP32'}
+                    </button>
                     <Link
                         href="/admin/users/chiefs"
                         className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed]"
                     >
-                        Chefs de département
+                        Chefs de departement
                     </Link>
                     <Link
                         href="/admin/users/create"
@@ -196,13 +310,13 @@ export default function AdminUsers() {
 
                         {/* Filtre role */}
                         <div>
-                            <label htmlFor="role-filter" className="sr-only">Filtrer par rôle</label>
+                            <label htmlFor="role-filter" className="sr-only">Filtrer par role</label>
                             <select
                                 className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm rounded-md"
                                 value={roleFilter}
                                 onChange={(e) => setRoleFilter(e.target.value)}
                             >
-                                <option value="all">Tous les rôles</option>
+                                <option value="all">Tous les roles</option>
                                 {Object.keys(ROLES).map(roleKey => (
                                     <option key={roleKey} value={roleKey}>{ROLES[roleKey]}</option>
                                 ))}
@@ -228,7 +342,7 @@ export default function AdminUsers() {
 
                         {/* Filtre departement */}
                         <div>
-                            <label htmlFor="department-filter" className="sr-only">Filtrer par département</label>
+                            <label htmlFor="department-filter" className="sr-only">Filtrer par departement</label>
                             <select
                                 id="department-filter"
                                 name="department-filter"
@@ -246,7 +360,7 @@ export default function AdminUsers() {
                         </div>
                     </div>
                     <div className="mt-4 text-sm text-gray-500">
-                        {filteredUsers.length} utilisateur(s) trouvé(s)
+                        {filteredTeacherConfigs.length} enseignant(s) dans le fichier de configuration ESP32
                     </div>
                 </div>
             </div>
@@ -285,7 +399,7 @@ export default function AdminUsers() {
                             </div>
                             <div className="ml-5 w-0 flex-1">
                                 <dl>
-                                    <dt className="text-sm font-medium text-gray-500 truncate">Chefs Département</dt>
+                                    <dt className="text-sm font-medium text-gray-500 truncate">Chefs Departement</dt>
                                     <dd className="text-lg font-medium text-gray-900">
                                         {totalChiefs}
                                     </dd>
@@ -340,119 +454,81 @@ export default function AdminUsers() {
                 </div>
             </div>
 
-            {/* Tableau des utilisateurs */}
+            {/* Tableau de configuration enseignants */}
             <div className="bg-white shadow overflow-hidden sm:rounded-md">
+                <div className="px-6 py-4 border-b border-gray-100 bg-emerald-50/40">
+                    <h2 className="text-sm font-semibold text-emerald-800 uppercase tracking-wider">Configuration export ESP32</h2>
+                    <p className="text-sm text-emerald-700 mt-1">
+                        Format: matricule, nom, departement, niveaux enseignes, matiere enseignee.
+                    </p>
+                </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Utilisateur
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Rôle
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Département
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Statut
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Dernière connexion
-                            </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
-                            </th>
-                        </tr>
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matricule</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom enseignant</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Departement</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Niveaux enseignes</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matiere enseignee</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredUsers.map((u) => (
-                            <tr key={u.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="flex items-center">
-                                        <div className="flex-shrink-0 h-10 w-10">
-                                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#7c3aed] to-[#a855f7] flex items-center justify-center text-white font-medium">
-                                                {u.name.charAt(0).toUpperCase()}
-                                            </div>
-                                        </div>
-                                        <div className="ml-4">
-                                            <div className="text-sm font-medium text-gray-900">{u.name}</div>
-                                            <div className="text-sm text-gray-500">{u.email}</div>
-                                            <div className="text-xs text-gray-400">@{u.username}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(u.role)}`}>
-                                        {getRoleLabel(u.role)}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-900">
-                                    <div className="max-w-xs break-words">
-                                        {u.departement ? u.departement : '-'}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(u.status)}`}>
-                                        {u.status === 'active' ? 'Actif' : u.status === 'inactive' ? 'Inactif' : 'En attente'}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {u.lastLogin ? u.lastLogin : 'Jamais connecté'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div className="flex items-center justify-end space-x-2">
-                                        <Link
-                                            href={`/admin/users/${u.id}`}
-                                            className="text-[#7c3aed] hover:text-violet-600"
-                                        >
-                                            Voir
-                                        </Link>
-                                        <span className="text-gray-300">|</span>
-                                        <Link
-                                            href={`/admin/users/${u.id}/edit`}
-                                            className="text-indigo-600 hover:text-indigo-900"
-                                        >
-                                            Modifier
-                                        </Link>
-                                        <span className="text-gray-300">|</span>
-                                        <button
-                                            onClick={() => toggleUserStatus(u)}
-                                            className={`${
-                                                u.status === 'active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'
-                                            }`}
-                                        >
-                                            {u.status === 'active' ? 'Désactiver' : 'Activer'}
-                                        </button>
-                                        {u.id !== user?.id && (
-                                            <>
-                                                <span className="text-gray-300">|</span>
-                                                <button
-                                                    onClick={() => { setSelectedUser(u); setShowDeleteModal(true); }}
-                                                    className="text-red-600 hover:text-red-900"
-                                                >
-                                                    Supprimer
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                            {filteredTeacherConfigs.map((row) => {
+                                const sourceUser = usersById.get(row.id);
+                                return (
+                                    <tr key={row.id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.matricule || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-900">{row.nom || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-900">{row.departement || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-900">{row.niveaux.length > 0 ? row.niveaux.join(', ') : '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-900">{row.matieres.length > 0 ? row.matieres.join(', ') : '-'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            {sourceUser ? (
+                                                <div className="flex items-center justify-end space-x-2">
+                                                    <Link href={`/admin/users/${sourceUser.id}`} className="text-[#7c3aed] hover:text-violet-600">Voir</Link>
+                                                    <span className="text-gray-300">|</span>
+                                                    <Link href={`/admin/users/${sourceUser.id}/edit`} className="text-indigo-600 hover:text-indigo-900">Modifier</Link>
+                                                    <span className="text-gray-300">|</span>
+                                                    <button
+                                                        onClick={() => toggleUserStatus(sourceUser)}
+                                                        className={`${sourceUser.status === 'active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}`}
+                                                    >
+                                                        {sourceUser.status === 'active' ? 'Desactiver' : 'Activer'}
+                                                    </button>
+                                                    {sourceUser.id !== user?.id && (
+                                                        <>
+                                                            <span className="text-gray-300">|</span>
+                                                            <button
+                                                                onClick={() => { setSelectedUser(sourceUser); setShowDeleteModal(true); }}
+                                                                className="text-red-600 hover:text-red-900"
+                                                            >
+                                                                Supprimer
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            {filteredUsers.length === 0 && (
+            {(filteredTeacherConfigs.length === 0 || configLoading) && (
                 <div className="text-center py-12">
                     <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m0 0v1M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                     </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun utilisateur trouvé</h3>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">{configLoading ? 'Chargement des donnees de configuration...' : 'Aucun enseignant trouve'}</h3>
                     <p className="mt-1 text-sm text-gray-500">
-                        Aucun utilisateur ne correspond à vos critères de recherche.
+                        {configLoading ? 'Recuperation des classes et matieres en cours.' : 'Aucun enseignant ne correspond a vos criteres de recherche.'}
                     </p>
                     <div className="mt-6">
                         <Link
@@ -462,12 +538,11 @@ export default function AdminUsers() {
                             <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                             </svg>
-                            Créer un utilisateur
+                            Creer un utilisateur
                         </Link>
                     </div>
                 </div>
             )}
-
             {/* Modal de suppression */}
             {showDeleteModal && (
                 <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -483,9 +558,9 @@ export default function AdminUsers() {
                             </h3>
                             <div className="mt-2 px-7 py-3">
                                 <p className="text-sm text-gray-500">
-                                    Êtes-vous sûr de vouloir supprimer l&apos; utilisateur
+                                    Etes-vous sur de vouloir supprimer l&apos; utilisateur
                                     <span className="font-medium">{selectedUser?.name}</span> ?
-                                    Cette action est irréversible et supprimera toutes les données associées.
+                                    Cette action est irreversible et supprimera toutes les donnees associees.
                                 </p>
                             </div>
                             <div className="items-center px-4 py-3">
@@ -512,3 +587,4 @@ export default function AdminUsers() {
         </div>
     );
 }
+
