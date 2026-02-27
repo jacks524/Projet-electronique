@@ -40,12 +40,12 @@ public class JwtService {
     Long currentTime = System.currentTimeMillis();
     Long expireTime = currentTime + 30 * 60 * 1000;
 
+    // Garder uniquement les claims metier ici.
+    // Les claims standards (exp, sub, iat) sont deja poses par les setters dedies.
     Map<String, Object> claims = Map.of(
         "nom", user.getName(),
         "userId", user.getId(),
-        "email", user.getEmail(),
-        Claims.EXPIRATION, expireTime,
-        Claims.SUBJECT, user.getUsername());
+        "email", user.getEmail());
 
     final String bearer = Jwts.builder()
         .expiration(new Date(expireTime))
@@ -85,9 +85,7 @@ public class JwtService {
 
     Map<String, Object> claims = Map.of(
         "email", email,
-        "userId", userId,
-        Claims.EXPIRATION, expireTime,
-        Claims.SUBJECT, "password-reset");
+        "userId", userId);
 
     return Jwts.builder()
         .expiration(new Date(expireTime))

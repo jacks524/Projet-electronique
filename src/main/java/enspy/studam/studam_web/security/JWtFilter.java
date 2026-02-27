@@ -7,6 +7,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import enspy.studam.studam_web.models.User;
 import jakarta.servlet.FilterChain;
@@ -18,6 +20,7 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class JWtFilter extends OncePerRequestFilter {
+  private static final Logger LOGGER = LoggerFactory.getLogger(JWtFilter.class);
 
   private JwtService jwtService;
 
@@ -36,9 +39,13 @@ public class JWtFilter extends OncePerRequestFilter {
 
     if (authorization != null && authorization.startsWith("Bearer ")) {
       token = authorization.substring(7);
-      isTokenExpired = jwtService.isTokenExpired(token);
-      // tokenDansLaBD = this.jwtService.tokenByValue(token);
-      username = jwtService.extractUsername(token);
+      try {
+        isTokenExpired = jwtService.isTokenExpired(token);
+        // tokenDansLaBD = this.jwtService.tokenByValue(token);
+        username = jwtService.extractUsername(token);
+      } catch (Exception ex) {
+        LOGGER.warn("JWT parsing failed: {}", ex.getMessage());
+      }
     }
     if (!isTokenExpired
         && username != null
