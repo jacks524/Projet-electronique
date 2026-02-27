@@ -949,6 +949,7 @@ bool sendPresenceFileOverWifi() {
 
   http.addHeader("Content-Type", "text/plain");
   int code = http.POST(payload);
+  String responseBody = http.getString();
   http.end();
 
   // Politique: couper le WiFi apres tentative pour economiser l'energie
@@ -956,6 +957,17 @@ bool sendPresenceFileOverWifi() {
   WiFi.mode(WIFI_OFF);
 
   bool ok = (code >= 200 && code < 300);
+  Serial.print("[NET] POST /fingerprint/text code=");
+  Serial.println(code);
+  if (code < 0) {
+    Serial.print("[NET] POST error=");
+    Serial.println(HTTPClient::errorToString(code));
+  }
+  if (responseBody.length() > 0) {
+    Serial.print("[NET] POST body=");
+    Serial.println(responseBody);
+  }
+
   if (ok) {
     displayCenteredMessage("Transfert OK", "Fichier envoye", ILI9341_GREEN);
   } else {

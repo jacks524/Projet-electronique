@@ -39,7 +39,15 @@ public class Configurations {
                   .requestMatchers("/user/signin", "/api/user/signin").permitAll()
                   .requestMatchers("/user/forgot-password", "/api/user/forgot-password").permitAll()
                   .requestMatchers("/user/reset-password", "/api/user/reset-password").permitAll()
-                  .requestMatchers("/fingerprint/text", "/api/fingerprint/text").permitAll()
+                  // Endpoints utilises par l'ESP32 (publics)
+                  .requestMatchers(HttpMethod.POST,
+                      "/fingerprint/text", "/fingerprint/text/**",
+                      "/api/fingerprint/text", "/api/fingerprint/text/**")
+                  .permitAll()
+                  .requestMatchers(HttpMethod.GET,
+                      "/fingerprint/text", "/fingerprint/text/**",
+                      "/api/fingerprint/text", "/api/fingerprint/text/**")
+                  .permitAll()
                   .requestMatchers(HttpMethod.GET, "/fingerprint/config/published", "/api/fingerprint/config/published")
                   .permitAll()
                   .requestMatchers("/public/time", "/api/public/time").permitAll()

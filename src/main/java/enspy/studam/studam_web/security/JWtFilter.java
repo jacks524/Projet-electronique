@@ -37,14 +37,20 @@ public class JWtFilter extends OncePerRequestFilter {
 
     String authorization = request.getHeader("Authorization");
 
-    if (authorization != null && authorization.startsWith("Bearer ")) {
-      token = authorization.substring(7);
+    if (authorization != null && !authorization.isBlank()) {
+      token = authorization.trim();
+      // Accepte:
+      // - "Bearer <jwt>"
+      // - "<jwt>"
+      // - "Bearer Bearer <jwt>" (erreur client frequente)
+      if (token.startsWith("Bearer ")) token = token.substring(7).trim();
+      if (token.startsWith("Bearer ")) token = token.substring(7).trim();
       try {
         isTokenExpired = jwtService.isTokenExpired(token);
         // tokenDansLaBD = this.jwtService.tokenByValue(token);
         username = jwtService.extractUsername(token);
       } catch (Exception ex) {
-        LOGGER.warn("JWT parsing failed: {}", ex.getMessage());
+        LOGGER.warn("JWT parsing failed on path {}: {}", request.getRequestURI(), ex.getMessage());
       }
     }
     if (!isTokenExpired
