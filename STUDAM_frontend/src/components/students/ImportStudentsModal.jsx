@@ -26,6 +26,14 @@ const ImportStudentsModal = ({
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+    if (file && !file.name.toLowerCase().endsWith('.csv')) {
+      setSelectedFile(null);
+      setErrors(prev => ({
+        ...prev,
+        file: "Seuls les fichiers CSV sont pris en charge pour cet import.",
+      }));
+      return;
+    }
     setSelectedFile(file);
 
     // Effacer l'erreur si elle existe
@@ -159,7 +167,7 @@ const csvContent = [
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Fichier Excel <span className="text-red-500">*</span>
+                Fichier CSV <span className="text-red-500">*</span>
               </label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                 <div className="space-y-1 text-center">
@@ -174,7 +182,7 @@ const csvContent = [
                         name="file-upload"
                         type="file"
                         className="sr-only"
-                        accept=".xlsx,.xls,.csv"
+                        accept=".csv"
                         onChange={handleFileChange}
                         disabled={isUploading}
                       />
@@ -182,7 +190,7 @@ const csvContent = [
                     <p className="pl-1">ou glisser-déposer</p>
                   </div>
                   <p className="text-xs text-gray-500">
-                    Excel (.xlsx, .xls) ou CSV jusqu'à 10MB
+                    CSV (.csv) jusqu'a 10MB
                   </p>
                   {selectedFile && (
                     <p className="text-sm text-green-600">
@@ -203,7 +211,7 @@ const csvContent = [
                 </div>
                 <div className="ml-3 text-sm text-blue-700">
                   <h3 className="font-medium">Format du fichier</h3>
-                  <p>Le fichier doit contenir les colonnes suivantes : Matricule, Nom, Email, Téléphone, Date de naissance, Lieu de naissance.</p>
+                  <p>Le fichier doit contenir les colonnes suivantes : Matricule, Nom, Email, Telephone, Date de naissance, Lieu de naissance.</p>
                   <p className="mt-1">
                     <button
                       type="button"
