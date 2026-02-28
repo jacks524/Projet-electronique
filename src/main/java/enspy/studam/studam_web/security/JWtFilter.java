@@ -27,6 +27,18 @@ public class JWtFilter extends OncePerRequestFilter {
   private UserDetailsService userDetailsService;
 
   @Override
+  protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+    String uri = request.getRequestURI();
+    if (uri == null) return false;
+
+    // Routes explicitement publiques pour les appareils ESP32.
+    return uri.equals("/fingerprint/text")
+        || uri.equals("/api/fingerprint/text")
+        || uri.startsWith("/fingerprint/text/")
+        || uri.startsWith("/api/fingerprint/text/");
+  }
+
+  @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
       FilterChain filterChain)
       throws ServletException, IOException {
