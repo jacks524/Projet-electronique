@@ -8,6 +8,7 @@ import userService from '../../../services/userService';
 import departmentService from '../../../services/departmentService';
 import classService from '../../../services/classService';
 import subjectService from '../../../services/subjectService';
+import esp32ConfigService from '../../../services/esp32ConfigService';
 import { ROLES } from '../../../lib/roles';
 import toast from 'react-hot-toast';
 
@@ -24,6 +25,7 @@ export default function AdminUsers() {
     const [teacherConfigRows, setTeacherConfigRows] = useState([]);
     const [configLoading, setConfigLoading] = useState(false);
     const [isExportingConfig, setIsExportingConfig] = useState(false);
+    const [isPublishingConfig, setIsPublishingConfig] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const totalUsers = users.length;
@@ -194,8 +196,6 @@ export default function AdminUsers() {
     });
     const usersById = new Map(users.map((u) => [u.id, u]));
 
-    const toCsvValue = (value) => `"${`${value ?? ''}`.replace(/"/g, '""')}"`;
-
     const handleExportTeacherConfig = async () => {
         if (filteredTeacherConfigs.length === 0) {
             toast.error("Aucune configuration enseignant a exporter.");
@@ -204,41 +204,29 @@ export default function AdminUsers() {
 
         try {
             setIsExportingConfig(true);
-            const headers = [
-                "Matricule de l'enseignant",
-                "Nom de l'enseignant",
-                "Departement de l'enseignant",
-                "Semestre",
-                "Niveaux dans lesquels il enseigne",
-                "Matiere enseignee",
-            ];
-
-            const rows = filteredTeacherConfigs.map((row) => ([
-                row.matricule,
-                row.nom,
-                row.departement,
-                row.semestres.join(' | '),
-                row.niveaux.join(' | '),
-                row.matieres.join(' | '),
-            ]));
-
-            const csvContent = [headers, ...rows]
-                .map((line) => line.map(toCsvValue).join(','))
-                .join('\n');
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const fileName = `config-enseignants-esp32-${new Date().toISOString().split('T')[0]}.csv`;
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = fileName;
-            link.click();
-            URL.revokeObjectURL(link.href);
-
+            esp32ConfigService.downloadTeacherConfig(filteredTeacherConfigs);
             toast.success("Fichier de configuration exporte avec succes.");
         } catch {
             toast.error("Echec de l'export du fichier de configuration.");
         } finally {
             setIsExportingConfig(false);
+        }
+    };
+
+    const handlePublishTeacherConfig = async () => {
+        if (filteredTeacherConfigs.length === 0) {
+            toast.error("Aucune configuration enseignant a publier.");
+            return;
+        }
+
+        try {
+            setIsPublishingConfig(true);
+            await esp32ConfigService.publishTeacherConfig(filteredTeacherConfigs);
+            toast.success("Configuration TXT ESP32 publiee avec succes.");
+        } catch (error) {
+            toast.error(error?.message || "Echec de la publication du TXT de configuration ESP32.");
+        } finally {
+            setIsPublishingConfig(false);
         }
     };
 
@@ -266,6 +254,17 @@ export default function AdminUsers() {
                     </p>
                 </div>
                 <div className="mt-4 flex space-x-3 md:mt-0 md:ml-4">
+                    <button
+                        type="button"
+                        onClick={handlePublishTeacherConfig}
+                        disabled={isPublishingConfig || configLoading || filteredTeacherConfigs.length === 0}
+                        className="inline-flex items-center px-4 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                        <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16l3-3m0 0l3-3m-3 3h12M4 4h16v16H4z" />
+                        </svg>
+                        {isPublishingConfig ? 'Publication...' : 'Publier TXT ESP32'}
+                    </button>
                     <button
                         type="button"
                         onClick={handleExportTeacherConfig}
