@@ -1,5 +1,7 @@
 package enspy.studam.studam_web.security;
 
+import jakarta.servlet.DispatcherType;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,7 +37,9 @@ public class Configurations {
         .cors(Customizer.withDefaults())
         .authorizeHttpRequests(
             (auth) -> {
-              auth.requestMatchers("/user/register", "/api/user/register").permitAll()
+              auth.dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
+                  .requestMatchers("/error", "/api/error").permitAll()
+                  .requestMatchers("/user/register", "/api/user/register").permitAll()
                   .requestMatchers("/user/signin", "/api/user/signin").permitAll()
                   .requestMatchers("/user/forgot-password", "/api/user/forgot-password").permitAll()
                   .requestMatchers("/user/reset-password", "/api/user/reset-password").permitAll()
