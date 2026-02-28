@@ -29,6 +29,43 @@ export default function CreateTeacherPage() {
     const [errors, setErrors] = useState({});
     const [showPassword, setShowPassword] = useState(false);
 
+    const resolveChiefDepartmentContext = async () => {
+        const chiefDepartmentId = user?.departmentIdIfChief;
+        const fallbackId = Array.isArray(user?.departmentsIds) ? user.departmentsIds[0] : null;
+        const selectedId = chiefDepartmentId || fallbackId;
+
+        if (selectedId) {
+            const numericId = parseInt(selectedId, 10);
+            const knownName = Array.isArray(user?.departmentNames) && user.departmentNames.length > 0
+                ? user.departmentNames[0]
+                : '';
+
+            if (knownName) {
+                return { departmentId: numericId, name: knownName };
+            }
+
+            const dept = await departmentService.getById(numericId);
+            return {
+                departmentId: numericId,
+                name: dept?.name || `Departement #${numericId}`,
+            };
+        }
+
+        if (Array.isArray(user?.departmentNames) && user.departmentNames.length > 0) {
+            const allDepartments = await departmentService.getAll();
+            const targetDepartment = allDepartments.find((d) => d.name === user.departmentNames[0]);
+
+            if (targetDepartment) {
+                return {
+                    departmentId: targetDepartment.departmentId,
+                    name: targetDepartment.name,
+                };
+            }
+        }
+
+        throw new Error("Aucun departement assigne");
+    };
+
     useEffect(() => {
         if (authLoading) return;
         if (!isAuthenticated) {
@@ -40,34 +77,11 @@ export default function CreateTeacherPage() {
 
     const loadDepartment = async () => {
         try {
-            const chiefDepartmentId = user?.departmentIdIfChief;
-            const fallbackId = Array.isArray(user?.departmentsIds) ? user.departmentsIds[0] : null;
-            const selectedId = chiefDepartmentId || fallbackId;
-
-            if (selectedId) {
-                const dept = await departmentService.getById(selectedId);
-                setDepartmentName(dept.name);
-                setFormData(prev => ({ ...prev, departmentId: String(dept.departmentId) }));
-                return;
-            }
-
-            if (!user?.departmentNames || user.departmentNames.length === 0) {
-                toast.error("Aucun departement assigne");
-                return;
-            }
-
-            const allDepartments = await departmentService.getAll();
-            const targetDepartment = allDepartments.find(
-                d => d.name === user.departmentNames[0]
-            );
-
-            if (targetDepartment) {
-                setDepartmentName(targetDepartment.name);
-                setFormData(prev => ({ ...prev, departmentId: String(targetDepartment.departmentId) }));
-            }
-
+            const department = await resolveChiefDepartmentContext();
+            setDepartmentName(department.name);
+            setFormData(prev => ({ ...prev, departmentId: String(department.departmentId) }));
         } catch (error) {
-            toast.error("Erreur lors du chargement du departement");
+            toast.error(error.message || "Erreur lors du chargement du departement");
             console.error(error);
         }
     };
@@ -147,7 +161,7 @@ export default function CreateTeacherPage() {
                 phoneNumber: formData.phoneNumber,
                 matricule: formData.matricule,
                 role: 'TEACHER',
-                departmentIds: [formData.departmentId]
+                departmentIds: [parseInt(formData.departmentId, 10)]
             });
 
             toast.success("Enseignant cree avec succes");
@@ -270,7 +284,7 @@ export default function CreateTeacherPage() {
 
                         <div>
                             <label htmlFor="departmentId" className="block text-sm font-medium text-gray-700 mb-1">
-                                Departement
+                                Departement attribue automatiquement
                             </label>
                             <input
                                 type="text"
@@ -282,6 +296,9 @@ export default function CreateTeacherPage() {
                             {errors.departmentId && (
                                 <p className="mt-1 text-sm text-red-600">{errors.departmentId}</p>
                             )}
+                            <p className="mt-1 text-xs text-gray-500">
+                                Cet enseignant sera cree dans le departement du chef connecte.
+                            </p>
                         </div>
 
                         <div>

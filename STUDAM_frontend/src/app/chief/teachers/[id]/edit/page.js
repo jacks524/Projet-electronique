@@ -24,7 +24,7 @@ export default function EditTeacherPage() {
         departmentId: ''
     });
 
-    const [departments, setDepartments] = useState([]);
+    const [departmentName, setDepartmentName] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState({});
@@ -46,6 +46,23 @@ export default function EditTeacherPage() {
         return null;
     };
 
+    const resolveChiefDepartmentContext = async (departmentsList) => {
+        const chiefDepartment = resolveDepartment(departmentsList);
+        if (chiefDepartment) {
+            return chiefDepartment;
+        }
+
+        const chiefDepartmentId = user?.departmentIdIfChief ||
+            (Array.isArray(user?.departmentsIds) && user.departmentsIds.length > 0 ? user.departmentsIds[0] : null);
+
+        if (chiefDepartmentId) {
+            const dept = await departmentService.getById(chiefDepartmentId);
+            return dept ? { departmentId: dept.departmentId, name: dept.name } : null;
+        }
+
+        return null;
+    };
+
     const loadData = async () => {
         try {
             setLoading(true);
@@ -55,11 +72,13 @@ export default function EditTeacherPage() {
             ]);
 
             const departmentsList = Array.isArray(departmentsData) ? departmentsData : [];
-            const chiefDepartment = resolveDepartment(departmentsList);
+            const chiefDepartment = await resolveChiefDepartmentContext(departmentsList);
 
             if (!chiefDepartment) {
                 throw new Error("Aucun departement n'est assigne a votre compte.");
             }
+
+            setDepartmentName(chiefDepartment.name || '---');
 
             setFormData({
                 name: teacherData?.name || '',
@@ -69,8 +88,6 @@ export default function EditTeacherPage() {
                 matricule: teacherData?.matricule || '',
                 departmentId: chiefDepartment.departmentId.toString(),
             });
-
-            setDepartments([{ id: chiefDepartment.departmentId, name: chiefDepartment.name }]);
 
         } catch (error) {
             toast.error(error.message || "Erreur lors du chargement des donnees");
@@ -141,7 +158,7 @@ export default function EditTeacherPage() {
                 username: formData.username,
                 phoneNumber: formData.phoneNumber,
                 matricule: formData.matricule,
-                departmentId: parseInt(formData.departmentId, 10),
+                departmentIds: [parseInt(formData.departmentId, 10)],
                 role: 'TEACHER',
             });
 
@@ -271,26 +288,21 @@ export default function EditTeacherPage() {
 
                         <div className="md:col-span-2">
                             <label htmlFor="departmentId" className="block text-sm font-medium text-gray-700 mb-1">
-                                Departement <span className="text-red-500">*</span>
+                                Departement attribue automatiquement <span className="text-red-500">*</span>
                             </label>
-                            <select
+                            <input
+                                type="text"
                                 id="departmentId"
-                                name="departmentId"
-                                value={formData.departmentId}
-                                onChange={handleChange}
+                                value={departmentName || '---'}
                                 disabled
                                 className={`block w-full px-3 py-2 border ${errors.departmentId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm bg-gray-50`}
-                            >
-                                <option value="">Selectionner un departement</option>
-                                {departments.map((dept) => (
-                                    <option key={dept.id} value={dept.id}>
-                                        {dept.name}
-                                    </option>
-                                ))}
-                            </select>
+                            />
                             {errors.departmentId && (
                                 <p className="mt-1 text-sm text-red-600">{errors.departmentId}</p>
                             )}
+                            <p className="mt-1 text-xs text-gray-500">
+                                Le departement de cet enseignant suit automatiquement celui du chef connecte.
+                            </p>
                         </div>
                     </div>
 
