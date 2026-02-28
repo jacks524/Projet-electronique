@@ -3,10 +3,13 @@ package enspy.studam.studam_web.services;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import enspy.studam.studam_web.dto.requestDTO.AttendanceRequestDTO;
 import enspy.studam.studam_web.dto.requestDTO.AttendanceUpdateRequestDTO;
@@ -30,6 +33,8 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class AttendanceService {
+  private static final Logger log = LoggerFactory.getLogger(AttendanceService.class);
+
   private final StudentLookupService studentLookupService;
   private final AttendanceRepository attendanceRepository;
   private final UserLookupService userLookupService;
@@ -56,8 +61,14 @@ public class AttendanceService {
     attendanceSession.setDate(sessionDate != null ? sessionDate : attendancesRequestDTO.get(0).getDate());
     attendanceSession.setTeacher(teacher);
     attendanceSession.setSubject(subject);
-    attendanceSession.setTimetable(
-        this.timetableLookupService.getTimetableContainsDate(attendancesRequestDTO.get(0).getDate().toLocalDate()));
+    try {
+      attendanceSession.setTimetable(
+          this.timetableLookupService.getTimetableContainsDate(attendancesRequestDTO.get(0).getDate().toLocalDate()));
+    } catch (ResponseStatusException ex) {
+      log.warn("No timetable found for attendance import on {}. Saving session without timetable.",
+          attendancesRequestDTO.get(0).getDate().toLocalDate());
+      attendanceSession.setTimetable(null);
+    }
     attendanceSession.setValidated(true);
     attendanceSession = attendanceSessionRepository.save(attendanceSession);
     for (AttendanceRequestDTO attendanceRequestDTO : attendancesRequestDTO) {
