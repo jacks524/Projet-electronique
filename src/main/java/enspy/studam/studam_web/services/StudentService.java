@@ -6,6 +6,7 @@ import enspy.studam.studam_web.dto.responseDTO.StudentResponseDTO;
 import enspy.studam.studam_web.mappers.StudentMapper;
 import enspy.studam.studam_web.models.Student;
 import enspy.studam.studam_web.models.Class;
+import enspy.studam.studam_web.repositories.AttendanceRepository;
 import enspy.studam.studam_web.repositories.StudentRepository;
 import enspy.studam.studam_web.services.lookup.ClassLookupService;
 import enspy.studam.studam_web.repositories.ClassRepository;
@@ -37,11 +38,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class StudentService {
     @Autowired
     private StudentRepository studentRepository;
+
+    @Autowired
+    private AttendanceRepository attendanceRepository;
 
     @Autowired
     private ClassRepository classRepository;
@@ -139,6 +144,7 @@ public class StudentService {
         return StudentMapper.toDTO(updatedStudent);
     }
 
+    @Transactional
     public void deleteStudent(int id) {
         if (!studentRepository.existsById(id)) {
             throw new ResponseStatusException(
@@ -146,6 +152,9 @@ public class StudentService {
                     "Student not found with id: " + id);
         }
         Student student = studentRepository.findById(id).orElse(null);
+        if (student != null) {
+            attendanceRepository.deleteByStudent(student);
+        }
         studentRepository.deleteById(id);
         if (student != null) {
             publishStudentEvent("student.deleted", student);
