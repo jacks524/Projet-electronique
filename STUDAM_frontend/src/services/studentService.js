@@ -16,6 +16,8 @@ const normalizeHeader = (value) =>
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '');
 
+const normalizePhoneNumber = (value) => String(value || '').replace(/\D/g, '');
+
 const parseCsvLine = (line) => {
     const values = [];
     let current = '';
@@ -104,10 +106,10 @@ const importStudentsFromCsv = async (file, classId) => {
 
         try {
             await create({
-                matricule: row.matricule,
+                matricule: String(row.matricule).trim().toUpperCase(),
                 name: row.nom,
                 email: row.email,
-                phoneNumber: row.telephone || null,
+                phoneNumber: normalizePhoneNumber(row.telephone) || null,
                 birthDate: row['date de naissance'],
                 birthPlace: row['lieu de naissance'] || '',
                 classId: parseInt(classId, 10),
@@ -160,7 +162,12 @@ const create = async (payload) => {
         return data;
     } catch (error) {
         console.error('Erreur API [createStudent]:', error);
-        throw new Error(error.response?.data?.message || "La creation de l'etudiant a echoue.");
+        const responseData = error.response?.data;
+        const backendMessage =
+            typeof responseData === 'string'
+                ? responseData
+                : responseData?.message || responseData?.error || responseData?.details;
+        throw new Error(backendMessage || "La creation de l'etudiant a echoue.");
     }
 };
 
