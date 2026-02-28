@@ -17,13 +17,26 @@ apiClient.interceptors.request.use(
             if (typeof window !== 'undefined') {
                 const token = localStorage.getItem('authToken');
                 if (token) {
-                    config.headers.Authorization = token;
+                    config.headers.Authorization = token.startsWith('Bearer ')
+                        ? token
+                        : `Bearer ${token}`;
                 }
             }
         }
         return config;
     },
     (error) => {
+        return Promise.reject(error);
+    }
+);
+
+apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (typeof window !== 'undefined' && error?.response?.status === 401) {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+        }
         return Promise.reject(error);
     }
 );
