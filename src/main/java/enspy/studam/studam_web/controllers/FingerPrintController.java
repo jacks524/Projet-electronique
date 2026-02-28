@@ -130,6 +130,12 @@ public class FingerPrintController {
       return ResponseEntity.ok("Parsed successfully: " + parsed.attendances.size() + " records");
     } catch (IOException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error parsing text payload");
+    } catch (ResponseStatusException ex) {
+      throw ex;
+    } catch (Exception ex) {
+      LOGGER.error("Unexpected error while importing fingerprint text", ex);
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+          "Fingerprint import failed: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
     }
   }
 
@@ -256,12 +262,13 @@ public class FingerPrintController {
 
       long elapsedMillis = parseMillis(parts[0].trim(), lineNumber);
       String studentMatricule = parts[1].trim();
+      long relativeMillis = headerMillis == null ? elapsedMillis : Math.max(0L, elapsedMillis - headerMillis);
 
       AttendanceRequestDTO dto = new AttendanceRequestDTO();
       dto.setStudentId(studentMatricule);
       dto.setTeacherId(headerTeacher);
       dto.setSubjectId(subjectId);
-      dto.setDate(baseDate.plus(Duration.ofMillis(elapsedMillis)));
+      dto.setDate(baseDate.plus(Duration.ofMillis(relativeMillis)));
       attendances.add(dto);
     }
 
@@ -277,7 +284,7 @@ public class FingerPrintController {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No attendance records found in payload");
     }
 
-    LocalDateTime sessionStart = baseDate.plus(Duration.ofMillis(headerMillis != null ? headerMillis : 0));
+    LocalDateTime sessionStart = baseDate;
     return new ParsedAttendance(attendances, sessionStart);
   }
 
