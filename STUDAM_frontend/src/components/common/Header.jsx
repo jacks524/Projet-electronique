@@ -66,6 +66,7 @@ const Header = () => {
             <nav className="hidden lg:flex items-center space-x-2">
               {!isAuthenticated ? (
                   <>
+                    <Link href="/consultation-presences" className={navLinkClass}>Consultation des presences</Link>
                     <Link href="/features" className={navLinkClass}>Fonctionnalités</Link>
                     <Link href="/about" className={navLinkClass}>À propos</Link>
                     <Link href="/contact" className={navLinkClass}>Contact</Link>
@@ -117,6 +118,7 @@ const Header = () => {
           <div className="lg:hidden absolute top-16 left-0 w-full bg-white border-b border-slate-200 shadow-xl p-4 flex flex-col gap-2">
             {!isAuthenticated ? (
               <>
+                <Link href="/consultation-presences" className="block p-3 rounded-lg hover:bg-violet-50 text-slate-700 font-medium">Consultation des presences</Link>
                 <Link href="/features" className="block p-3 rounded-lg hover:bg-violet-50 text-slate-700 font-medium">Fonctionnalités</Link>
                 <Link href="/auth/login" className="block p-3 rounded-lg text-center border border-slate-200 mt-2">Connexion</Link>
               </>

@@ -89,6 +89,9 @@ export default function HomePage() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/consultation-presences" className="inline-flex justify-center items-center px-8 py-4 rounded-xl bg-white text-slate-700 border border-slate-200 font-semibold hover:bg-slate-50 transition-all duration-200">
+                  Consulter les présences
+                </Link>
                 <Link href="/auth/login" className="inline-flex justify-center items-center px-8 py-4 rounded-xl bg-violet-600 text-white font-semibold shadow-lg shadow-violet-200 hover:bg-violet-700 hover:scale-105 transition-all duration-200">
                   Accéder à la plateforme
                 </Link>
