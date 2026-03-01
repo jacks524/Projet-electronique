@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import publicAttendanceService from '@/services/publicAttendanceService';
 
@@ -45,7 +45,7 @@ const formatDate = (value) => {
     return date.toLocaleDateString('fr-FR');
 };
 
-export default function ConsultationPresencesPage() {
+function ConsultationPresencesPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const initialMatricule = searchParams.get('matricule') || '';
@@ -296,5 +296,31 @@ export default function ConsultationPresencesPage() {
                 </div>
             </section>
         </div>
+    );
+}
+
+export default function ConsultationPresencesPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="min-h-screen bg-[#f4f4f4] pt-24 pb-12 text-slate-900">
+                    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                        <div className="overflow-hidden rounded-sm border border-slate-300 bg-white shadow-sm">
+                            <div className="border-b border-slate-300 px-6 py-6 text-center">
+                                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-600">Portail de consultation</p>
+                                <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-800">
+                                    Gestion des Presences Academiques
+                                </h1>
+                            </div>
+                            <div className="px-6 py-16 text-center text-sm text-slate-500">
+                                Chargement de la consultation des presences...
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            }
+        >
+            <ConsultationPresencesPageContent />
+        </Suspense>
     );
 }
