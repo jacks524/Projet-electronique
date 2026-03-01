@@ -33,6 +33,61 @@ const normalizeSession = (session) => {
     };
 };
 
+const normalizeAttendanceStatus = (value) => {
+    const status = `${value || ''}`.trim().toUpperCase();
+    if (status === 'PRESENT') return 'PRESENT';
+    if (status === 'LATE') return 'LATE';
+    if (status === 'ABSENT') return 'ABSENT';
+    return '';
+};
+
+const buildStatsFromAttendances = (attendances = [], fallbackTotal = 0) => {
+    const counts = { present: 0, absent: 0, late: 0 };
+
+    (Array.isArray(attendances) ? attendances : []).forEach((attendance) => {
+        const normalized = normalizeAttendanceStatus(
+            attendance?.attendanceStatus ??
+            attendance?.status
+        );
+        if (normalized === 'PRESENT') counts.present += 1;
+        else if (normalized === 'LATE') counts.late += 1;
+        else if (normalized === 'ABSENT') counts.absent += 1;
+    });
+
+    const computedTotal = counts.present + counts.absent + counts.late;
+    return {
+        ...counts,
+        totalStudents: Math.max(computedTotal, toNumber(fallbackTotal, 0)),
+    };
+};
+
+const enrichSessionWithRealStats = async (session) => {
+    const normalized = normalizeSession(session);
+    const hasMeaningfulStats =
+        normalized.present > 0 ||
+        normalized.absent > 0 ||
+        normalized.late > 0 ||
+        normalized.totalStudents > 0;
+
+    if (hasMeaningfulStats || !normalized.id) {
+        return normalized;
+    }
+
+    try {
+        const details = await getSessionDetails(normalized.id);
+        const stats = buildStatsFromAttendances(details, normalized.totalStudents);
+        return {
+            ...normalized,
+            present: stats.present,
+            absent: stats.absent,
+            late: stats.late,
+            totalStudents: stats.totalStudents,
+        };
+    } catch {
+        return normalized;
+    }
+};
+
 const getSessionsByTeacher = async (teacherId) => {
     try {
         const { data } = await apiClient.get(`/attendance-session/teacher/${teacherId}`);
@@ -40,6 +95,14 @@ const getSessionsByTeacher = async (teacherId) => {
     } catch {
         throw new Error("Impossible de charger les sessions de presence.");
     }
+};
+
+const getSessionsByTeacherWithStats = async (teacherId) => {
+    const sessions = await getSessionsByTeacher(teacherId);
+    const normalized = await Promise.all(
+        (Array.isArray(sessions) ? sessions : []).map((session) => enrichSessionWithRealStats(session))
+    );
+    return normalized;
 };
 
 const getMyStats = async (teacherId) => {
@@ -50,7 +113,7 @@ const getMyStats = async (teacherId) => {
         }
 
         const sessions = await getSessionsByTeacher(teacherId);
-        const normalized = (Array.isArray(sessions) ? sessions : []).map(normalizeSession);
+        const normalized = await getSessionsByTeacherWithStats(teacherId);
 
         if (normalized.length === 0) {
             return { averageAttendance: 0, totalStudents: 0, totalCourses: 0 };
@@ -88,8 +151,7 @@ const getMyRecent = async (limit = 3, teacherId) => {
         }
 
         const sessions = await getSessionsByTeacher(teacherId);
-        const normalized = (Array.isArray(sessions) ? sessions : [])
-            .map(normalizeSession)
+        const normalized = (await getSessionsByTeacherWithStats(teacherId))
             .sort((a, b) => {
                 const ta = new Date(a.date || 0).getTime();
                 const tb = new Date(b.date || 0).getTime();
@@ -151,6 +213,7 @@ const attendanceService = {
     updateAttendance,
     getSessionDetails,
     getSessionsByTeacher,
+    getSessionsByTeacherWithStats,
     downloadSessionCsv,
     launchWebAttendanceCall,
 };

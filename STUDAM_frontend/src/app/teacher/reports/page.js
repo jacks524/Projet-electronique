@@ -25,16 +25,38 @@ export default function TeacherReportsPage() {
 
             const [validated, teacherSessions] = await Promise.all([
                 reportService.getValidatedReports(user.id),
-                attendanceService.getSessionsByTeacher(user.id),
+                attendanceService.getSessionsByTeacherWithStats(user.id),
             ]);
 
-            const ownSessionIds = new Set((Array.isArray(teacherSessions) ? teacherSessions : []).map((s) => String(s.attendanceSessionId || s.sessionId || s.id)).filter(Boolean));
+            const teacherSessionsById = new Map(
+                (Array.isArray(teacherSessions) ? teacherSessions : [])
+                    .map((s) => [String(s.attendanceSessionId || s.sessionId || s.id), s])
+                    .filter(([id]) => Boolean(id))
+            );
+            const ownSessionIds = new Set(teacherSessionsById.keys());
 
             const sanitized = (Array.isArray(validated) ? validated : []).filter((report) => {
                 const id = String(report.id || report.raw?.attendanceSessionId || report.raw?.sessionId || report.raw?.id || '');
                 if (id && ownSessionIds.size > 0) return ownSessionIds.has(id);
                 if (report.raw?.teacherId) return String(report.raw.teacherId) === String(user.id);
                 return true;
+            }).map((report) => {
+                const key = String(report.id || '');
+                const session = teacherSessionsById.get(key);
+                if (!session) return report;
+
+                return {
+                    ...report,
+                    presentCount: session.present ?? report.presentCount ?? 0,
+                    totalStudents: session.totalStudents ?? report.totalStudents ?? 0,
+                    raw: {
+                        ...report.raw,
+                        presentCount: session.present ?? report.raw?.presentCount,
+                        totalStudents: session.totalStudents ?? report.raw?.totalStudents,
+                        absentCount: session.absent ?? report.raw?.absentCount,
+                        lateCount: session.late ?? report.raw?.lateCount,
+                    },
+                };
             });
 
             setReports(sanitized);

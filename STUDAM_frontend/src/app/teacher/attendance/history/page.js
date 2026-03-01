@@ -38,7 +38,7 @@ export default function AttendanceHistoryPage() {
             const [teacherSubjects, teacherClasses, teacherSessions] = await Promise.all([
                 subjectService.getByTeacher(user.id),
                 classService.getByTeacher(user.id),
-                attendanceService.getSessionsByTeacher(user.id)
+                attendanceService.getSessionsByTeacherWithStats(user.id)
             ]);
 
             setSubjects(Array.isArray(teacherSubjects) ? teacherSubjects : []);
@@ -50,9 +50,9 @@ export default function AttendanceHistoryPage() {
                 const subjectCode = session.subjectCode || session.subject?.code || session.courseCode || '';
                 const className = session.className || session.clazzName || session.timetable?.clazz?.name || '';
                 const classId = session.classId || session.timetable?.clazz?.id || session.timetable?.clazz?.classId || '';
-                const present = session.present || session.totalPresent || session.presentCount || 0;
-                const absent = session.absent || session.absentCount || 0;
-                const late = session.late || session.lateCount || 0;
+                const present = session.present ?? session.totalPresent ?? session.presentCount ?? 0;
+                const absent = session.absent ?? session.absentCount ?? 0;
+                const late = session.late ?? session.lateCount ?? 0;
                 const totalStudents = session.totalStudents || session.total || (present + absent + late) || 0;
                 const method = session.method || session.attendanceMethod || 'automatic';
 
