@@ -26,6 +26,7 @@ export default function AdminUsers() {
     const [configLoading, setConfigLoading] = useState(false);
     const [isExportingConfig, setIsExportingConfig] = useState(false);
     const [isPublishingConfig, setIsPublishingConfig] = useState(false);
+    const [configLoaded, setConfigLoaded] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const totalUsers = users.length;
@@ -55,8 +56,7 @@ export default function AdminUsers() {
     };
 
     const normalizeTeacherConfigRow = async (teacherUser) => {
-        const [teacherDetails, teacherClasses, teacherSubjects] = await Promise.all([
-            userService.getById(teacherUser.id),
+        const [teacherClasses, teacherSubjects] = await Promise.all([
             classService.getByTeacher(teacherUser.id),
             subjectService.getByTeacher(teacherUser.id),
         ]);
@@ -70,17 +70,15 @@ export default function AdminUsers() {
         const semesters = [...new Set((Array.isArray(teacherSubjects) ? teacherSubjects : [])
             .map(extractSubjectSemester)
             .filter(Boolean))];
-        const departments = Array.isArray(teacherDetails?.departmentsNames) ? teacherDetails.departmentsNames : [];
-
         return {
             id: teacherUser.id,
-            matricule: teacherDetails?.matricule || '',
-            nom: teacherDetails?.name || teacherUser.name || '',
-            departement: departments.length > 0 ? departments.join(', ') : (teacherUser.departement || ''),
+            matricule: teacherUser.matricule || '',
+            nom: teacherUser.name || '',
+            departement: teacherUser.departement || '',
             semestres: semesters,
             niveaux: levels,
             matieres: subjects,
-            status: teacherDetails?.active ? 'active' : 'inactive',
+            status: teacherUser.status || 'inactive',
         };
     };
 
@@ -88,7 +86,8 @@ export default function AdminUsers() {
         const teacherUsers = (Array.isArray(usersList) ? usersList : []).filter((u) => u.role === 'TEACHER');
         if (teacherUsers.length === 0) {
             setTeacherConfigRows([]);
-            return;
+            setConfigLoaded(true);
+            return [];
         }
 
         setConfigLoading(true);
@@ -112,9 +111,19 @@ export default function AdminUsers() {
                 })
             );
             setTeacherConfigRows(rows);
+            setConfigLoaded(true);
+            return rows;
         } finally {
             setConfigLoading(false);
         }
+    };
+
+    const ensureTeacherConfigRows = async () => {
+        if (configLoaded || configLoading) {
+            return teacherConfigRows;
+        }
+
+        return await loadTeacherConfigRows(users);
     };
 
     const loadData = async () => {
@@ -131,6 +140,7 @@ export default function AdminUsers() {
                 name: u.name,
                 email: u.email,
                 username: u.username,
+                matricule: u.matricule,
                 role: u.roles && u.roles.length > 0 ? u.roles[0].role.toUpperCase() : 'UNKNOWN',
                 departement: u.departmentsNames && u.departmentsNames.length > 0 ? u.departmentsNames.join(', ') : null,
                 status: u.active ? 'active' : 'inactive',
@@ -139,7 +149,8 @@ export default function AdminUsers() {
             mappedUsers.sort((a, b) => (b.id || 0) - (a.id || 0));
             setUsers(mappedUsers);
             setDepartments(Array.isArray(departmentsResponse) ? departmentsResponse : []);
-            await loadTeacherConfigRows(mappedUsers);
+            setTeacherConfigRows([]);
+            setConfigLoaded(false);
 
         } catch (error) {
             toast.error(error.message || "Erreur lors du chargement des donnees.");
@@ -197,14 +208,37 @@ export default function AdminUsers() {
     const usersById = new Map(users.map((u) => [u.id, u]));
 
     const handleExportTeacherConfig = async () => {
-        if (filteredTeacherConfigs.length === 0) {
+        const rows = await ensureTeacherConfigRows();
+        if (!rows || rows.length === 0) {
             toast.error("Aucune configuration enseignant a exporter.");
+            return;
+        }
+
+        const filteredRows = rows.filter((row) => {
+            const normalizedSearch = searchTerm.toLowerCase();
+            const matchesSearch = !searchTerm ||
+                row.nom.toLowerCase().includes(normalizedSearch) ||
+                row.matricule.toLowerCase().includes(normalizedSearch) ||
+                row.departement.toLowerCase().includes(normalizedSearch) ||
+                row.semestres.some((semester) => semester.toLowerCase().includes(normalizedSearch)) ||
+                row.niveaux.some((level) => level.toLowerCase().includes(normalizedSearch)) ||
+                row.matieres.some((subject) => subject.toLowerCase().includes(normalizedSearch));
+
+            const matchesRole = roleFilter === 'all' || roleFilter === 'TEACHER';
+            const matchesStatus = statusFilter === 'all' || row.status === statusFilter;
+            const matchesDepartment = departmentFilter === 'all' || row.departement.includes(departmentFilter);
+
+            return matchesSearch && matchesRole && matchesStatus && matchesDepartment;
+        });
+
+        if (filteredRows.length === 0) {
+            toast.error("Aucun enseignant ne correspond aux filtres actifs.");
             return;
         }
 
         try {
             setIsExportingConfig(true);
-            esp32ConfigService.downloadTeacherConfig(filteredTeacherConfigs);
+            esp32ConfigService.downloadTeacherConfig(filteredRows);
             toast.success("Fichier de configuration exporte avec succes.");
         } catch {
             toast.error("Echec de l'export du fichier de configuration.");
@@ -214,14 +248,37 @@ export default function AdminUsers() {
     };
 
     const handlePublishTeacherConfig = async () => {
-        if (filteredTeacherConfigs.length === 0) {
+        const rows = await ensureTeacherConfigRows();
+        if (!rows || rows.length === 0) {
             toast.error("Aucune configuration enseignant a publier.");
+            return;
+        }
+
+        const filteredRows = rows.filter((row) => {
+            const normalizedSearch = searchTerm.toLowerCase();
+            const matchesSearch = !searchTerm ||
+                row.nom.toLowerCase().includes(normalizedSearch) ||
+                row.matricule.toLowerCase().includes(normalizedSearch) ||
+                row.departement.toLowerCase().includes(normalizedSearch) ||
+                row.semestres.some((semester) => semester.toLowerCase().includes(normalizedSearch)) ||
+                row.niveaux.some((level) => level.toLowerCase().includes(normalizedSearch)) ||
+                row.matieres.some((subject) => subject.toLowerCase().includes(normalizedSearch));
+
+            const matchesRole = roleFilter === 'all' || roleFilter === 'TEACHER';
+            const matchesStatus = statusFilter === 'all' || row.status === statusFilter;
+            const matchesDepartment = departmentFilter === 'all' || row.departement.includes(departmentFilter);
+
+            return matchesSearch && matchesRole && matchesStatus && matchesDepartment;
+        });
+
+        if (filteredRows.length === 0) {
+            toast.error("Aucun enseignant ne correspond aux filtres actifs.");
             return;
         }
 
         try {
             setIsPublishingConfig(true);
-            await esp32ConfigService.publishTeacherConfig(filteredTeacherConfigs);
+            await esp32ConfigService.publishTeacherConfig(filteredRows);
             toast.success("Configuration TXT ESP32 publiee avec succes.");
         } catch (error) {
             toast.error(error?.message || "Echec de la publication du TXT de configuration ESP32.");
@@ -257,7 +314,7 @@ export default function AdminUsers() {
                     <button
                         type="button"
                         onClick={handlePublishTeacherConfig}
-                        disabled={isPublishingConfig || configLoading || filteredTeacherConfigs.length === 0}
+                        disabled={isPublishingConfig || configLoading || users.every((u) => u.role !== 'TEACHER')}
                         className="inline-flex items-center px-4 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
                         <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -268,7 +325,7 @@ export default function AdminUsers() {
                     <button
                         type="button"
                         onClick={handleExportTeacherConfig}
-                        disabled={isExportingConfig || configLoading || filteredTeacherConfigs.length === 0}
+                        disabled={isExportingConfig || configLoading || users.every((u) => u.role !== 'TEACHER')}
                         className="inline-flex items-center px-4 py-2 border border-emerald-300 rounded-md shadow-sm text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
                     >
                         <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -371,7 +428,9 @@ export default function AdminUsers() {
                         </div>
                     </div>
                     <div className="mt-4 text-sm text-gray-500">
-                        {filteredTeacherConfigs.length} enseignant(s) dans le fichier de configuration ESP32
+                        {configLoaded
+                            ? `${filteredTeacherConfigs.length} enseignant(s) dans le fichier de configuration ESP32`
+                            : `${users.filter((u) => u.role === 'TEACHER').length} enseignant(s) disponibles pour la configuration ESP32`}
                     </div>
                 </div>
             </div>
@@ -534,7 +593,7 @@ export default function AdminUsers() {
                 </div>
             </div>
 
-            {(filteredTeacherConfigs.length === 0 || configLoading) && (
+            {((configLoaded && filteredTeacherConfigs.length === 0) || configLoading) && (
                 <div className="text-center py-12">
                     <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m0 0v1M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>

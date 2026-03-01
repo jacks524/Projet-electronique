@@ -70,8 +70,8 @@ export default function ModernFooter() {
               <h3 className="text-white font-semibold mb-4">Plateforme</h3>
               <ul className="space-y-3 text-sm">
                 <li><Link href="/features" className="hover:text-violet-400 transition-colors">Fonctionnalités</Link></li>
-                <li><Link href="/pricing" className="hover:text-violet-400 transition-colors">Tarifs</Link></li>
-                <li><Link href="/demo" className="hover:text-violet-400 transition-colors">Demander une démo</Link></li>
+                <li><Link href="/about" className="hover:text-violet-400 transition-colors">À propos</Link></li>
+                <li><Link href="/contact" className="hover:text-violet-400 transition-colors">Contact</Link></li>
               </ul>
             </div>
 
@@ -80,7 +80,6 @@ export default function ModernFooter() {
               <h3 className="text-white font-semibold mb-4">Légal & Sécurité</h3>
               <ul className="space-y-3 text-sm">
                 <li><Link href="/privacy" className="hover:text-violet-400 transition-colors">Politique de confidentialité</Link></li>
-                <li><Link href="/rgpd" className="hover:text-violet-400 transition-colors">Conformité RGPD</Link></li>
                 <li><Link href="/terms" className="hover:text-violet-400 transition-colors">Conditions d'utilisation</Link></li>
               </ul>
             </div>

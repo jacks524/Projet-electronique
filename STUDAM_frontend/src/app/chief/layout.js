@@ -277,7 +277,6 @@ export default function ChiefLayout({ children }) {
             <div className="flex items-center gap-4">
               <Link href="/privacy" className="hover:text-violet-600">Politique de confidentialite</Link>
               <Link href="/terms" className="hover:text-violet-600">Conditions d'utilisation</Link>
-              <Link href="/help" className="hover:text-violet-600">Aide</Link>
             </div>
           </div>
         </footer>
@@ -285,4 +284,3 @@ export default function ChiefLayout({ children }) {
     </div>
   );
 }
-

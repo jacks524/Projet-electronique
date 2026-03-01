@@ -499,9 +499,6 @@ export default function AdminLayout({ children }) {
               <Link href="/terms" className="hover:text-violet-600">
                 Conditions d'utilisation
               </Link>
-              <Link href="/help" className="hover:text-violet-600">
-                Aide
-              </Link>
             </div>
           </div>
         </footer>

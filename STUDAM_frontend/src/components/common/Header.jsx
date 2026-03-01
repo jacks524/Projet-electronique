@@ -119,7 +119,6 @@ const Header = () => {
               <>
                 <Link href="/features" className="block p-3 rounded-lg hover:bg-violet-50 text-slate-700 font-medium">Fonctionnalités</Link>
                 <Link href="/auth/login" className="block p-3 rounded-lg text-center border border-slate-200 mt-2">Connexion</Link>
-                <Link href="/auth/register" className="block p-3 rounded-lg text-center bg-violet-600 text-white shadow-md">Commencer</Link>
               </>
             ) : (
                <Link href={getDashboardPath()} className="block p-3 rounded-lg bg-violet-50 text-violet-700 font-medium">Accéder au Dashboard</Link>
