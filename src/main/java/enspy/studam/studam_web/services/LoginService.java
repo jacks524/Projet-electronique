@@ -47,6 +47,7 @@ public class LoginService {
   private final UserLookupService userLookupService;
   private final DepartmentLookupService departmentLookupService;
   private final WebSocketEventPublisher webSocketEventPublisher;
+  private final SecurityUtils securityUtils;
 
   public void forgotPassword(ForgotPasswordRequestDTO requestDTO) {
     User user = this.userLookupService.getUserByEmail(requestDTO.getEmail());
@@ -192,7 +193,7 @@ public class LoginService {
 
   // Modification du mot de passe
   public UserResponseDTO changePassword(ChangePasswordRequestDTO changePasswordRequestDTO) {
-    User user = SecurityUtils.getCurrentUser();
+    User user = securityUtils.getCurrentUser();
 
     // Vérification de l'ancien mot de passe
     if (!new BCryptPasswordEncoder().matches(changePasswordRequestDTO.getOldPassword(), user.getPassword())) {

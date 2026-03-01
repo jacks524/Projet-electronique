@@ -60,6 +60,7 @@ public class FingerPrintController {
   private final FingerprintTextStore fingerprintTextStore;
   private final TeacherConfigFileService teacherConfigFileService;
   private final WebSocketEventPublisher webSocketEventPublisher;
+  private final SecurityUtils securityUtils;
 
   @Hidden
   @PostMapping("/saveBySchedule")
@@ -155,7 +156,7 @@ public class FingerPrintController {
   @Operation(summary = "Publish teacher configuration TXT for ESP32", description = "Generates (or stores manually) a global TXT config for all teachers/departments, then publishes it for device download.")
   public ResponseEntity<String> publishTeacherConfig(
       @RequestBody(required = false) String rawText) {
-    User currentUser = SecurityUtils.getCurrentUser();
+    User currentUser = securityUtils.getCurrentUser();
     ensureAdminAccess(currentUser);
 
     TeacherConfigFileService.StoredTeacherConfig published = (rawText != null && !rawText.isBlank())

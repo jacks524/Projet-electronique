@@ -45,10 +45,11 @@ public class ReportController {
   private final AttendanceSessionRepository attendanceSessionRepository;
   private final UserRepository userRepository;
   private final WebSocketEventPublisher webSocketEventPublisher;
+  private final SecurityUtils securityUtils;
 
   @GetMapping("/statistics")
   public ResponseEntity<StatisticsResponseDTO> getStatistics() {
-    User currentUser = SecurityUtils.getCurrentUser();
+    User currentUser = securityUtils.getCurrentUser();
     boolean isAdmin = hasRole(currentUser, UserRoleEnum.ADMIN);
     boolean isManager = hasRole(currentUser, UserRoleEnum.DEPARTMENT_MANAGER);
 
@@ -93,7 +94,7 @@ public class ReportController {
   public ResponseEntity<List<RecentActivityResponseDTO>> getRecentActivity(
       @RequestParam(defaultValue = "20") int limit,
       @RequestParam(required = false) Integer departmentId) {
-    User currentUser = SecurityUtils.getCurrentUser();
+    User currentUser = securityUtils.getCurrentUser();
     boolean isAdmin = hasRole(currentUser, UserRoleEnum.ADMIN);
     boolean isManager = hasRole(currentUser, UserRoleEnum.DEPARTMENT_MANAGER);
 
@@ -170,7 +171,7 @@ public class ReportController {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "startDate and endDate are required");
     }
 
-    User currentUser = SecurityUtils.getCurrentUser();
+    User currentUser = securityUtils.getCurrentUser();
     boolean isAdmin = hasRole(currentUser, UserRoleEnum.ADMIN);
     boolean isManager = hasRole(currentUser, UserRoleEnum.DEPARTMENT_MANAGER);
 
@@ -262,7 +263,7 @@ public class ReportController {
       @PathVariable int teacherId,
       @RequestParam(required = false) String status,
       @RequestParam(required = false) String semester) {
-    User currentUser = SecurityUtils.getCurrentUser();
+    User currentUser = securityUtils.getCurrentUser();
     boolean isAdmin = hasRole(currentUser, UserRoleEnum.ADMIN);
     boolean isManager = hasRole(currentUser, UserRoleEnum.DEPARTMENT_MANAGER);
     User teacher = userLookupService.getUserById(teacherId);
