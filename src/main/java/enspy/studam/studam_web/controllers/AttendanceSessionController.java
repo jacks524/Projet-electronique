@@ -1,9 +1,10 @@
 package enspy.studam.studam_web.controllers;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,12 +12,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
+import enspy.studam.studam_web.dto.requestDTO.AttendanceLaunchRequestDTO;
 import enspy.studam.studam_web.dto.responseDTO.AttendanceResponseDTO;
 import enspy.studam.studam_web.dto.responseDTO.AttendanceSessionResponseDTO;
+import enspy.studam.studam_web.dto.responseDTO.RemoteAttendanceLaunchResponseDTO;
 import enspy.studam.studam_web.models.Attendance;
 import enspy.studam.studam_web.models.AttendanceSession;
+import enspy.studam.studam_web.models.User;
 import enspy.studam.studam_web.services.AttendanceSessionService;
+import enspy.studam.studam_web.services.RemoteAttendanceLaunchService;
 import enspy.studam.studam_web.services.lookup.AttendanceSessionLookupService;
+import enspy.studam.studam_web.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -28,6 +34,8 @@ import lombok.AllArgsConstructor;
 public class AttendanceSessionController {
   private final AttendanceSessionService attendanceSessionService;
   private final AttendanceSessionLookupService attendanceSessionLookupService;
+  private final RemoteAttendanceLaunchService remoteAttendanceLaunchService;
+  private final SecurityUtils securityUtils;
 
   @GetMapping("/teacher/{teacherId}")
   @Operation(summary = "Get attendance sessions for a teacher", description = "Returns a list of attendance sessions for a specific teacher.")
@@ -71,6 +79,34 @@ public class AttendanceSessionController {
         .contentType(MediaType.parseMediaType("text/csv"))
         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
         .body(csv);
+  }
+
+  @PostMapping("/launch")
+  @Operation(summary = "Launch attendance call from web app", description = "Creates a single pending launch order for the ESP32 device.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Launch order created successfully."),
+      @ApiResponse(responseCode = "400", description = "Invalid launch request."),
+      @ApiResponse(responseCode = "403", description = "User cannot launch this schedule.")
+  })
+  public ResponseEntity<RemoteAttendanceLaunchResponseDTO> launchAttendanceCall(
+      @RequestBody AttendanceLaunchRequestDTO request) {
+    User currentUser = securityUtils.getCurrentUser();
+    RemoteAttendanceLaunchResponseDTO response = remoteAttendanceLaunchService.createLaunchOrder(request, currentUser);
+    return ResponseEntity.ok(response);
+  }
+
+  @GetMapping("/launch/pending")
+  @Operation(summary = "Consume pending attendance launch for ESP32", description = "Returns the pending web launch order once, then clears it.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Launch order consumed successfully."),
+      @ApiResponse(responseCode = "204", description = "No pending launch order.")
+  })
+  public ResponseEntity<RemoteAttendanceLaunchResponseDTO> consumePendingLaunch() {
+    RemoteAttendanceLaunchResponseDTO response = remoteAttendanceLaunchService.consumePendingLaunch();
+    if (response == null) {
+      return ResponseEntity.noContent().build();
+    }
+    return ResponseEntity.ok(response);
   }
 
   private String buildCsvFilename(AttendanceSession session) {

@@ -46,6 +46,7 @@ public class Configurations {
                   // Routes fingerprint publiques pour les appareils uniquement.
                   .requestMatchers(HttpMethod.POST, "/fingerprint/text", "/api/fingerprint/text").permitAll()
                   .requestMatchers(HttpMethod.GET, "/fingerprint/text", "/api/fingerprint/text").permitAll()
+                  .requestMatchers(HttpMethod.GET, "/attendance-session/launch/pending", "/api/attendance-session/launch/pending").permitAll()
                   .requestMatchers(HttpMethod.GET, "/fingerprint/config/published", "/api/fingerprint/config/published")
                   .permitAll()
                   .requestMatchers("/public/time", "/api/public/time").permitAll()

@@ -34,6 +34,8 @@ public class JWtFilter extends OncePerRequestFilter {
     // Routes explicitement publiques pour les appareils ESP32.
     return uri.equals("/fingerprint/text")
         || uri.equals("/api/fingerprint/text")
+        || uri.equals("/attendance-session/launch/pending")
+        || uri.equals("/api/attendance-session/launch/pending")
         || uri.equals("/fingerprint/config/published")
         || uri.equals("/api/fingerprint/config/published");
   }

@@ -101,9 +101,14 @@ const char* WIFI_SSID = "TECNO SPARK 10C";
 const char* WIFI_PASSWORD = "987654321";
 const char* BACKEND_URL = "https://projet-electronique.onrender.com/api/fingerprint/text";
 const char* CONFIG_URL  = "https://projet-electronique.onrender.com/api/fingerprint/config/published";
+const char* REMOTE_LAUNCH_URL = "https://projet-electronique.onrender.com/api/attendance-session/launch/pending";
 
 // Prototypes explicites pour eviter les erreurs d'ordre de declaration Arduino.
 bool wifiEnsureConnected(unsigned long timeoutMs = 15000);
+void pollRemoteAttendanceLaunch();
+void startRemoteVerificationSession(const String& teacherMatricule, const String& teacherName, const String& subjectName, const String& semester);
+String extractJsonString(const String& json, const String& key);
+long extractJsonLong(const String& json, const String& key, long fallbackValue = -1);
 
 // === MODIFICATION ===
 int modifyID = 0;
@@ -159,6 +164,8 @@ const char* keys[4][3] = {
 // Bouton debounce
 unsigned long lastButtonPress = 0;
 const unsigned long debounceDelay = 500;
+unsigned long lastRemoteLaunchPollMs = 0;
+const unsigned long REMOTE_LAUNCH_POLL_INTERVAL_MS = 5000;
 
 String availableMatieres[32];
 int availableMatiereCount = 0;
@@ -1007,6 +1014,132 @@ bool wifiEnsureConnected(unsigned long timeoutMs) {
     delay(200);
   }
   return (WiFi.status() == WL_CONNECTED);
+}
+
+String extractJsonString(const String& json, const String& key) {
+  String needle = "\"" + key + "\"";
+  int keyPos = json.indexOf(needle);
+  if (keyPos < 0) return "";
+
+  int colonPos = json.indexOf(':', keyPos + needle.length());
+  if (colonPos < 0) return "";
+
+  int valueStart = json.indexOf('"', colonPos + 1);
+  if (valueStart < 0) return "";
+
+  int valueEnd = json.indexOf('"', valueStart + 1);
+  if (valueEnd < 0) return "";
+
+  return json.substring(valueStart + 1, valueEnd);
+}
+
+long extractJsonLong(const String& json, const String& key, long fallbackValue) {
+  String needle = "\"" + key + "\"";
+  int keyPos = json.indexOf(needle);
+  if (keyPos < 0) return fallbackValue;
+
+  int colonPos = json.indexOf(':', keyPos + needle.length());
+  if (colonPos < 0) return fallbackValue;
+
+  int start = colonPos + 1;
+  while (start < json.length() && (json.charAt(start) == ' ' || json.charAt(start) == '\n' || json.charAt(start) == '\r')) {
+    start++;
+  }
+
+  int end = start;
+  while (end < json.length() && isDigit(json.charAt(end))) {
+    end++;
+  }
+
+  if (end <= start) return fallbackValue;
+  return json.substring(start, end).toInt();
+}
+
+void startRemoteVerificationSession(const String& teacherMatricule, const String& teacherName, const String& subjectName, const String& semester) {
+  currentTeacherMatricule = teacherMatricule;
+  currentTeacherName = teacherName.length() > 0 ? teacherName : teacherMatricule;
+  currentMatiere = subjectName;
+  currentSemestre = semester;
+  currentProfV2Line = "";
+  currentDeptField = "";
+  currentAffectField = "";
+  resetV2Selections();
+
+  verificationActive = true;
+  currentMode = MODE_VERIFICATION_IN_PROGRESS;
+
+  displayCenteredMessage("APPEL WEB ACTIF", currentMatiere + " " + currentSemestre, ILI9341_GREEN);
+  tft.setTextSize(1);
+  tft.setTextColor(ILI9341_YELLOW);
+  tft.setCursor(50, 120);
+  tft.print("Enseignant: " + currentTeacherMatricule);
+
+  beginVerificationSession();
+
+  delay(2500);
+  displayCurrentMode();
+  displayCenteredMessage("Verification active", "Placez empreinte eleve", ILI9341_WHITE);
+}
+
+void pollRemoteAttendanceLaunch() {
+  if (currentMode != MODE_VERIFICATION || verificationActive) return;
+
+  unsigned long now = millis();
+  if ((now - lastRemoteLaunchPollMs) < REMOTE_LAUNCH_POLL_INTERVAL_MS) return;
+  lastRemoteLaunchPollMs = now;
+
+  if (!wifiEnsureConnected(6000)) return;
+
+  HTTPClient http;
+  WiFiClientSecure client;
+  client.setInsecure();
+  http.setTimeout(5000);
+
+  if (!http.begin(client, REMOTE_LAUNCH_URL)) {
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_OFF);
+    return;
+  }
+
+  int code = http.GET();
+  String body = code > 0 ? http.getString() : "";
+  http.end();
+
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_OFF);
+
+  if (code == 204 || code == 404) return;
+
+  if (code < 200 || code >= 300) {
+    Serial.print("Polling appel distant KO, code=");
+    Serial.println(code);
+    return;
+  }
+
+  long launchId = extractJsonLong(body, "launchId", -1);
+  String teacherMatricule = extractJsonString(body, "teacherMatricule");
+  String teacherName = extractJsonString(body, "teacherName");
+  String subjectName = extractJsonString(body, "subjectName");
+  String semester = extractJsonString(body, "semester");
+
+  if (launchId <= 0 || teacherMatricule.length() == 0 || subjectName.length() == 0 || semester.length() == 0) {
+    Serial.println("Polling appel distant: payload incomplet");
+    Serial.println(body);
+    return;
+  }
+
+  Serial.println("===== APPEL DISTANT RECU =====");
+  Serial.print("launchId=");
+  Serial.println(launchId);
+  Serial.print("teacher=");
+  Serial.println(teacherMatricule);
+  Serial.print("subject=");
+  Serial.println(subjectName);
+  Serial.print("semester=");
+  Serial.println(semester);
+  Serial.println("==============================");
+
+  startRemoteVerificationSession(teacherMatricule, teacherName, subjectName, semester);
 }
 
 bool clearPresenceFile() {
@@ -2199,6 +2332,7 @@ void setup() {
 // === LOOP PRINCIPAL ===
 void loop() {
   checkButton();
+  pollRemoteAttendanceLaunch();
   
   bool isTouched = touch.touched();
   TS_Point p;
