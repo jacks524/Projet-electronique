@@ -28,6 +28,8 @@ public interface SchedulerRepository extends JpaRepository<Schedule, Integer> {
 
   List<Schedule> findByTeacherAndTimetable(User teacher, Timetable timetable);
 
+  List<Schedule> findByTeacherAndTimetableAndSubject(User teacher, Timetable timetable, Subject subject);
+
   List<Schedule> findByTimetable(Timetable timetable);
 
   @Query("SELECT s FROM Schedule s JOIN s.timetable t WHERE t.clazz = :clazz")

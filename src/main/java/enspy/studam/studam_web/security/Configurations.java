@@ -51,6 +51,8 @@ public class Configurations {
                   .permitAll()
                   .requestMatchers("/public/time", "/api/public/time").permitAll()
                   .requestMatchers("/public/time/**", "/api/public/time/**").permitAll()
+                  .requestMatchers(HttpMethod.GET, "/public/student-attendance", "/api/public/student-attendance")
+                  .permitAll()
                   .requestMatchers("/ws", "/ws/**").permitAll()
                   .requestMatchers("/swagger-ui/**", "/api/swagger-ui/**").permitAll()
                   .requestMatchers("/v3/api-docs/**", "/api/v3/api-docs/**").permitAll()

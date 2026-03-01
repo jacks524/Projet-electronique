@@ -19,6 +19,8 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Integer>
 
   Page<Attendance> findByStudent(Student student, Pageable pageable);
 
+  List<Attendance> findByStudentOrderByPresenceLoggedAtDesc(Student student);
+
   void deleteByStudent(Student student);
 
   Optional<Attendance> findByAttendanceSessionAndStudent(AttendanceSession attendanceSession, Student student);

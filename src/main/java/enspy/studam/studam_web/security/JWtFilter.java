@@ -37,7 +37,9 @@ public class JWtFilter extends OncePerRequestFilter {
         || uri.equals("/attendance-session/launch/pending")
         || uri.equals("/api/attendance-session/launch/pending")
         || uri.equals("/fingerprint/config/published")
-        || uri.equals("/api/fingerprint/config/published");
+        || uri.equals("/api/fingerprint/config/published")
+        || uri.equals("/public/student-attendance")
+        || uri.equals("/api/public/student-attendance");
   }
 
   @Override
