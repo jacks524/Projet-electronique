@@ -105,6 +105,8 @@ const char* REMOTE_LAUNCH_URL = "https://projet-electronique.onrender.com/api/at
 
 // Prototypes explicites pour eviter les erreurs d'ordre de declaration Arduino.
 bool wifiEnsureConnected(unsigned long timeoutMs = 15000);
+void wifiStartBackgroundConnection();
+void wifiLogStatus(const char* context);
 void pollRemoteAttendanceLaunch();
 void startRemoteVerificationSession(const String& teacherMatricule, const String& teacherName, const String& subjectName, const String& semester);
 String extractJsonString(const String& json, const String& key);
@@ -165,7 +167,11 @@ const char* keys[4][3] = {
 unsigned long lastButtonPress = 0;
 const unsigned long debounceDelay = 500;
 unsigned long lastRemoteLaunchPollMs = 0;
-const unsigned long REMOTE_LAUNCH_POLL_INTERVAL_MS = 5000;
+unsigned long lastLocalActivityMs = 0;
+unsigned long lastWifiConnectKickMs = 0;
+const unsigned long REMOTE_LAUNCH_POLL_INTERVAL_MS = 12000;
+const unsigned long REMOTE_LAUNCH_IDLE_BEFORE_POLL_MS = 3000;
+const unsigned long WIFI_RECONNECT_KICK_INTERVAL_MS = 10000;
 
 String availableMatieres[32];
 int availableMatiereCount = 0;
@@ -234,11 +240,11 @@ const char* SUBJECT_CATALOG[] = {
   "GI;3;S2;Introduction a la data science",
   "GI;3;S2;Introduction aux Reseaux",
   "GI;3;S2;Programmation systeme",
-  "GI;4;S1;Machine learning",
+  "GI;4;S1;Machine Learning",
   "GI;4;S1;Analyse des donnees",
   "GI;4;S1;IHM",
-  "GI;4;S1;Programmation Web",
-  "GI;4;S1;Grammaire et Langage",
+  "GI;4;S1;Programmation web",
+  "GI;4;S1;Grammaire",
   "GI;4;S1;Management",
   "GI;4;S1;Admin Reseau",
   "GI;4;S1;Gestion de Projet",
@@ -509,8 +515,8 @@ void initializeMatieresFile() {
       file.println("Machine Learning");
       file.println("Analyse des Donnees");
       file.println("Gestion de Projet");
-      file.println("Grammaire et Langage");
-      file.println("Programmation Web");
+      file.println("Grammaire");
+      file.println("Programmation web");
       file.println("IHM");
       file.println("Admin Reseau");
       file.println("Management");
@@ -1003,16 +1009,45 @@ bool isFingerIdInProfV2(int fingerId) {
 }
 
 // === WIFI HELPERS ===
+void wifiStartBackgroundConnection() {
+  if (WiFi.status() == WL_CONNECTED) return;
+
+  unsigned long now = millis();
+  if ((now - lastWifiConnectKickMs) < WIFI_RECONNECT_KICK_INTERVAL_MS) return;
+  lastWifiConnectKickMs = now;
+
+  WiFi.persistent(false);
+  WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false);
+  WiFi.setAutoReconnect(true);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  Serial.print("WiFi connexion demandee a ");
+  Serial.println(WIFI_SSID);
+}
+
+void wifiLogStatus(const char* context) {
+  Serial.print("[WiFi] ");
+  Serial.print(context);
+  Serial.print(" status=");
+  Serial.print((int)WiFi.status());
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.print(" ip=");
+    Serial.print(WiFi.localIP());
+  }
+  Serial.println();
+}
+
 bool wifiEnsureConnected(unsigned long timeoutMs) {
   if (WiFi.status() == WL_CONNECTED) return true;
 
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  wifiStartBackgroundConnection();
 
   unsigned long start = millis();
   while (WiFi.status() != WL_CONNECTED && (millis() - start) < timeoutMs) {
-    delay(200);
+    delay(100);
   }
+  wifiLogStatus("wifiEnsureConnected");
   return (WiFi.status() == WL_CONNECTED);
 }
 
@@ -1084,29 +1119,30 @@ void startRemoteVerificationSession(const String& teacherMatricule, const String
 void pollRemoteAttendanceLaunch() {
   if (currentMode != MODE_VERIFICATION || verificationActive) return;
 
+  wifiStartBackgroundConnection();
+
   unsigned long now = millis();
   if ((now - lastRemoteLaunchPollMs) < REMOTE_LAUNCH_POLL_INTERVAL_MS) return;
+  if ((now - lastLocalActivityMs) < REMOTE_LAUNCH_IDLE_BEFORE_POLL_MS) return;
   lastRemoteLaunchPollMs = now;
 
-  if (!wifiEnsureConnected(6000)) return;
+  if (!wifiEnsureConnected(6000)) {
+    Serial.println("Polling appel distant: WiFi non connecte");
+    return;
+  }
 
   HTTPClient http;
   WiFiClientSecure client;
   client.setInsecure();
-  http.setTimeout(5000);
+  http.setTimeout(1200);
 
   if (!http.begin(client, REMOTE_LAUNCH_URL)) {
-    WiFi.disconnect(true);
-    WiFi.mode(WIFI_OFF);
     return;
   }
 
   int code = http.GET();
   String body = code > 0 ? http.getString() : "";
   http.end();
-
-  WiFi.disconnect(true);
-  WiFi.mode(WIFI_OFF);
 
   if (code == 204 || code == 404) return;
 
@@ -2168,6 +2204,7 @@ void checkButton() {
     
     if (currentTime - lastButtonPress > debounceDelay) {
       lastButtonPress = currentTime;
+      lastLocalActivityMs = currentTime;
       
       // Si une vérification est en cours
       if (verificationActive) {
@@ -2207,6 +2244,7 @@ void checkButton() {
       else {
         currentMode = MODE_VERIFICATION;
         Serial.println(">>> PASSAGE EN MODE VERIFICATION");
+        wifiStartBackgroundConnection();
         displayCenteredMessage("MODE VERIFICATION", "Actif", ILI9341_GREEN);
         delay(2000);
         displayCenteredMessage("Placez empreinte", "pour verifier", ILI9341_WHITE);
@@ -2241,6 +2279,7 @@ void checkButton() {
 void setup() {
   Serial.begin(115200);
   delay(1000);
+  lastLocalActivityMs = millis();
   
   Serial.println("\n=================================");
   Serial.println("  SYSTEME DE POINTAGE AMELIORE");
@@ -2323,6 +2362,12 @@ void setup() {
   Serial.println("  Profs: 5 chiffres (12345)");
   Serial.println("  Reset: 6 chiffres (123456)");
   Serial.println("  Arret verification: 5 chiffres (12345)\n");
+
+  if (wifiEnsureConnected(15000)) {
+    Serial.println("WiFi connecte au demarrage");
+  } else {
+    Serial.println("WiFi non connecte au demarrage");
+  }
   
   displayCenteredMessage("SYSTEME DE POINTAGE", "Pret", ILI9341_GREEN);
   delay(2000);
@@ -2332,7 +2377,10 @@ void setup() {
 // === LOOP PRINCIPAL ===
 void loop() {
   checkButton();
-  pollRemoteAttendanceLaunch();
+
+  if (currentMode == MODE_VERIFICATION && !verificationActive) {
+    wifiStartBackgroundConnection();
+  }
   
   bool isTouched = touch.touched();
   TS_Point p;
@@ -2340,12 +2388,14 @@ void loop() {
 
   // Lire le point pendant l'appui (plus fiable), puis utiliser la derniere position au relachement
   if (isTouched) {
+    lastLocalActivityMs = millis();
     p = touch.getPoint();
     lastTouchRawX = p.x;
     lastTouchRawY = p.y;
   }
 
   if (wasTouched && !isTouched) {
+    lastLocalActivityMs = millis();
     x = map(lastTouchRawX, 3900, 200, 0, 320);
     y = map(lastTouchRawY, 3900, 200, 0, 240);
   }
@@ -3636,6 +3686,7 @@ void loop() {
     int result = finger.getImage();
     
     if (result == FINGERPRINT_OK) {
+      lastLocalActivityMs = millis();
       displayCenteredMessage("Lecture...", "", ILI9341_YELLOW);
       delay(500);
       
@@ -3714,6 +3765,7 @@ void loop() {
     int result = finger.getImage();
     
     if (result == FINGERPRINT_OK) {
+      lastLocalActivityMs = millis();
       displayCenteredMessage("Lecture...", "", ILI9341_YELLOW);
       delay(500);
       
@@ -3774,6 +3826,8 @@ void loop() {
     }
     return;
   }
+
+  pollRemoteAttendanceLaunch();
   
   wasTouched = isTouched;
   delay(10);
