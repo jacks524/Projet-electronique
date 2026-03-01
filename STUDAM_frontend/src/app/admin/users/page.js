@@ -9,7 +9,7 @@ import departmentService from '../../../services/departmentService';
 import classService from '../../../services/classService';
 import subjectService from '../../../services/subjectService';
 import esp32ConfigService from '../../../services/esp32ConfigService';
-import { ROLES } from '../../../lib/roles';
+import { ROLES, hasUserRole } from '../../../lib/roles';
 import toast from 'react-hot-toast';
 
 export default function AdminUsers() {
@@ -29,6 +29,7 @@ export default function AdminUsers() {
     const [configLoaded, setConfigLoaded] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
+    const isAdminUser = hasUserRole(user, 'ADMIN') || hasUserRole(user, 'SUPER_ADMIN');
     const totalUsers = users.length;
     const totalChiefs = users.filter(u => u.role === 'DEPARTMENT_MANAGER').length;
     const totalTeachers = users.filter(u => u.role === 'TEACHER').length;
@@ -36,12 +37,12 @@ export default function AdminUsers() {
 
     useEffect(() => {
         if (authLoading) return;
-        if (!isAuthenticated || user?.role?.toUpperCase() !== 'ADMIN') {
+        if (!isAuthenticated || !isAdminUser) {
             router.push('/auth/login');
             return;
         }
         loadData();
-    }, [user, isAuthenticated, authLoading, router]);
+    }, [user, isAuthenticated, authLoading, router, isAdminUser]);
 
     const extractClassLevel = (classe) => {
         return classe?.code || classe?.name || classe?.className || null;

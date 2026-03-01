@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuthContext } from "../../context/authContext";
 import reportService from "../../services/reportService";
 import systemSettingsService from "../../services/systemSettingsService";
+import { hasUserRole } from "../../lib/roles";
 
 import {
   LayoutDashboard,
@@ -85,8 +86,7 @@ export default function AdminLayout({ children }) {
   useEffect(() => {
     if (authLoading) return;
 
-    const role = user?.role?.toUpperCase();
-    const allowed = role === "ADMIN" || role === "SUPER_ADMIN";
+    const allowed = hasUserRole(user, "ADMIN") || hasUserRole(user, "SUPER_ADMIN");
 
     if (!isAuthenticated || !allowed) {
       router.push("/auth/login");
