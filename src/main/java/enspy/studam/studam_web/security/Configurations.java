@@ -43,8 +43,11 @@ public class Configurations {
                   .requestMatchers("/user/signin", "/api/user/signin").permitAll()
                   .requestMatchers("/user/forgot-password", "/api/user/forgot-password").permitAll()
                   .requestMatchers("/user/reset-password", "/api/user/reset-password").permitAll()
-                  // Toutes les routes fingerprint sont publiques pour les appareils.
-                  .requestMatchers("/fingerprint/**", "/api/fingerprint/**").permitAll()
+                  // Routes fingerprint publiques pour les appareils uniquement.
+                  .requestMatchers(HttpMethod.POST, "/fingerprint/text", "/api/fingerprint/text").permitAll()
+                  .requestMatchers(HttpMethod.GET, "/fingerprint/text", "/api/fingerprint/text").permitAll()
+                  .requestMatchers(HttpMethod.GET, "/fingerprint/config/published", "/api/fingerprint/config/published")
+                  .permitAll()
                   .requestMatchers("/public/time", "/api/public/time").permitAll()
                   .requestMatchers("/public/time/**", "/api/public/time/**").permitAll()
                   .requestMatchers("/ws", "/ws/**").permitAll()
