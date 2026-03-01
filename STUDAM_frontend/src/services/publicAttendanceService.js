@@ -5,6 +5,7 @@ const lookupPath = process.env.NEXT_PUBLIC_PUBLIC_ATTENDANCE_LOOKUP_PATH || '/pu
 
 const publicApiClient = axios.create({
     baseURL,
+    timeout: 10000,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -59,6 +60,9 @@ const lookupStudentAttendance = async (matricule) => {
         });
         return normalizeLookupResponse(data, matricule);
     } catch (error) {
+        if (error?.code === 'ECONNABORTED') {
+            throw new Error("Le serveur de consultation ne repond pas. Verifiez que le backend public est bien deployee.");
+        }
         const backendMessage =
             error?.response?.data?.message ||
             error?.response?.data?.error ||
