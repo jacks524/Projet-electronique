@@ -112,14 +112,22 @@ const buildTeacherConfigTxt = (rows = []) => rows
 
 const publishTeacherConfig = async (rows = []) => {
     const payload = buildTeacherConfigTxt(rows);
-
-    const { data } = await apiClient.post('/fingerprint/config/published', payload, {
-        headers: {
-            'Content-Type': 'text/plain',
-        },
-    });
-
-    return data;
+    try {
+        const { data } = await apiClient.post('/fingerprint/config/publish', payload, {
+            headers: {
+                'Content-Type': 'text/plain',
+                Accept: 'application/json, text/plain, */*',
+            },
+        });
+        return data;
+    } catch (error) {
+        const backendMessage =
+            error?.response?.data?.message ||
+            error?.response?.data?.error ||
+            (typeof error?.response?.data === 'string' ? error.response.data : null) ||
+            error?.message;
+        throw new Error(backendMessage || "La publication du TXT de configuration ESP32 a echoue.");
+    }
 };
 
 const downloadTeacherConfig = (rows = []) => {

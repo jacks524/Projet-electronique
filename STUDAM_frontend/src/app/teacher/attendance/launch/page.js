@@ -38,6 +38,7 @@ export default function LaunchAttendanceCallPage() {
     const [launching, setLaunching] = useState(false);
     const [schedules, setSchedules] = useState([]);
     const [selectedScheduleId, setSelectedScheduleId] = useState("");
+    const [lastLaunch, setLastLaunch] = useState(null);
 
     useEffect(() => {
         if (authLoading || !user?.id) return;
@@ -66,10 +67,12 @@ export default function LaunchAttendanceCallPage() {
                         subjectName: schedule?.subject?.name || schedule?.subject?.label || "Cours",
                         subjectCode: schedule?.subject?.code || "",
                         className:
+                            schedule?.classe?.name ||
                             schedule?.classResponseDTO?.name ||
                             schedule?.class?.name ||
                             classInfo?.name ||
                             "Classe",
+                        semester: tt?.semester || schedule?.subject?.semester || "",
                     });
                 });
             });
@@ -114,14 +117,8 @@ export default function LaunchAttendanceCallPage() {
             };
 
             const result = await attendanceService.launchWebAttendanceCall(payload);
-            const createdSessionId = result?.attendanceSessionId || result?.sessionId || result?.id;
             toast.success("Appel lance depuis l'application web.");
-
-            if (createdSessionId) {
-                router.push(`/teacher/attendance/history/${createdSessionId}`);
-                return;
-            }
-            router.push("/teacher/attendance/history");
+            setLastLaunch(result || null);
         } catch (error) {
             toast.error(error.message || "Le lancement de l'appel a echoue.");
         } finally {
@@ -179,18 +176,41 @@ export default function LaunchAttendanceCallPage() {
                 <select
                     id="scheduleSelect"
                     value={selectedScheduleId}
-                    onChange={(e) => setSelectedScheduleId(e.target.value)}
+                    onChange={(e) => {
+                        setSelectedScheduleId(e.target.value);
+                        setLastLaunch(null);
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 >
                     <option value="">Selectionnez un cours</option>
                     {sortedSchedules.map((s) => (
                         <option key={s.id} value={s.id}>
-                            {dayLabels[s.day] || s.day} | {s.start}-{s.end} | {s.subjectName} {s.subjectCode ? `(${s.subjectCode})` : ""} | {s.className}
+                            {dayLabels[s.day] || s.day} | {s.start}-{s.end} | {s.subjectName} {s.subjectCode ? `(${s.subjectCode})` : ""} | {s.className} {s.semester ? `| ${s.semester}` : ""}
                         </option>
                     ))}
                 </select>
 
-                <div className="mt-6 flex justify-end">
+                {lastLaunch && (
+                    <div className="mt-5 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+                        <p className="font-medium text-green-900">Ordre envoye au dispositif</p>
+                        <p className="mt-1">
+                            Prof: <span className="font-medium">{lastLaunch.teacherMatricule}</span> | Matiere: <span className="font-medium">{lastLaunch.subjectName}</span> | Semestre: <span className="font-medium">{lastLaunch.semester}</span>
+                        </p>
+                        <p className="mt-1">
+                            Classe: <span className="font-medium">{lastLaunch.className || "N/A"}</span> | launchId: <span className="font-medium">{lastLaunch.launchId}</span>
+                        </p>
+                        <p className="mt-1">Le dispositif ESP32 peut maintenant consommer cet ordre en polling.</p>
+                    </div>
+                )}
+
+                <div className="mt-6 flex justify-end gap-3">
+                    <button
+                        type="button"
+                        onClick={() => router.push("/teacher/attendance")}
+                        className="inline-flex items-center px-5 py-2.5 rounded-lg text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors"
+                    >
+                        Retour au hub
+                    </button>
                     <button
                         type="button"
                         onClick={handleLaunch}
