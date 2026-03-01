@@ -276,7 +276,18 @@ export default function TeacherDashboard() {
                 />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <QuickActionCard
+                    title="Lancer l'appel web"
+                    description="Demarrer l'appel directement depuis l'espace enseignant"
+                    icon={
+                        <svg className="w-5 h-5 text-fuchsia-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                        </svg>
+                    }
+                    color="border-fuchsia-500"
+                    href="/teacher/attendance/launch"
+                />
                 <QuickActionCard
                     title="Valider les presences"
                     description="Corriger et valider les feuilles en attente"

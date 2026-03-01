@@ -86,7 +86,8 @@ export default function TeacherAttendanceHub() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <QuickActionCard title="Lancer l&apos;Appel Web" description="Demarrez l&apos;appel sans passer par la prise manuelle." icon={<svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" /></svg>} href="/teacher/attendance/launch" color="bg-violet-500" buttonText="Lancer maintenant" />
                 <QuickActionCard title="Consulter l&apos;Historique" description="Verifiez et corrigez vos presences enregistrees." icon={<svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2" /></svg>} href="/teacher/attendance/history" color="bg-blue-500" buttonText="Voir l&apos;historique" />
                 <QuickActionCard title="Prise de Presence Manuelle" description="Lancez une session manuelle si necessaire." icon={<svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>} href="/teacher/attendance/take" color="bg-green-500" buttonText="Commencer une session" />
             </div>

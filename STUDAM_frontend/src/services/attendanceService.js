@@ -132,6 +132,19 @@ const updateAttendance = async (attendanceId, updateData) => {
     }
 };
 
+const launchWebAttendanceCall = async (payload) => {
+    try {
+        const { data } = await apiClient.post('/attendance-session/launch', payload);
+        return data;
+    } catch (error) {
+        const backendMessage =
+            error?.response?.data?.message ||
+            error?.response?.data?.error ||
+            error?.message;
+        throw new Error(backendMessage || "Le lancement de l'appel web a echoue.");
+    }
+};
+
 const attendanceService = {
     getMyStats,
     getMyRecent,
@@ -139,6 +152,7 @@ const attendanceService = {
     getSessionDetails,
     getSessionsByTeacher,
     downloadSessionCsv,
+    launchWebAttendanceCall,
 };
 
 export default attendanceService;
