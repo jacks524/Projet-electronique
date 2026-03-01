@@ -205,6 +205,21 @@ export default function AdminUsers() {
 
         return matchesSearch && matchesRole && matchesStatus && matchesDepartment;
     });
+    const filteredUsers = users.filter((row) => {
+        const normalizedSearch = searchTerm.toLowerCase();
+        const matchesSearch = !searchTerm ||
+            row.name?.toLowerCase().includes(normalizedSearch) ||
+            row.email?.toLowerCase().includes(normalizedSearch) ||
+            row.username?.toLowerCase().includes(normalizedSearch) ||
+            row.matricule?.toLowerCase().includes(normalizedSearch) ||
+            row.departement?.toLowerCase().includes(normalizedSearch);
+
+        const matchesRole = roleFilter === 'all' || row.role === roleFilter;
+        const matchesStatus = statusFilter === 'all' || row.status === statusFilter;
+        const matchesDepartment = departmentFilter === 'all' || (row.departement || '').includes(departmentFilter);
+
+        return matchesSearch && matchesRole && matchesStatus && matchesDepartment;
+    });
     const usersById = new Map(users.map((u) => [u.id, u]));
 
     const handleExportTeacherConfig = async () => {
@@ -428,9 +443,7 @@ export default function AdminUsers() {
                         </div>
                     </div>
                     <div className="mt-4 text-sm text-gray-500">
-                        {configLoaded
-                            ? `${filteredTeacherConfigs.length} enseignant(s) dans le fichier de configuration ESP32`
-                            : `${users.filter((u) => u.role === 'TEACHER').length} enseignant(s) disponibles pour la configuration ESP32`}
+                        {filteredUsers.length} utilisateur(s) correspondent aux filtres actuels.
                     </div>
                 </div>
             </div>
@@ -524,12 +537,88 @@ export default function AdminUsers() {
                 </div>
             </div>
 
+            <div className="bg-white shadow overflow-hidden sm:rounded-md">
+                <div className="px-6 py-4 border-b border-gray-100">
+                    <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Utilisateurs</h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                        Vue principale de gestion des comptes du systeme.
+                    </p>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matricule</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Departement</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Derniere connexion</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {filteredUsers.map((row) => (
+                                <tr key={row.id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{row.name || '-'}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.matricule || '-'}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{row.email || '-'}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{ROLES[row.role] || row.role}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.departement || '-'}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                            row.status === 'active'
+                                                ? 'bg-green-100 text-green-800'
+                                                : row.status === 'pending'
+                                                    ? 'bg-yellow-100 text-yellow-800'
+                                                    : 'bg-red-100 text-red-800'
+                                        }`}>
+                                            {row.status === 'active' ? 'Actif' : row.status === 'pending' ? 'En attente' : 'Inactif'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.lastLogin || '-'}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div className="flex items-center justify-end space-x-2">
+                                            <Link href={`/admin/users/${row.id}`} className="text-[#7c3aed] hover:text-violet-600">Voir</Link>
+                                            <span className="text-gray-300">|</span>
+                                            <Link href={`/admin/users/${row.id}/edit`} className="text-indigo-600 hover:text-indigo-900">Modifier</Link>
+                                            <span className="text-gray-300">|</span>
+                                            <button
+                                                onClick={() => toggleUserStatus(row)}
+                                                className={`${row.status === 'active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}`}
+                                            >
+                                                {row.status === 'active' ? 'Desactiver' : 'Activer'}
+                                            </button>
+                                            {row.id !== user?.id && (
+                                                <>
+                                                    <span className="text-gray-300">|</span>
+                                                    <button
+                                                        onClick={() => { setSelectedUser(row); setShowDeleteModal(true); }}
+                                                        className="text-red-600 hover:text-red-900"
+                                                    >
+                                                        Supprimer
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             {/* Tableau de configuration enseignants */}
             <div className="bg-white shadow overflow-hidden sm:rounded-md">
                 <div className="px-6 py-4 border-b border-gray-100 bg-emerald-50/40">
                     <h2 className="text-sm font-semibold text-emerald-800 uppercase tracking-wider">Configuration export ESP32</h2>
                     <p className="text-sm text-emerald-700 mt-1">
                         Format: matricule, nom, departement, semestre, niveaux enseignes, matiere enseignee.
+                    </p>
+                    <p className="text-xs text-emerald-700/80 mt-1">
+                        Cette section se charge uniquement lors d'un export ou d'une publication pour garder la page admin reactive.
                     </p>
                 </div>
                 <div className="overflow-x-auto">
@@ -592,6 +681,18 @@ export default function AdminUsers() {
                     </table>
                 </div>
             </div>
+
+            {filteredUsers.length === 0 && !loading && (
+                <div className="text-center py-12">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.121 17.804A8.966 8.966 0 0112 15c2.125 0 4.078.737 5.613 1.969M15 11a3 3 0 11-6 0 3 3 0 016 0zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun utilisateur trouve</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                        Aucun utilisateur ne correspond a vos criteres de recherche.
+                    </p>
+                </div>
+            )}
 
             {((configLoaded && filteredTeacherConfigs.length === 0) || configLoading) && (
                 <div className="text-center py-12">
