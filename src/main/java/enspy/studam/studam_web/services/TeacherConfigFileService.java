@@ -48,7 +48,8 @@ public class TeacherConfigFileService {
     if (rawText == null || rawText.isBlank()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Configuration text is empty");
     }
-    StoredTeacherConfig stored = new StoredTeacherConfig(rawText, MANUAL_SOURCE, OffsetDateTime.now());
+    String normalizedRawText = normalizePublishedRawConfig(rawText);
+    StoredTeacherConfig stored = new StoredTeacherConfig(normalizedRawText, MANUAL_SOURCE, OffsetDateTime.now());
     publishedConfig = stored;
     return stored;
   }
@@ -71,6 +72,103 @@ public class TeacherConfigFileService {
       builder.append(teacherLine).append('\n');
     }
     return builder.toString();
+  }
+
+  private String normalizePublishedRawConfig(String rawText) {
+    String[] lines = rawText.replace("\r\n", "\n").replace('\r', '\n').split("\n", -1);
+    List<String> normalizedLines = new ArrayList<>();
+
+    for (String rawLine : lines) {
+      String line = rawLine == null ? "" : rawLine.trim();
+      if (line.isEmpty()) {
+        continue;
+      }
+      if (line.startsWith("#")) {
+        continue;
+      }
+      normalizedLines.add(normalizeTeacherConfigLine(line));
+    }
+
+    StringBuilder builder = new StringBuilder();
+    builder.append("#FORMAT=PROF_CONFIG_V1\n");
+    builder.append("#MATRICULE;NOM_COMPLET;DEPARTEMENTS;AFFECTATIONS\n");
+    builder.append("#DEPARTEMENTS: GIND=genie_industriel, GI=genie_informatique, GEL=genie_electrique\n");
+    for (String normalizedLine : normalizedLines) {
+      builder.append(normalizedLine).append('\n');
+    }
+    return builder.toString();
+  }
+
+  private String normalizeTeacherConfigLine(String line) {
+    String[] parts = line.split(";", 4);
+    String matricule = parts.length > 0 ? cleanField(parts[0]) : "";
+    String fullName = parts.length > 1 ? cleanField(parts[1]) : "";
+    String assignmentsPart = parts.length > 3 ? parts[3].trim() : "";
+
+    LinkedHashSet<String> normalizedAssignments = new LinkedHashSet<>();
+    Map<String, Map<Integer, TreeSet<String>>> departmentLevelSemesters = new LinkedHashMap<>();
+
+    int start = 0;
+    while (start < assignmentsPart.length()) {
+      int bar = assignmentsPart.indexOf('|', start);
+      String assignment = (bar >= 0) ? assignmentsPart.substring(start, bar) : assignmentsPart.substring(start);
+      assignment = assignment.trim();
+
+      int p1 = assignment.indexOf(':');
+      int p2 = assignment.indexOf(':', p1 + 1);
+      int p3 = assignment.indexOf(':', p2 + 1);
+      if (p1 > 0 && p2 > p1 && p3 > p2) {
+        String departmentCode = cleanField(assignment.substring(0, p1));
+        String rawLevel = assignment.substring(p1 + 1, p2).trim();
+        String semester = normalizeSemester(assignment.substring(p2 + 1, p3));
+        String subjectName = cleanField(assignment.substring(p3 + 1));
+        Integer level = normalizeLevel(rawLevel);
+
+        if (!departmentCode.isBlank() && level != null && !subjectName.isBlank()) {
+          normalizedAssignments.add(departmentCode + ":" + level + ":" + semester + ":" + subjectName);
+          departmentLevelSemesters
+              .computeIfAbsent(departmentCode, key -> new LinkedHashMap<>())
+              .computeIfAbsent(level, key -> new TreeSet<>())
+              .add(semester);
+        }
+      }
+
+      if (bar < 0) {
+        break;
+      }
+      start = bar + 1;
+    }
+
+    if (normalizedAssignments.isEmpty()) {
+      return String.join(";",
+          matricule,
+          fullName,
+          parts.length > 2 ? cleanField(parts[2]) : "",
+          assignmentsPart);
+    }
+
+    List<String> departmentParts = new ArrayList<>();
+    for (Map.Entry<String, Map<Integer, TreeSet<String>>> entry : departmentLevelSemesters.entrySet()) {
+      departmentParts.add(buildDepartmentsPart(entry.getKey(), entry.getValue()));
+    }
+
+    return String.join(";",
+        matricule,
+        fullName,
+        String.join("|", departmentParts),
+        String.join("|", normalizedAssignments));
+  }
+
+  private Integer normalizeLevel(String rawLevel) {
+    if (rawLevel == null || rawLevel.isBlank()) {
+      return null;
+    }
+
+    Matcher matcher = LEVEL_PATTERN.matcher(rawLevel.trim().toUpperCase());
+    if (matcher.find()) {
+      return Integer.parseInt(matcher.group(1));
+    }
+    return null;
   }
 
   private String buildTeacherLine(User teacher) {
