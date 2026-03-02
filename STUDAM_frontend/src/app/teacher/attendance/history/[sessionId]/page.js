@@ -43,17 +43,25 @@ export default function AttendanceSessionDetailPage() {
             const className = sessionMeta?.className || sessionMeta?.clazzName || sessionMeta?.timetable?.clazz?.name || '';
             const totalStudents = sessionMeta?.totalStudents || sessionMeta?.total || (sessionMeta?.totalPresent || 0);
 
-            const mappedAttendances = (Array.isArray(sessionAttendances) ? sessionAttendances : []).map((attendance) => {
-                const student = attendance.student || attendance.studentDTO || attendance.studentResponse || {};
-                return {
-                    id: attendance.attendanceId || attendance.id,
-                    matricule: student.matricule || attendance.studentMatricule || '',
-                    name: student.name || attendance.studentName || '',
-                    email: student.email || '',
-                    status: attendance.attendanceStatus || attendance.status,
-                    timestamp: attendance.presenceLoggedAt || attendance.loggedAt || sessionDate,
-                };
-            });
+            const mappedAttendances = Array.from(
+                new Map(
+                    (Array.isArray(sessionAttendances) ? sessionAttendances : [])
+                        .map((attendance) => {
+                            const student = attendance.student || attendance.studentDTO || attendance.studentResponse || {};
+                            const attendanceId = attendance.attendanceId ?? attendance.id ?? null;
+                            return {
+                                id: attendanceId,
+                                matricule: student.matricule || attendance.studentMatricule || '',
+                                name: student.name || attendance.studentName || '',
+                                email: student.email || '',
+                                status: attendance.attendanceStatus || attendance.status,
+                                timestamp: attendance.presenceLoggedAt || attendance.loggedAt || sessionDate,
+                            };
+                        })
+                        .filter((attendance) => attendance.id !== null && attendance.id !== undefined)
+                        .map((attendance) => [String(attendance.id), attendance])
+                ).values()
+            );
 
             setSessionDetails({
                 id: sessionMeta?.attendanceSessionId || sessionMeta?.sessionId || sessionMeta?.id || parseInt(sessionId, 10),
@@ -63,10 +71,12 @@ export default function AttendanceSessionDetailPage() {
                 courseCode: subjectCode,
                 className,
                 method: sessionMeta?.method || sessionMeta?.attendanceMethod || 'automatic',
-                totalStudents: totalStudents || mappedAttendances.length,
+                totalStudents: mappedAttendances.length || totalStudents || 0,
             });
 
             setStudentsAttendance(mappedAttendances);
+            setModifiedAttendances({});
+            setHasChanges(false);
 
         } catch (error) {
             toast.error('Erreur lors du chargement des détails de la session');
@@ -268,7 +278,7 @@ export default function AttendanceSessionDetailPage() {
                         <div>
                             <h2 className="text-lg font-semibold text-gray-900">Feuille de Présence</h2>
                             <p className="text-sm text-gray-600 mt-1">
-                                {studentsAttendance.length} étudiant(s) • Cliquez sur les statuts pour les modifier
+                                {studentsAttendance.length} étudiant(s) réellement enregistrés pour cette séance
                             </p>
                         </div>
                         {hasChanges && (
@@ -373,6 +383,13 @@ export default function AttendanceSessionDetailPage() {
                                 </tr>
                             );
                         })}
+                        {studentsAttendance.length === 0 && (
+                            <tr>
+                                <td colSpan="4" className="px-6 py-8 text-center text-sm text-gray-500">
+                                    Aucun enregistrement exploitable pour cette séance.
+                                </td>
+                            </tr>
+                        )}
                         </tbody>
                     </table>
                 </div>
@@ -398,7 +415,7 @@ export default function AttendanceSessionDetailPage() {
                     <div>
                         <h4 className="font-medium text-gray-900 mb-2">Bonnes pratiques</h4>
                         <ul className="space-y-2 text-sm text-gray-600">
-                            <li>• Les modifications sont sauvegardées individuellement</li>
+                            <li>• Seules les présences réellement enregistrées sont affichées ici</li>
                             <li>• Une action ne modifie que l'étudiant sélectionné</li>
                             <li>• Vous pouvez imprimer cette feuille pour archivage</li>
                         </ul>
