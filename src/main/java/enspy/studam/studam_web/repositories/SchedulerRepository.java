@@ -34,4 +34,12 @@ public interface SchedulerRepository extends JpaRepository<Schedule, Integer> {
 
   @Query("SELECT s FROM Schedule s JOIN s.timetable t WHERE t.clazz = :clazz")
   List<Schedule> findByClass(Class clazz);
+
+  @Query("SELECT s FROM Schedule s WHERE s.teacher = :teacher AND s.subject = :subject "
+      + "AND s.day = :dayOfWeek AND :time >= s.startHour AND :time <= s.endHour")
+  List<Schedule> findActiveSchedulesByTeacherAndSubject(
+      @Param("teacher") User teacher,
+      @Param("subject") Subject subject,
+      @Param("dayOfWeek") DayOfWeek dayOfWeek,
+      @Param("time") LocalTime time);
 }
