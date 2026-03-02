@@ -789,6 +789,21 @@ String getFieldSemicolon(const String& line, int index) {
   }
 }
 
+int findTopLevelSeparator(const String& text, char separator, int startIndex) {
+  int depth = 0;
+  for (int i = startIndex; i < text.length(); i++) {
+    char c = text.charAt(i);
+    if (c == '(') {
+      depth++;
+    } else if (c == ')') {
+      if (depth > 0) depth--;
+    } else if (c == separator && depth == 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 void resetAddTeacherMatiereState() {
   addTeacherMatiereMode = false;
   addTeacherMatiereFingerId = 0;
@@ -816,7 +831,7 @@ void setManualDeptChoices() {
 String deptSpecForCode(const String& deptField, const String& code) {
   int start = 0;
   while (start < deptField.length()) {
-    int bar = deptField.indexOf('|', start);
+    int bar = findTopLevelSeparator(deptField, '|', start);
     String part = (bar >= 0) ? deptField.substring(start, bar) : deptField.substring(start);
     part.trim();
     if (part.startsWith(code + "(") && part.endsWith(")")) {
@@ -832,7 +847,7 @@ void parseDeptCodes(const String& deptField) {
   v2_deptCount = 0;
   int start = 0;
   while (start < deptField.length() && v2_deptCount < 10) {
-    int bar = deptField.indexOf('|', start);
+    int bar = findTopLevelSeparator(deptField, '|', start);
     String part = (bar >= 0) ? deptField.substring(start, bar) : deptField.substring(start);
     part.trim();
     if (part.length() > 0) {
