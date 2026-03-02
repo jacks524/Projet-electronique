@@ -3,6 +3,7 @@ package enspy.studam.studam_web.dto.requestDTO;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import java.sql.Date;
+import java.util.List;
 
 @Data
 public class StudentRequestDTO {
@@ -30,4 +31,6 @@ public class StudentRequestDTO {
     private Integer classId;
 
     private String className;
+
+    private List<StudentCatchUpAssignmentRequestDTO> catchUpAssignments;
 }

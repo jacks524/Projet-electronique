@@ -1,14 +1,20 @@
 package enspy.studam.studam_web.services;
 
 import enspy.studam.studam_web.dto.requestDTO.StudentRequestDTO;
+import enspy.studam.studam_web.dto.requestDTO.StudentCatchUpAssignmentRequestDTO;
+import enspy.studam.studam_web.dto.responseDTO.StudentCatchUpAssignmentResponseDTO;
 import enspy.studam.studam_web.dto.responseDTO.ImportStudentsResponseDTO;
 import enspy.studam.studam_web.dto.responseDTO.StudentResponseDTO;
 import enspy.studam.studam_web.mappers.StudentMapper;
 import enspy.studam.studam_web.models.Student;
 import enspy.studam.studam_web.models.Class;
+import enspy.studam.studam_web.models.StudentCatchUpAssignment;
+import enspy.studam.studam_web.models.Subject;
 import enspy.studam.studam_web.repositories.AttendanceRepository;
 import enspy.studam.studam_web.repositories.StudentRepository;
+import enspy.studam.studam_web.repositories.StudentCatchUpAssignmentRepository;
 import enspy.studam.studam_web.services.lookup.ClassLookupService;
+import enspy.studam.studam_web.services.lookup.SubjectLookupService;
 import enspy.studam.studam_web.repositories.ClassRepository;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -35,7 +41,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +65,10 @@ public class StudentService {
     private ClassLookupService classLookupService;
     @Autowired
     private WebSocketEventPublisher webSocketEventPublisher;
+    @Autowired
+    private SubjectLookupService subjectLookupService;
+    @Autowired
+    private StudentCatchUpAssignmentRepository studentCatchUpAssignmentRepository;
 
     /**
      * Resolves a Class entity from StudentRequestDTO.
@@ -67,20 +81,25 @@ public class StudentService {
      *                                 className is provided
      */
     private Class resolveClass(StudentRequestDTO dto) {
-        if (dto.getClassId() != null) {
-            return classLookupService.getClassById(dto.getClassId());
+        return resolveClass(dto.getClassId(), dto.getClassName());
+    }
+
+    private Class resolveClass(Integer classId, String className) {
+        if (classId != null) {
+            return classLookupService.getClassById(classId);
         }
-        if (dto.getClassName() != null && !dto.getClassName().isEmpty()) {
-            return classRepository.findByName(dto.getClassName())
+        if (className != null && !className.isEmpty()) {
+            return classRepository.findByName(className)
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.NOT_FOUND,
-                            "Class not found with name: " + dto.getClassName()));
+                            "Class not found with name: " + className));
         }
         throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Either classId or className must be provided");
     }
 
+    @Transactional
     public StudentResponseDTO createStudent(StudentRequestDTO dto) {
         Class classe = resolveClass(dto);
 
@@ -99,12 +118,14 @@ public class StudentService {
         student.setClasses(classe);
 
         Student savedStudent = studentRepository.save(student);
+        syncCatchUpAssignments(savedStudent, classe, dto.getCatchUpAssignments());
+        savedStudent = studentRepository.save(savedStudent);
         publishStudentEvent("student.created", savedStudent);
-        return StudentMapper.toDTO(savedStudent);
+        return toStudentResponse(savedStudent);
     }
 
     public List<StudentResponseDTO> getAllStudents() {
-        return studentRepository.findAll().stream().map(StudentMapper::toDTO).collect(Collectors.toList());
+        return studentRepository.findAll().stream().map(this::toStudentResponse).collect(Collectors.toList());
     }
 
     public Student getStudentById(int id) {
@@ -115,21 +136,29 @@ public class StudentService {
     }
 
     public List<StudentResponseDTO> getStudentsByName(String name) {
-        return studentRepository.findByNameContainingIgnoreCase(name).stream().map(StudentMapper::toDTO)
+        return studentRepository.findByNameContainingIgnoreCase(name).stream().map(this::toStudentResponse)
                 .collect(Collectors.toList());
     }
 
     public List<StudentResponseDTO> getStudentsByClass(int classId) {
-        return studentRepository.findByClasses_ClassId(classId).stream().map(StudentMapper::toDTO)
+        Class clazz = classLookupService.getClassById(classId);
+        return studentRepository.findDistinctByPrimaryOrCatchUpClass(clazz).stream().map(this::toStudentResponse)
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public StudentResponseDTO updateStudent(int id, StudentRequestDTO dto) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Student not found with id: " + id));
         Class classe = resolveClass(dto);
+
+        if (!student.getMatricule().equals(dto.getMatricule())
+                && this.studentRepository.existsByMatricule(dto.getMatricule())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Student with matricule '" + dto.getMatricule() + "' already exists.");
+        }
 
         student.setMatricule(dto.getMatricule());
         student.setName(dto.getName());
@@ -138,10 +167,11 @@ public class StudentService {
         student.setEmail(dto.getEmail());
         student.setPhoneNumber(dto.getPhoneNumber());
         student.setClasses(classe);
+        syncCatchUpAssignments(student, classe, dto.getCatchUpAssignments());
 
         Student updatedStudent = studentRepository.save(student);
         publishStudentEvent("student.updated", updatedStudent);
-        return StudentMapper.toDTO(updatedStudent);
+        return toStudentResponse(updatedStudent);
     }
 
     @Transactional
@@ -154,6 +184,7 @@ public class StudentService {
         Student student = studentRepository.findById(id).orElse(null);
         if (student != null) {
             attendanceRepository.deleteByStudent(student);
+            studentCatchUpAssignmentRepository.deleteByStudent(student);
         }
         studentRepository.deleteById(id);
         if (student != null) {
@@ -310,7 +341,7 @@ public class StudentService {
     public Page<Student> getStudentsByClass(int classId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Class clazz = classLookupService.getClassById(classId);
-        return studentRepository.findByClasses(clazz, pageable);
+        return studentRepository.findDistinctByPrimaryOrCatchUpClass(clazz, pageable);
     }
 
     private void publishStudentEvent(String type, Student student) {
@@ -320,5 +351,116 @@ public class StudentService {
         payload.put("name", student.getName());
         payload.put("classId", student.getClasses() != null ? student.getClasses().getClassId() : null);
         webSocketEventPublisher.publish(type, payload);
+    }
+
+    private void syncCatchUpAssignments(Student student, Class primaryClass,
+            List<StudentCatchUpAssignmentRequestDTO> catchUpRequests) {
+        studentCatchUpAssignmentRepository.deleteByStudent(student);
+
+        if (catchUpRequests == null || catchUpRequests.isEmpty()) {
+            student.setCatchUpAssignments(new ArrayList<>());
+            return;
+        }
+
+        List<StudentCatchUpAssignment> assignments = new ArrayList<>();
+        Set<String> dedup = new LinkedHashSet<>();
+        for (StudentCatchUpAssignmentRequestDTO request : catchUpRequests) {
+            Class catchUpClass = resolveClass(request.getClassId(), request.getClassName());
+            validateCatchUpClass(primaryClass, catchUpClass);
+
+            if (request.getSubjectIds() == null || request.getSubjectIds().isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Each catch-up class must contain at least one subject");
+            }
+
+            for (Integer subjectId : request.getSubjectIds()) {
+                Subject subject = subjectLookupService.getSubjectById(subjectId);
+                validateCatchUpSubject(primaryClass, catchUpClass, subject);
+
+                String key = catchUpClass.getClassId() + ":" + subject.getSubjectId();
+                if (!dedup.add(key)) {
+                    continue;
+                }
+
+                StudentCatchUpAssignment assignment = new StudentCatchUpAssignment();
+                assignment.setStudent(student);
+                assignment.setClazz(catchUpClass);
+                assignment.setSubject(subject);
+                assignments.add(assignment);
+            }
+        }
+
+        student.setCatchUpAssignments(assignments);
+    }
+
+    private void validateCatchUpClass(Class primaryClass, Class catchUpClass) {
+        if (primaryClass == null || primaryClass.getDepartment() == null
+                || catchUpClass == null || catchUpClass.getDepartment() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Primary class and catch-up classes must belong to a department");
+        }
+
+        if (Objects.equals(primaryClass.getClassId(), catchUpClass.getClassId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Catch-up class must be different from the student's primary class");
+        }
+
+        if (!Objects.equals(primaryClass.getDepartment().getDepartmentId(),
+                catchUpClass.getDepartment().getDepartmentId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Catch-up classes must belong to the same department as the student's primary class");
+        }
+    }
+
+    private void validateCatchUpSubject(Class primaryClass, Class catchUpClass, Subject subject) {
+        if (subject.getDepartment() == null || catchUpClass.getDepartment() == null
+                || !Objects.equals(subject.getDepartment().getDepartmentId(),
+                        catchUpClass.getDepartment().getDepartmentId())
+                || !Objects.equals(subject.getDepartment().getDepartmentId(),
+                        primaryClass.getDepartment().getDepartmentId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Catch-up subjects must belong to the same department as the student");
+        }
+
+        boolean subjectBelongsToClass = catchUpClass.getSubjects() != null
+                && catchUpClass.getSubjects().stream()
+                        .anyMatch(classSubject -> classSubject.getSubjectId() == subject.getSubjectId());
+        if (!subjectBelongsToClass) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Subject '" + subject.getName() + "' does not belong to class '" + catchUpClass.getName() + "'");
+        }
+    }
+
+    private StudentResponseDTO toStudentResponse(Student student) {
+        StudentResponseDTO dto = StudentMapper.toDTO(student);
+        dto.setCatchUpAssignments(buildCatchUpResponse(student));
+        return dto;
+    }
+
+    private List<StudentCatchUpAssignmentResponseDTO> buildCatchUpResponse(Student student) {
+        Map<Integer, StudentCatchUpAssignmentResponseDTO> groupedAssignments = new LinkedHashMap<>();
+        if (student.getCatchUpAssignments() == null) {
+            return new ArrayList<>();
+        }
+
+        for (StudentCatchUpAssignment assignment : student.getCatchUpAssignments()) {
+            if (assignment.getClazz() == null || assignment.getSubject() == null) {
+                continue;
+            }
+
+            StudentCatchUpAssignmentResponseDTO grouped = groupedAssignments.computeIfAbsent(
+                    assignment.getClazz().getClassId(),
+                    ignored -> {
+                        StudentCatchUpAssignmentResponseDTO item = new StudentCatchUpAssignmentResponseDTO();
+                        item.setClassId(assignment.getClazz().getClassId());
+                        item.setClassName(assignment.getClazz().getName());
+                        return item;
+                    });
+
+            grouped.getSubjectIds().add(assignment.getSubject().getSubjectId());
+            grouped.getSubjectNames().add(assignment.getSubject().getName());
+        }
+
+        return new ArrayList<>(groupedAssignments.values());
     }
 }

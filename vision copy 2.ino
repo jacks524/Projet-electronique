@@ -117,6 +117,8 @@ void startRemoteVerificationSession(const String& teacherMatricule, const String
 String extractJsonString(const String& json, const String& key);
 long extractJsonLong(const String& json, const String& key, long fallbackValue = -1);
 String normalizeSubjectLabel(const String& raw);
+bool readStableTouchRaw(int& rawX, int& rawY);
+void mapTouchToScreen(int rawX, int rawY, int& x, int& y);
 void resetAddTeacherMatiereState();
 String buildMergedStructuredTeacherData(const String& existingData, const String& dep, int level, const String& sem, const String& selected);
 String buildDeptFieldFromAffectField(const String& affectField);
@@ -158,6 +160,8 @@ bool wasTouched = false;
 // Dernier point touch (pour fiabiliser les clics)
 int lastTouchRawX = 0;
 int lastTouchRawY = 0;
+const int TOUCH_SAMPLE_COUNT = 3;
+const int TOUCH_STABILITY_DELTA = 120;
 String selectedMatieres = "";
 
 // === VARIABLES RECHERCHE ===
@@ -1345,6 +1349,49 @@ bool wifiEnsureConnected(unsigned long timeoutMs) {
   }
   wifiLogStatus("wifiEnsureConnected");
   return (WiFi.status() == WL_CONNECTED);
+}
+
+bool readStableTouchRaw(int& rawX, int& rawY) {
+  if (!touch.touched()) return false;
+
+  long sumX = 0;
+  long sumY = 0;
+  int minX = 4096;
+  int minY = 4096;
+  int maxX = 0;
+  int maxY = 0;
+  int samples = 0;
+
+  for (int i = 0; i < TOUCH_SAMPLE_COUNT; i++) {
+    if (!touch.touched()) break;
+
+    TS_Point p = touch.getPoint();
+    sumX += p.x;
+    sumY += p.y;
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+    samples++;
+    delay(2);
+  }
+
+  if (samples == 0) return false;
+
+  if ((maxX - minX) > TOUCH_STABILITY_DELTA || (maxY - minY) > TOUCH_STABILITY_DELTA) {
+    return false;
+  }
+
+  rawX = sumX / samples;
+  rawY = sumY / samples;
+  return true;
+}
+
+void mapTouchToScreen(int rawX, int rawY, int& x, int& y) {
+  x = map(rawX, 3900, 200, 0, 320);
+  y = map(rawY, 3900, 200, 0, 240);
+  x = constrain(x, 0, 319);
+  y = constrain(y, 0, 239);
 }
 
 String extractJsonString(const String& json, const String& key) {
@@ -2752,22 +2799,22 @@ void loop() {
     wifiStartBackgroundConnection();
   }
   
-  bool isTouched = touch.touched();
-  TS_Point p;
+  bool isTouched = false;
   int x = 0, y = 0;
 
   // Lire le point pendant l'appui (plus fiable), puis utiliser la derniere position au relachement
-  if (isTouched) {
+  int rawX = 0;
+  int rawY = 0;
+  if (readStableTouchRaw(rawX, rawY)) {
+    isTouched = true;
     lastLocalActivityMs = millis();
-    p = touch.getPoint();
-    lastTouchRawX = p.x;
-    lastTouchRawY = p.y;
+    lastTouchRawX = rawX;
+    lastTouchRawY = rawY;
   }
 
   if (wasTouched && !isTouched) {
     lastLocalActivityMs = millis();
-    x = map(lastTouchRawX, 3900, 200, 0, 320);
-    y = map(lastTouchRawY, 3900, 200, 0, 240);
+    mapTouchToScreen(lastTouchRawX, lastTouchRawY, x, y);
   }
   
   // === MODE MENU PRINCIPAL ===

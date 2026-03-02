@@ -3,8 +3,10 @@ package enspy.studam.studam_web.models;
 import java.sql.Date;
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -41,4 +43,7 @@ public class Student {
   // Plusieurs etudiant appartiennent à une classe
   @ManyToOne
   private Class classes;
+
+  @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+  private List<StudentCatchUpAssignment> catchUpAssignments;
 }
