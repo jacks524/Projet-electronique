@@ -31,6 +31,8 @@ enum SystemMode {
   MODE_VERIFICATION_IN_PROGRESS,
   MODE_MAIN_MENU,
   MODE_ENROLL_CHOICE,
+  MODE_ADD_MATIERE_SCAN,
+  MODE_ADD_MATIERE_CONFIRM,
   MODE_PASSWORD,
   MODE_PROF_ENROLL_TYPE,
   MODE_ENROLL,
@@ -67,6 +69,9 @@ String currentDeptField = "";
 String currentAffectField = "";
 String pendingTeacherMatricule = "";
 bool teacherType1EnrollSelection = false;
+bool addTeacherMatiereMode = false;
+int addTeacherMatiereFingerId = 0;
+String addTeacherMatiereMatricule = "";
 
 String v2_selectedDept = "";
 int    v2_selectedLevel = 0;
@@ -111,6 +116,12 @@ void pollRemoteAttendanceLaunch();
 void startRemoteVerificationSession(const String& teacherMatricule, const String& teacherName, const String& subjectName, const String& semester);
 String extractJsonString(const String& json, const String& key);
 long extractJsonLong(const String& json, const String& key, long fallbackValue = -1);
+String normalizeSubjectLabel(const String& raw);
+void resetAddTeacherMatiereState();
+String buildMergedStructuredTeacherData(const String& existingData, const String& dep, int level, const String& sem, const String& selected);
+String buildDeptFieldFromAffectField(const String& affectField);
+String mergeAffectField(const String& affectField, const String& dep, int level, const String& sem, const String& selected);
+void displayAddMatiereConfirm();
 
 // === MODIFICATION ===
 int modifyID = 0;
@@ -170,8 +181,12 @@ unsigned long lastRemoteLaunchPollMs = 0;
 unsigned long lastLocalActivityMs = 0;
 unsigned long lastWifiConnectKickMs = 0;
 const unsigned long REMOTE_LAUNCH_POLL_INTERVAL_MS = 12000;
-const unsigned long REMOTE_LAUNCH_IDLE_BEFORE_POLL_MS = 3000;
+const unsigned long REMOTE_LAUNCH_IDLE_BEFORE_POLL_MS = 15000;
 const unsigned long WIFI_RECONNECT_KICK_INTERVAL_MS = 10000;
+const unsigned long PRESENCE_UPLOAD_RETRY_WINDOW_MS = 60000;
+const unsigned long PRESENCE_UPLOAD_RETRY_DELAY_MS = 3000;
+const unsigned long REMOTE_LAUNCH_HTTP_TIMEOUT_MS = 5000;
+unsigned long lastWifiStatusLogMs = 0;
 
 String availableMatieres[32];
 int availableMatiereCount = 0;
@@ -240,6 +255,7 @@ const char* SUBJECT_CATALOG[] = {
   "GI;3;S2;Introduction a la data science",
   "GI;3;S2;Introduction aux Reseaux",
   "GI;3;S2;Programmation systeme",
+  "GI;4;S1;Electronique",
   "GI;4;S1;Machine Learning",
   "GI;4;S1;Analyse des donnees",
   "GI;4;S1;IHM",
@@ -701,11 +717,12 @@ bool containsCsvValue(const String& csv, const String& value) {
 }
 
 void addAvailableMatiere(const String& value) {
-  if (value.length() == 0 || availableMatiereCount >= 32) return;
+  String normalized = normalizeSubjectLabel(value);
+  if (normalized.length() == 0 || availableMatiereCount >= 32) return;
   for (int i = 0; i < availableMatiereCount; i++) {
-    if (availableMatieres[i] == value) return;
+    if (availableMatieres[i] == normalized) return;
   }
-  availableMatieres[availableMatiereCount++] = value;
+  availableMatieres[availableMatiereCount++] = normalized;
 }
 
 void clearAvailableMatieres() {
@@ -747,6 +764,17 @@ bool teacherDataIsStructured(const String& data) {
   return data.indexOf(';') > 0 && data.indexOf(':') > 0;
 }
 
+String normalizeSubjectLabel(const String& raw) {
+  String value = raw;
+  value.trim();
+
+  if (value == "Grammaire et Langage") return "Grammaire";
+  if (value == "Programmation Web") return "Programmation web";
+  if (value == "Machine learning") return "Machine Learning";
+
+  return value;
+}
+
 String getFieldSemicolon(const String& line, int index) {
   int start = 0;
   int current = 0;
@@ -759,6 +787,12 @@ String getFieldSemicolon(const String& line, int index) {
     start = sep + 1;
     current++;
   }
+}
+
+void resetAddTeacherMatiereState() {
+  addTeacherMatiereMode = false;
+  addTeacherMatiereFingerId = 0;
+  addTeacherMatiereMatricule = "";
 }
 
 void resetV2Selections() {
@@ -888,7 +922,7 @@ void buildMatieresForSelection(const String& affectField, const String& dep, int
       String d = item.substring(0, p1);
       int lvl = item.substring(p1 + 1, p2).toInt();
       String s = item.substring(p2 + 1, p3);
-      String mat = item.substring(p3 + 1);
+      String mat = normalizeSubjectLabel(item.substring(p3 + 1));
       d.trim();
       s.trim();
       mat.trim();
@@ -925,6 +959,163 @@ String buildAffectFieldFromSelection(const String& selected, const String& dep, 
     start = comma + 1;
   }
   return affect;
+}
+
+String mergeAffectField(const String& affectField, const String& dep, int level, const String& sem, const String& selected) {
+  String merged = affectField;
+  int start = 0;
+
+  while (start < selected.length()) {
+    int comma = selected.indexOf(',', start);
+    String mat = (comma >= 0) ? selected.substring(start, comma) : selected.substring(start);
+    mat = normalizeSubjectLabel(mat);
+    mat.trim();
+
+    if (mat.length() > 0) {
+      String entry = dep + ":" + String(level) + ":" + sem + ":" + mat;
+      bool exists = false;
+
+      int affectStart = 0;
+      while (affectStart < affectField.length()) {
+        int bar = affectField.indexOf('|', affectStart);
+        String item = (bar >= 0) ? affectField.substring(affectStart, bar) : affectField.substring(affectStart);
+        item.trim();
+        if (item == entry) {
+          exists = true;
+          break;
+        }
+        if (bar < 0) break;
+        affectStart = bar + 1;
+      }
+
+      if (!exists) {
+        if (merged.length() > 0) merged += "|";
+        merged += entry;
+      }
+    }
+
+    if (comma < 0) break;
+    start = comma + 1;
+  }
+
+  return merged;
+}
+
+String buildDeptFieldFromAffectField(const String& affectField) {
+  String deps[20];
+  int levels[20];
+  String sems[20];
+  int tripleCount = 0;
+
+  int start = 0;
+  while (start < affectField.length() && tripleCount < 20) {
+    int bar = affectField.indexOf('|', start);
+    String item = (bar >= 0) ? affectField.substring(start, bar) : affectField.substring(start);
+    item.trim();
+
+    int p1 = item.indexOf(':');
+    int p2 = item.indexOf(':', p1 + 1);
+    int p3 = item.indexOf(':', p2 + 1);
+    if (p1 > 0 && p2 > p1 && p3 > p2) {
+      String dep = item.substring(0, p1);
+      int level = item.substring(p1 + 1, p2).toInt();
+      String sem = item.substring(p2 + 1, p3);
+      dep.trim();
+      sem.trim();
+
+      bool exists = false;
+      for (int i = 0; i < tripleCount; i++) {
+        if (deps[i] == dep && levels[i] == level && sems[i] == sem) {
+          exists = true;
+          break;
+        }
+      }
+
+      if (!exists && dep.length() > 0 && level > 0 && sem.length() > 0) {
+        deps[tripleCount] = dep;
+        levels[tripleCount] = level;
+        sems[tripleCount] = sem;
+        tripleCount++;
+      }
+    }
+
+    if (bar < 0) break;
+    start = bar + 1;
+  }
+
+  String deptField = "";
+  String seenDept[10];
+  int seenDeptCount = 0;
+
+  for (int i = 0; i < tripleCount; i++) {
+    String dep = deps[i];
+    bool deptAlreadyDone = false;
+    for (int d = 0; d < seenDeptCount; d++) {
+      if (seenDept[d] == dep) {
+        deptAlreadyDone = true;
+        break;
+      }
+    }
+    if (deptAlreadyDone) continue;
+
+    seenDept[seenDeptCount++] = dep;
+    if (deptField.length() > 0) deptField += "|";
+    deptField += dep + "(";
+
+    int seenLevels[10];
+    int seenLevelCount = 0;
+    bool firstLevel = true;
+
+    for (int j = 0; j < tripleCount; j++) {
+      if (deps[j] != dep) continue;
+
+      int level = levels[j];
+      bool levelAlreadyDone = false;
+      for (int l = 0; l < seenLevelCount; l++) {
+        if (seenLevels[l] == level) {
+          levelAlreadyDone = true;
+          break;
+        }
+      }
+      if (levelAlreadyDone) continue;
+
+      seenLevels[seenLevelCount++] = level;
+      if (!firstLevel) deptField += ",";
+      firstLevel = false;
+      deptField += String(level) + "(";
+
+      bool firstSem = true;
+      for (int k = 0; k < tripleCount; k++) {
+        if (deps[k] == dep && levels[k] == level) {
+          bool semAlreadyDone = false;
+          for (int m = 0; m < k; m++) {
+            if (deps[m] == dep && levels[m] == level && sems[m] == sems[k]) {
+              semAlreadyDone = true;
+              break;
+            }
+          }
+          if (semAlreadyDone) continue;
+
+          if (!firstSem) deptField += "|";
+          firstSem = false;
+          deptField += sems[k];
+        }
+      }
+
+      deptField += ")";
+    }
+
+    deptField += ")";
+  }
+
+  return deptField;
+}
+
+String buildMergedStructuredTeacherData(const String& existingData, const String& dep, int level, const String& sem, const String& selected) {
+  String existingAffect = teacherDataIsStructured(existingData) ? getTeacherStructuredAffectField(existingData) : "";
+  String mergedAffect = mergeAffectField(existingAffect, dep, level, sem, selected);
+  String mergedDept = buildDeptFieldFromAffectField(mergedAffect);
+  return mergedDept + ";" + mergedAffect;
 }
 
 bool downloadAndSaveConfig() {
@@ -1093,7 +1284,7 @@ long extractJsonLong(const String& json, const String& key, long fallbackValue) 
 void startRemoteVerificationSession(const String& teacherMatricule, const String& teacherName, const String& subjectName, const String& semester) {
   currentTeacherMatricule = teacherMatricule;
   currentTeacherName = teacherName.length() > 0 ? teacherName : teacherMatricule;
-  currentMatiere = subjectName;
+  currentMatiere = normalizeSubjectLabel(subjectName);
   currentSemestre = semester;
   currentProfV2Line = "";
   currentDeptField = "";
@@ -1119,24 +1310,28 @@ void startRemoteVerificationSession(const String& teacherMatricule, const String
 void pollRemoteAttendanceLaunch() {
   if (currentMode != MODE_VERIFICATION || verificationActive) return;
 
-  wifiStartBackgroundConnection();
-
   unsigned long now = millis();
   if ((now - lastRemoteLaunchPollMs) < REMOTE_LAUNCH_POLL_INTERVAL_MS) return;
   if ((now - lastLocalActivityMs) < REMOTE_LAUNCH_IDLE_BEFORE_POLL_MS) return;
   lastRemoteLaunchPollMs = now;
 
-  if (!wifiEnsureConnected(6000)) {
-    Serial.println("Polling appel distant: WiFi non connecte");
+  wifiStartBackgroundConnection();
+
+  if (WiFi.status() != WL_CONNECTED) {
+    if ((now - lastWifiStatusLogMs) > 5000) {
+      lastWifiStatusLogMs = now;
+      Serial.println("Polling appel distant: WiFi non connecte");
+    }
     return;
   }
 
   HTTPClient http;
   WiFiClientSecure client;
   client.setInsecure();
-  http.setTimeout(1200);
+  http.setTimeout(REMOTE_LAUNCH_HTTP_TIMEOUT_MS);
 
   if (!http.begin(client, REMOTE_LAUNCH_URL)) {
+    Serial.println("Polling appel distant KO: http.begin");
     return;
   }
 
@@ -1149,6 +1344,9 @@ void pollRemoteAttendanceLaunch() {
   if (code < 200 || code >= 300) {
     Serial.print("Polling appel distant KO, code=");
     Serial.println(code);
+    if (body.length() > 0) {
+      Serial.println(body);
+    }
     return;
   }
 
@@ -1191,6 +1389,12 @@ bool clearPresenceFile() {
 bool sendPresenceFileOverWifi() {
   if (!SPIFFS.exists(FILE_PRESENCE)) return false;
 
+  if (sessionPresentList == "|") {
+    Serial.println("Aucune presence eleve a envoyer");
+    displayCenteredMessage("Aucune presence", "Session vide", ILI9341_ORANGE);
+    return true;
+  }
+
   File file = SPIFFS.open(FILE_PRESENCE, "r");
   if (!file) return false;
 
@@ -1200,49 +1404,70 @@ bool sendPresenceFileOverWifi() {
   payload.trim();
   if (payload.length() == 0) return false;
 
-  // Notif: transfert commence
-  displayCenteredMessage("Transfert en cours", "Connexion WiFi...", ILI9341_CYAN);
-
-  if (!wifiEnsureConnected(20000)) {
-    displayCenteredMessage("Transfert echoue", "WiFi non connecte", ILI9341_RED);
-    return false;
-  }
-
-  displayCenteredMessage("Transfert en cours", "Envoi vers serveur...", ILI9341_CYAN);
-
-  HTTPClient http;
-  WiFiClientSecure client;
-  client.setInsecure();               // OK si tu n'utilises pas de certificat CA
-
-  http.setTimeout(15000);             // evite blocage long -> watchdog
-  if (!http.begin(client, BACKEND_URL)) {
-    displayCenteredMessage("Transfert echoue", "HTTP begin error", ILI9341_RED);
-    return false;
-  }
+  unsigned long retryStartMs = millis();
+  int attempt = 0;
+  int lastCode = -999;
+  String lastResponseBody = "";
+  bool ok = false;
 
   Serial.println("===== TXT ENVOYE =====");
   Serial.println(payload);
   Serial.println("======================");
 
-  http.addHeader("Content-Type", "text/plain");
-  int code = http.POST(payload);
-  String responseBody = http.getString();
-  http.end();
+  while ((millis() - retryStartMs) < PRESENCE_UPLOAD_RETRY_WINDOW_MS) {
+    attempt++;
 
-  // Politique: couper le WiFi apres tentative pour economiser l'energie
+    displayCenteredMessage("Transfert en cours", "Tentative " + String(attempt), ILI9341_CYAN);
+
+    if (!wifiEnsureConnected(20000)) {
+      lastCode = -1;
+      lastResponseBody = "WiFi non connecte";
+      Serial.println("Tentative envoi KO: WiFi non connecte");
+    } else {
+      HTTPClient http;
+      WiFiClientSecure client;
+      client.setInsecure();
+
+      http.setTimeout(15000);
+      if (!http.begin(client, BACKEND_URL)) {
+        lastCode = -2;
+        lastResponseBody = "HTTP begin error";
+        Serial.println("Tentative envoi KO: HTTP begin error");
+      } else {
+        http.addHeader("Content-Type", "text/plain");
+        lastCode = http.POST(payload);
+        lastResponseBody = http.getString();
+        http.end();
+
+        Serial.print("Tentative ");
+        Serial.print(attempt);
+        Serial.print(" HTTP CODE: ");
+        Serial.println(lastCode);
+        Serial.print("Tentative ");
+        Serial.print(attempt);
+        Serial.print(" HTTP BODY: ");
+        Serial.println(lastResponseBody);
+
+        ok = (lastCode >= 200 && lastCode < 300);
+        if (ok) break;
+      }
+    }
+
+    displayCenteredMessage("Transfert echoue", "Nouvel essai...", ILI9341_ORANGE);
+    delay(PRESENCE_UPLOAD_RETRY_DELAY_MS);
+  }
+
   WiFi.disconnect(true);
   WiFi.mode(WIFI_OFF);
-
-  bool ok = (code >= 200 && code < 300);
-  Serial.print("HTTP CODE: ");
-  Serial.println(code);
-  Serial.print("HTTP BODY: ");
-  Serial.println(responseBody);
 
   if (ok) {
     displayCenteredMessage("Transfert OK", "Fichier envoye", ILI9341_GREEN);
   } else {
-    displayCenteredMessage("Transfert echoue", "Code HTTP: " + String(code), ILI9341_RED);
+    Serial.print("ECHEC FINAL HTTP CODE: ");
+    Serial.println(lastCode);
+    Serial.print("ECHEC FINAL HTTP BODY: ");
+    Serial.println(lastResponseBody);
+    displayCenteredMessage("Transfert echoue", "Code: " + String(lastCode), ILI9341_RED);
   }
 
   return ok;
@@ -1261,7 +1486,7 @@ void beginVerificationSession() {
     file.print(",");
     file.print(currentTeacherMatricule);
     file.print(",");
-    file.print(currentMatiere);
+    file.print(normalizeSubjectLabel(currentMatiere));
     file.print(",");
     file.println(currentSemestre);
     file.close();
@@ -1485,22 +1710,63 @@ void displayEnrollChoice() {
   
   tft.setTextSize(2);
   tft.setTextColor(ILI9341_CYAN);
-  tft.setCursor(30, 20);
+  tft.setCursor(18, 15);
   tft.print("CHOIX ENREGISTREMENT");
   
-  tft.fillRect(40, 80, 240, 50, ILI9341_BLUE);
-  tft.drawRect(40, 80, 240, 50, ILI9341_WHITE);
+  tft.fillRect(30, 60, 260, 42, ILI9341_BLUE);
+  tft.drawRect(30, 60, 260, 42, ILI9341_WHITE);
   tft.setTextColor(ILI9341_WHITE);
-  tft.setTextSize(3);
-  tft.setCursor(90, 95);
+  tft.setTextSize(2);
+  tft.setCursor(105, 73);
   tft.print("ELEVE");
   
-  tft.fillRect(40, 150, 240, 50, ILI9341_GREEN);
-  tft.drawRect(40, 150, 240, 50, ILI9341_WHITE);
+  tft.fillRect(30, 112, 260, 42, ILI9341_GREEN);
+  tft.drawRect(30, 112, 260, 42, ILI9341_WHITE);
   tft.setTextColor(ILI9341_BLACK);
-  tft.setTextSize(3);
-  tft.setCursor(75, 165);
+  tft.setTextSize(2);
+  tft.setCursor(112, 125);
   tft.print("PROF");
+
+  tft.fillRect(30, 164, 260, 42, ILI9341_ORANGE);
+  tft.drawRect(30, 164, 260, 42, ILI9341_WHITE);
+  tft.setTextColor(ILI9341_BLACK);
+  tft.setTextSize(2);
+  tft.setCursor(55, 177);
+  tft.print("AJOUTER MATIERE");
+
+  tft.setTextSize(1);
+  tft.setTextColor(ILI9341_YELLOW);
+  tft.setCursor(18, 220);
+  tft.print("Ajouter une ou plusieurs matieres a un enseignant local");
+}
+
+void displayAddMatiereConfirm() {
+  tft.fillScreen(ILI9341_BLACK);
+  displayCurrentMode();
+
+  tft.setTextSize(2);
+  tft.setTextColor(ILI9341_GREEN);
+  tft.setCursor(25, 55);
+  tft.print("MATIERE AJOUTEE");
+
+  tft.setTextSize(2);
+  tft.setTextColor(ILI9341_WHITE);
+  tft.setCursor(20, 90);
+  tft.print("Ajouter une autre");
+  tft.setCursor(95, 115);
+  tft.print("matiere ?");
+
+  tft.fillRect(35, 165, 110, 42, ILI9341_GREEN);
+  tft.drawRect(35, 165, 110, 42, ILI9341_WHITE);
+  tft.setTextColor(ILI9341_BLACK);
+  tft.setCursor(72, 178);
+  tft.print("OUI");
+
+  tft.fillRect(175, 165, 110, 42, ILI9341_RED);
+  tft.drawRect(175, 165, 110, 42, ILI9341_WHITE);
+  tft.setTextColor(ILI9341_WHITE);
+  tft.setCursor(185, 178);
+  tft.print("ANNULER");
 }
 
 void displayAdminMenu() {
@@ -1965,7 +2231,7 @@ void displayCurrentMode() {
       tft.setCursor(250, 15);
       tft.print("[ACTIVE]");
     }
-  } else if (currentMode == MODE_ENROLL || currentMode == MODE_ENROLL_CHOICE || currentMode == MODE_PASSWORD || currentMode == MODE_PROF_ENROLL_TYPE) {
+  } else if (currentMode == MODE_ENROLL || currentMode == MODE_ENROLL_CHOICE || currentMode == MODE_ADD_MATIERE_SCAN || currentMode == MODE_ADD_MATIERE_CONFIRM || currentMode == MODE_PASSWORD || currentMode == MODE_PROF_ENROLL_TYPE) {
     tft.print("MODE: ENREGISTREMENT");
   } else if (currentMode >= MODE_ADMIN_PASSWORD && currentMode <= MODE_SEARCH_MATRICULE) {
     tft.print("MODE: ADMINISTRATION");
@@ -2265,6 +2531,7 @@ void checkButton() {
       isEditingMatieres = false;
       teacherEnrollType = 1;
       teacherType1EnrollSelection = false;
+      resetAddTeacherMatiereState();
       pendingTeacherMatricule = "";
       currentTeacherName = "";
       currentProfV2Line = "";
@@ -2363,11 +2630,9 @@ void setup() {
   Serial.println("  Reset: 6 chiffres (123456)");
   Serial.println("  Arret verification: 5 chiffres (12345)\n");
 
-  if (wifiEnsureConnected(15000)) {
-    Serial.println("WiFi connecte au demarrage");
-  } else {
-    Serial.println("WiFi non connecte au demarrage");
-  }
+  wifiStartBackgroundConnection();
+  delay(500);
+  wifiLogStatus("setup");
   
   displayCenteredMessage("SYSTEME DE POINTAGE", "Pret", ILI9341_GREEN);
   delay(2000);
@@ -2439,7 +2704,7 @@ void loop() {
   // === MODE CHOIX ELEVE/PROF ===
   if (currentMode == MODE_ENROLL_CHOICE) {
     if (wasTouched && !isTouched) {
-      if (x >= 40 && x <= 280 && y >= 80 && y <= 130) {
+      if (x >= 30 && x <= 290 && y >= 60 && y <= 102) {
         isTeacherMode = false;
         currentMode = MODE_PASSWORD;
         waitingForPassword = true;
@@ -2457,7 +2722,7 @@ void loop() {
         drawPasswordBox();
         drawKeyboard();
       }
-      else if (x >= 40 && x <= 280 && y >= 150 && y <= 200) {
+      else if (x >= 30 && x <= 290 && y >= 112 && y <= 154) {
         isTeacherMode = true;
         currentMode = MODE_PASSWORD;
         waitingForPassword = true;
@@ -2474,6 +2739,28 @@ void loop() {
         displayCurrentMode();
         drawPasswordBox();
         drawKeyboard();
+      }
+      else if (x >= 30 && x <= 290 && y >= 164 && y <= 206) {
+        resetAddTeacherMatiereState();
+        currentMode = MODE_ADD_MATIERE_SCAN;
+        Serial.println("Choix: AJOUTER MATIERE");
+        displayCenteredMessage("AJOUT MATIERE", "Placez empreinte prof", ILI9341_CYAN);
+      }
+    }
+    wasTouched = isTouched;
+    delay(10);
+    return;
+  }
+
+  if (currentMode == MODE_ADD_MATIERE_CONFIRM) {
+    if (wasTouched && !isTouched) {
+      if (x >= 35 && x <= 145 && y >= 165 && y <= 207) {
+        currentMode = MODE_ADD_MATIERE_SCAN;
+        displayCenteredMessage("AJOUT MATIERE", "Placez empreinte prof", ILI9341_CYAN);
+      } else if (x >= 175 && x <= 285 && y >= 165 && y <= 207) {
+        resetAddTeacherMatiereState();
+        currentMode = MODE_ENROLL_CHOICE;
+        displayEnrollChoice();
       }
     }
     wasTouched = isTouched;
@@ -2881,14 +3168,21 @@ void loop() {
       else if (x >= 110 && x <= 210 && y >= 200 && y <= 230) {
         if (selectedMatieres.length() > 0) {
           if (teacherType1EnrollSelection) {
-            String deptField = buildSingleDeptField(v2_selectedDept, v2_selectedLevel, v2_selectedSem);
-            String affectField = buildAffectFieldFromSelection(selectedMatieres, v2_selectedDept, v2_selectedLevel, v2_selectedSem);
-            String payload = deptField + ";" + affectField;
+            String payload = "";
+            bool success = false;
 
-            if (saveMatricule(enrollID, pendingTeacherMatricule, true, payload)) {
-              displayCenteredMessage("PROF ENREGISTRE!", pendingTeacherMatricule, ILI9341_GREEN);
-              delay(2500);
+            if (addTeacherMatiereMode) {
+              String existingData = getMatieresForTeacher(addTeacherMatiereFingerId);
+              payload = buildMergedStructuredTeacherData(existingData, v2_selectedDept, v2_selectedLevel, v2_selectedSem, selectedMatieres);
+              success = updateMatricule(addTeacherMatiereFingerId, addTeacherMatiereMatricule, true, payload);
+            } else {
+              String deptField = buildSingleDeptField(v2_selectedDept, v2_selectedLevel, v2_selectedSem);
+              String affectField = buildAffectFieldFromSelection(selectedMatieres, v2_selectedDept, v2_selectedLevel, v2_selectedSem);
+              payload = deptField + ";" + affectField;
+              success = saveMatricule(enrollID, pendingTeacherMatricule, true, payload);
+            }
 
+            if (success) {
               waitingForMatricule = false;
               enrollMode = false;
               teacherType1EnrollSelection = false;
@@ -2902,12 +3196,21 @@ void loop() {
 
               listMatricules();
 
-              currentMode = MODE_ENROLL;
-              displayCurrentMode();
-              displayCenteredMessage("Enseignant enregistre!", "Nouvelle empreinte?", ILI9341_GREEN);
-              delay(2000);
-              displayCurrentMode();
-              displayCenteredMessage("Placez empreinte", "a enregistrer", ILI9341_WHITE);
+              if (addTeacherMatiereMode) {
+                displayCenteredMessage("MATIERE AJOUTEE!", addTeacherMatiereMatricule, ILI9341_GREEN);
+                delay(1800);
+                currentMode = MODE_ADD_MATIERE_CONFIRM;
+                displayAddMatiereConfirm();
+              } else {
+                displayCenteredMessage("PROF ENREGISTRE!", pendingTeacherMatricule, ILI9341_GREEN);
+                delay(2500);
+                currentMode = MODE_ENROLL;
+                displayCurrentMode();
+                displayCenteredMessage("Enseignant enregistre!", "Nouvelle empreinte?", ILI9341_GREEN);
+                delay(2000);
+                displayCurrentMode();
+                displayCenteredMessage("Placez empreinte", "a enregistrer", ILI9341_WHITE);
+              }
             } else {
               displayCenteredMessage("Erreur sauvegarde", "", ILI9341_RED);
               delay(2000);
@@ -3070,7 +3373,13 @@ void loop() {
         currentAffectField = "";
         currentProfV2Line = "";
         currentTeacherName = "";
-        if (teacherType1EnrollSelection) {
+        if (addTeacherMatiereMode) {
+          teacherType1EnrollSelection = false;
+          pendingTeacherMatricule = "";
+          currentTeacherMatricule = "";
+          currentMode = MODE_ADD_MATIERE_SCAN;
+          displayCenteredMessage("AJOUT MATIERE", "Placez empreinte prof", ILI9341_CYAN);
+        } else if (teacherType1EnrollSelection) {
           teacherType1EnrollSelection = false;
           pendingTeacherMatricule = "";
           currentMode = MODE_ENROLL;
@@ -3680,6 +3989,65 @@ void loop() {
     }
     return;
   }
+
+  if (currentMode == MODE_ADD_MATIERE_SCAN) {
+    int result = finger.getImage();
+
+    if (result == FINGERPRINT_OK) {
+      displayCenteredMessage("Lecture...", "", ILI9341_YELLOW);
+      delay(500);
+
+      result = finger.image2Tz();
+      if (result == FINGERPRINT_OK) {
+        result = finger.fingerSearch();
+
+        if (result == FINGERPRINT_OK) {
+          String matricule = getMatricule(finger.fingerID);
+          if (matricule.length() == 0 || matricule.indexOf('M') <= 0) {
+            displayCenteredMessage("Empreinte invalide", "Prof requis", ILI9341_RED);
+            delay(2000);
+            displayCenteredMessage("AJOUT MATIERE", "Placez empreinte prof", ILI9341_CYAN);
+            return;
+          }
+
+          if (isFingerIdInProfV2(finger.fingerID)) {
+            displayCenteredMessage("Type 2 non modifie", "Utilisez config distante", ILI9341_ORANGE);
+            delay(2200);
+            displayCenteredMessage("AJOUT MATIERE", "Placez empreinte prof", ILI9341_CYAN);
+            return;
+          }
+
+          String teacherData = getMatieresForTeacher(finger.fingerID);
+          if (!teacherDataIsStructured(teacherData)) {
+            displayCenteredMessage("Prof local ancien", "Reenregistrer en Type 1", ILI9341_ORANGE);
+            delay(2200);
+            displayCenteredMessage("AJOUT MATIERE", "Placez empreinte prof", ILI9341_CYAN);
+            return;
+          }
+
+          addTeacherMatiereMode = true;
+          addTeacherMatiereFingerId = finger.fingerID;
+          addTeacherMatiereMatricule = matricule;
+          pendingTeacherMatricule = matricule;
+          currentTeacherMatricule = matricule;
+          currentTeacherName = matricule;
+          teacherType1EnrollSelection = true;
+          setManualDeptChoices();
+          currentMode = MODE_VERIFICATION_SETUP_V2;
+
+          displayCenteredMessage("PROF DETECTE", matricule, ILI9341_GREEN);
+          delay(1500);
+          displayVerificationV2_Departements();
+        } else {
+          displayCenteredMessage("Empreinte inconnue", "", ILI9341_RED);
+          delay(2000);
+          displayCenteredMessage("AJOUT MATIERE", "Placez empreinte prof", ILI9341_CYAN);
+        }
+      }
+      delay(500);
+    }
+    return;
+  }
   
   // === MODE VERIFICATION ===
   if (currentMode == MODE_VERIFICATION) {
@@ -3758,6 +4126,7 @@ void loop() {
       delay(500);
     }
 
+    wasTouched = isTouched;
     pollRemoteAttendanceLaunch();
     return;
   }
@@ -3826,6 +4195,7 @@ void loop() {
       }
       delay(500);
     }
+    wasTouched = isTouched;
     return;
   }
 
