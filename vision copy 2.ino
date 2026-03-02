@@ -121,6 +121,8 @@ void resetAddTeacherMatiereState();
 String buildMergedStructuredTeacherData(const String& existingData, const String& dep, int level, const String& sem, const String& selected);
 String buildDeptFieldFromAffectField(const String& affectField);
 String mergeAffectField(const String& affectField, const String& dep, int level, const String& sem, const String& selected);
+String normalizeAffectField(const String& affectField);
+String normalizeStructuredTeacherConfigLine(const String& line);
 void displayAddMatiereConfirm();
 
 // === MODIFICATION ===
@@ -639,8 +641,15 @@ bool resetSystem() {
   }
   
   // Supprimer les fichiers
-  String files[] = {FILE_ELEVES, FILE_PROFS, FILE_PRESENCE};
-  for (int i = 0; i < 3; i++) {
+  String files[] = {
+    FILE_ELEVES,
+    FILE_PROFS,
+    FILE_PROFS_V2,
+    FILE_CONFIG,
+    FILE_MATIERES,
+    FILE_PRESENCE
+  };
+  for (int i = 0; i < 6; i++) {
     if (SPIFFS.exists(files[i])) {
       if (!SPIFFS.remove(files[i])) {
         success = false;
@@ -773,6 +782,14 @@ String normalizeSubjectLabel(const String& raw) {
   if (value == "Machine learning") return "Machine Learning";
 
   return value;
+}
+
+int extractLevelNumber(const String& rawLevel) {
+  for (int i = 0; i < rawLevel.length(); i++) {
+    char c = rawLevel.charAt(i);
+    if (c >= '0' && c <= '9') return c - '0';
+  }
+  return 0;
 }
 
 String getFieldSemicolon(const String& line, int index) {
@@ -1016,6 +1033,59 @@ String mergeAffectField(const String& affectField, const String& dep, int level,
   return merged;
 }
 
+String normalizeAffectField(const String& affectField) {
+  String normalized = "";
+  int start = 0;
+
+  while (start < affectField.length()) {
+    int bar = affectField.indexOf('|', start);
+    String item = (bar >= 0) ? affectField.substring(start, bar) : affectField.substring(start);
+    item.trim();
+
+    int p1 = item.indexOf(':');
+    int p2 = item.indexOf(':', p1 + 1);
+    int p3 = item.indexOf(':', p2 + 1);
+    if (p1 > 0 && p2 > p1 && p3 > p2) {
+      String dep = item.substring(0, p1);
+      int level = extractLevelNumber(item.substring(p1 + 1, p2));
+      String sem = item.substring(p2 + 1, p3);
+      String mat = normalizeSubjectLabel(item.substring(p3 + 1));
+      dep.trim();
+      sem.trim();
+      mat.trim();
+
+      if (dep.length() > 0 && level > 0 && sem.length() > 0 && mat.length() > 0) {
+        String entry = dep + ":" + String(level) + ":" + sem + ":" + mat;
+        bool exists = false;
+
+        int existingStart = 0;
+        while (existingStart < normalized.length()) {
+          int existingBar = normalized.indexOf('|', existingStart);
+          String existingItem = (existingBar >= 0) ? normalized.substring(existingStart, existingBar)
+                                                   : normalized.substring(existingStart);
+          existingItem.trim();
+          if (existingItem == entry) {
+            exists = true;
+            break;
+          }
+          if (existingBar < 0) break;
+          existingStart = existingBar + 1;
+        }
+
+        if (!exists) {
+          if (normalized.length() > 0) normalized += "|";
+          normalized += entry;
+        }
+      }
+    }
+
+    if (bar < 0) break;
+    start = bar + 1;
+  }
+
+  return normalized;
+}
+
 String buildDeptFieldFromAffectField(const String& affectField) {
   String deps[20];
   int levels[20];
@@ -1133,6 +1203,22 @@ String buildMergedStructuredTeacherData(const String& existingData, const String
   return mergedDept + ";" + mergedAffect;
 }
 
+String normalizeStructuredTeacherConfigLine(const String& line) {
+  String matricule = getFieldSemicolon(line, 0);
+  String name = getFieldSemicolon(line, 1);
+  String affect = getFieldSemicolon(line, 3);
+
+  matricule.trim();
+  name.trim();
+  affect.trim();
+
+  String normalizedAffect = normalizeAffectField(affect);
+  if (normalizedAffect.length() == 0) return line;
+
+  String dept = buildDeptFieldFromAffectField(normalizedAffect);
+  return matricule + ";" + name + ";" + dept + ";" + normalizedAffect;
+}
+
 bool downloadAndSaveConfig() {
   if (!wifiEnsureConnected(20000)) return false;
 
@@ -1173,7 +1259,7 @@ String findProfLineInConfig(const String& fullMatricule) {
     if (line.length() == 0 || line.startsWith("#")) continue;
     if (getFieldSemicolon(line, 0) == fullMatricule) {
       f.close();
-      return line;
+      return normalizeStructuredTeacherConfigLine(line);
     }
   }
 
@@ -1186,7 +1272,7 @@ bool appendProfV2(int fingerId, const String& configLine) {
   if (!f) return false;
   f.print(fingerId);
   f.print(";");
-  f.println(configLine);
+  f.println(normalizeStructuredTeacherConfigLine(configLine));
   f.close();
   return true;
 }
@@ -1202,7 +1288,11 @@ String findProfV2LineByFingerId(int fingerId) {
     line.trim();
     if (line.startsWith(prefix)) {
       f.close();
-      return line;
+      int firstSep = line.indexOf(';');
+      if (firstSep < 0 || firstSep + 1 >= line.length()) return line;
+      String fingerIdPart = line.substring(0, firstSep);
+      String configLine = line.substring(firstSep + 1);
+      return fingerIdPart + ";" + normalizeStructuredTeacherConfigLine(configLine);
     }
   }
 

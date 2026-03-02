@@ -105,6 +105,14 @@ public class TeacherConfigFileService {
     String fullName = parts.length > 1 ? cleanField(parts[1]) : "";
     String assignmentsPart = parts.length > 3 ? parts[3].trim() : "";
 
+    if (!matricule.isBlank()) {
+      Optional<User> teacher = userRepository.findByMatricule(matricule);
+      if (teacher.isPresent() && teacher.get().getRoles() != null
+          && teacher.get().getRoles().stream().anyMatch(role -> role.getRole() == UserRoleEnum.TEACHER)) {
+        return buildTeacherLine(teacher.get());
+      }
+    }
+
     LinkedHashSet<String> normalizedAssignments = new LinkedHashSet<>();
     Map<String, Map<Integer, TreeSet<String>>> departmentLevelSemesters = new LinkedHashMap<>();
 
