@@ -187,7 +187,10 @@ const downloadSessionCsv = async (sessionId) => {
 
 const updateAttendance = async (attendanceId, updateData) => {
     try {
-        const { data } = await apiClient.put(`/attendances/${attendanceId}`, updateData);
+        const payload = {
+            attendanceStatus: updateData?.attendanceStatus || updateData?.status,
+        };
+        const { data } = await apiClient.put(`/attendance/${attendanceId}`, payload);
         return data;
     } catch {
         throw new Error('La mise a jour de la presence a echoue.');

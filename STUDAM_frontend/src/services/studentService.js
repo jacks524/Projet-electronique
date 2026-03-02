@@ -1,5 +1,32 @@
 import apiClient from '../lib/apiClient';
 
+const normalizeCatchUpAssignments = (assignments) => {
+    if (!Array.isArray(assignments)) return [];
+
+    return assignments
+        .map((assignment) => ({
+            classId: assignment?.classId ?? assignment?.class?.id ?? assignment?.classe?.id ?? null,
+            className: assignment?.className ?? assignment?.class?.name ?? assignment?.classe?.nom ?? '',
+            subjectIds: Array.isArray(assignment?.subjectIds)
+                ? assignment.subjectIds.map((id) => Number(id)).filter((id) => !Number.isNaN(id))
+                : [],
+            subjectNames: Array.isArray(assignment?.subjectNames) ? assignment.subjectNames : [],
+        }))
+        .filter((assignment) => assignment.classId && assignment.subjectIds.length > 0);
+};
+
+const normalizeStudent = (student) => {
+    if (!student) return null;
+
+    return {
+        ...student,
+        studentId: student.studentId ?? student.id ?? null,
+        classId: student.classId ?? student.classe?.id ?? student.class?.id ?? null,
+        className: student.className ?? student.classe?.nom ?? student.class?.name ?? '',
+        catchUpAssignments: normalizeCatchUpAssignments(student.catchUpAssignments),
+    };
+};
+
 const REQUIRED_IMPORT_HEADERS = [
     'matricule',
     'nom',
@@ -129,7 +156,7 @@ const importStudentsFromCsv = async (file, classId) => {
 const getAll = async () => {
     try {
         const { data } = await apiClient.get('/student');
-        return Array.isArray(data) ? data : [];
+        return Array.isArray(data) ? data.map(normalizeStudent) : [];
     } catch (error) {
         if (error.response?.status === 404) return [];
         console.error("Erreur API [getAllStudents]:", error);
@@ -143,10 +170,10 @@ const getByClass = async (classId, { page = 0, size = 2000 } = {}) => {
             params: { page, size },
         });
         if (Array.isArray(data)) {
-            return data;
+            return data.map(normalizeStudent);
         }
         if (data && Array.isArray(data.content)) {
-            return data.content;
+            return data.content.map(normalizeStudent);
         }
         return [];
     } catch (error) {
@@ -159,7 +186,7 @@ const getByClass = async (classId, { page = 0, size = 2000 } = {}) => {
 const create = async (payload) => {
     try {
         const { data } = await apiClient.post('/student', payload);
-        return data;
+        return normalizeStudent(data);
     } catch (error) {
         console.error('Erreur API [createStudent]:', error);
         const responseData = error.response?.data;
@@ -174,10 +201,15 @@ const create = async (payload) => {
 const update = async (studentId, payload) => {
     try {
         const { data } = await apiClient.put(`/student/${studentId}`, payload);
-        return data;
+        return normalizeStudent(data);
     } catch (error) {
         console.error('Erreur API [updateStudent]:', error);
-        throw new Error(error.response?.data?.message || "La mise a jour de l'etudiant a echoue.");
+        const responseData = error.response?.data;
+        const backendMessage =
+            typeof responseData === 'string'
+                ? responseData
+                : responseData?.message || responseData?.error || responseData?.details;
+        throw new Error(backendMessage || "La mise a jour de l'etudiant a echoue.");
     }
 };
 
@@ -185,7 +217,7 @@ const update = async (studentId, payload) => {
 const getById = async (studentId) => {
     try {
         const { data } = await apiClient.get(`/student/${studentId}`);
-        return data;
+        return normalizeStudent(data);
     } catch (error) {
         if (error.response?.status === 404) return null;
         console.error('Erreur API [getStudentById]:', error);

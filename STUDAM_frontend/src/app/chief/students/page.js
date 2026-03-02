@@ -29,6 +29,49 @@ export default function StudentsPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  const mapClass = (classe, fallbackDepartment) => ({
+    id: classe.classId,
+    nom: classe.name,
+    code: classe.code,
+    level: classe.level || classe.code,
+    departement: {
+      id: classe.departementResponseDTO?.departmentId || fallbackDepartment?.departmentId,
+      nom: classe.departementResponseDTO?.name || fallbackDepartment?.name || '',
+    },
+    subjects: Array.isArray(classe.subjects)
+      ? classe.subjects.map((subject) => ({
+          id: subject.subjectId,
+          subjectId: subject.subjectId,
+          name: subject.name,
+          code: subject.code,
+          semester: subject.semester,
+        }))
+      : [],
+  });
+
+  const mapStudent = (student, classesMap) => {
+    const primaryClass = classesMap.get(String(student.classId));
+    return {
+      id: student.studentId,
+      matricule: student.matricule,
+      nom: student.name,
+      email: student.email,
+      phone: student.phoneNumber,
+      classe: primaryClass || null,
+      dateNaissance: student.birthDate,
+      lieuNaissance: student.birthPlace,
+      status: typeof student.active === 'boolean' ? (student.active ? 'active' : 'inactive') : 'active',
+      catchUpAssignments: Array.isArray(student.catchUpAssignments)
+        ? student.catchUpAssignments.map((assignment) => ({
+            classId: assignment.classId,
+            className: assignment.className,
+            subjectIds: assignment.subjectIds || [],
+            subjectNames: assignment.subjectNames || [],
+          }))
+        : [],
+    };
+  };
+
   const resolveDepartment = (departmentsList) => {
     if (user?.departmentIdIfChief) {
       return departmentsList.find((dept) => dept.departmentId === user.departmentIdIfChief);
@@ -75,35 +118,24 @@ export default function StudentsPage() {
       }
 
       const classesData = await classService.getByDepartment(targetDepartment.departmentId);
-      const mappedClasses = classesData.map((classe) => ({
-        id: classe.classId,
-        nom: classe.name,
-        code: classe.code,
-        departement: {
-          id: classe.departementResponseDTO?.departmentId || targetDepartment.departmentId,
-          nom: classe.departementResponseDTO?.name || targetDepartment.name,
-        }
-      }));
+      const mappedClasses = classesData.map((classe) => mapClass(classe, targetDepartment));
+      const classesMap = new Map(mappedClasses.map((classe) => [String(classe.id), classe]));
 
       const studentsByClass = await Promise.all(
         mappedClasses.map(async (classe) => {
           const classStudents = await studentService.getByClass(classe.id, { page: 0, size: 2000 });
-          return classStudents.map((student) => ({
-            id: student.studentId,
-            matricule: student.matricule,
-            nom: student.name,
-            email: student.email,
-            phone: student.phoneNumber,
-            classe,
-            dateNaissance: student.birthDate,
-            lieuNaissance: student.birthPlace,
-            status: typeof student.active === 'boolean' ? (student.active ? 'active' : 'inactive') : 'active',
-          }));
+          return classStudents.map((student) => mapStudent(student, classesMap));
         })
       );
 
       setClasses(mappedClasses);
-      setStudents(studentsByClass.flat());
+      const uniqueStudents = new Map();
+      studentsByClass.flat().forEach((student) => {
+        if (!uniqueStudents.has(student.id)) {
+          uniqueStudents.set(student.id, student);
+        }
+      });
+      setStudents(Array.from(uniqueStudents.values()));
     } catch (error) {
       setErrorMessage(error?.message || 'Erreur lors du chargement des etudiants.');
     } finally {
@@ -151,9 +183,10 @@ export default function StudentsPage() {
         email: studentData.email,
         phoneNumber: studentData.phone || null,
         matricule: studentData.matricule,
-        classId: studentData.classe?.id,
+        classId: studentData.classeId,
         birthDate: studentData.dateNaissance,
         birthPlace: studentData.lieuNaissance || '',
+        catchUpAssignments: studentData.catchUpAssignments,
       };
 
       if (studentData.id) {

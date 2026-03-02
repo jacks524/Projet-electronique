@@ -43,6 +43,12 @@ export default function StudentDetailPage() {
                     name: departmentInfo.name || departmentInfo.nom || '--'
                 }
             },
+            catchUpAssignments: Array.isArray(data.catchUpAssignments)
+                ? data.catchUpAssignments.map((assignment) => ({
+                    className: assignment.className || '--',
+                    subjectNames: Array.isArray(assignment.subjectNames) ? assignment.subjectNames : [],
+                }))
+                : [],
             dateInscription: data.createdDate || data.dateInscription || ''
         };
     };
@@ -236,6 +242,23 @@ export default function StudentDetailPage() {
                                         <dt className="text-sm font-medium text-gray-500">Date d'inscription</dt>
                                         <dd className="text-sm text-gray-900 mt-1">
                                             {student.dateInscription ? new Date(student.dateInscription).toLocaleDateString('fr-FR') : '--'}
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-500">Rattrapages</dt>
+                                        <dd className="text-sm text-gray-900 mt-1">
+                                            {student.catchUpAssignments.length > 0 ? (
+                                                <div className="space-y-2">
+                                                    {student.catchUpAssignments.map((assignment) => (
+                                                        <div key={`${assignment.className}-${assignment.subjectNames.join('-')}`} className="rounded-lg bg-violet-50 px-3 py-2">
+                                                            <div className="font-medium text-violet-900">{assignment.className}</div>
+                                                            <div className="text-xs text-violet-700">{assignment.subjectNames.join(', ')}</div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                '--'
+                                            )}
                                         </dd>
                                     </div>
                                 </dl>

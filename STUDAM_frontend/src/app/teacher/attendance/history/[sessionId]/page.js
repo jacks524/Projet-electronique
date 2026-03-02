@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthContext } from '../../../../../context/authContext';
 import attendanceService from '../../../../../services/attendanceService';
@@ -9,8 +9,7 @@ import toast from 'react-hot-toast';
 
 export default function AttendanceSessionDetailPage() {
     const params = useParams();
-    const router = useRouter();
-    const { user, isAuthenticated, loading: authLoading } = useAuthContext();
+    const { user, loading: authLoading } = useAuthContext();
     const sessionId = params.sessionId;
 
     const [sessionDetails, setSessionDetails] = useState(null);
@@ -52,7 +51,6 @@ export default function AttendanceSessionDetailPage() {
                     name: student.name || attendance.studentName || '',
                     email: student.email || '',
                     status: attendance.attendanceStatus || attendance.status,
-                    notes: attendance.notes || '',
                     timestamp: attendance.presenceLoggedAt || attendance.loggedAt || sessionDate,
                 };
             });
@@ -85,17 +83,6 @@ export default function AttendanceSessionDetailPage() {
         setHasChanges(true);
     };
 
-    const handleNotesChange = (attendanceId, notes) => {
-        setModifiedAttendances(prev => ({
-            ...prev,
-            [attendanceId]: {
-                ...prev[attendanceId],
-                notes
-            }
-        }));
-        setHasChanges(true);
-    };
-
     const getCurrentStatus = (attendance) => {
         if (modifiedAttendances[attendance.id]) {
             return typeof modifiedAttendances[attendance.id] === 'string'
@@ -105,21 +92,13 @@ export default function AttendanceSessionDetailPage() {
         return attendance.status;
     };
 
-    const getCurrentNotes = (attendance) => {
-        if (modifiedAttendances[attendance.id] && modifiedAttendances[attendance.id].notes !== undefined) {
-            return modifiedAttendances[attendance.id].notes;
-        }
-        return attendance.notes || '';
-    };
-
     const handleSaveChanges = async () => {
         if (!hasChanges) return;
         setSaving(true);
 
         const updatePromises = Object.entries(modifiedAttendances).map(([attendanceId, modification]) => {
             const payload = {
-                status: typeof modification === 'string' ? modification : modification.status,
-                notes: typeof modification === 'object' ? modification.notes : undefined,
+                attendanceStatus: typeof modification === 'string' ? modification : modification.status,
             };
             return attendanceService.updateAttendance(attendanceId, payload);
         });
@@ -151,11 +130,7 @@ export default function AttendanceSessionDetailPage() {
         const absent = studentsAttendance.filter(student =>
             getCurrentStatus(student) === 'ABSENT'
         ).length;
-        const late = studentsAttendance.filter(student =>
-            getCurrentStatus(student) === 'LATE'
-        ).length;
-
-        return { present, absent, late };
+        return { present, absent, late: 0 };
     };
 
     const stats = getAttendanceStats();
@@ -255,7 +230,7 @@ export default function AttendanceSessionDetailPage() {
                     <div>
                         <p className="text-sm text-gray-500">Statistiques</p>
                         <p className="font-medium text-gray-900">
-                            {stats.present} présents • {stats.absent} absents • {stats.late} retards
+                        {stats.present} présents • {stats.absent} absents
                         </p>
                     </div>
                 </div>
@@ -277,11 +252,11 @@ export default function AttendanceSessionDetailPage() {
                         {Math.round((stats.absent / sessionDetails.totalStudents) * 100)}% de la classe
                     </div>
                 </div>
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
-                    <div className="text-3xl font-bold text-amber-600">{stats.late}</div>
-                    <div className="text-sm text-amber-700 mt-1">Retards</div>
-                    <div className="text-xs text-amber-600 mt-2">
-                        {Math.round((stats.late / sessionDetails.totalStudents) * 100)}% de la classe
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-center">
+                    <div className="text-3xl font-bold text-slate-700">{sessionDetails.totalStudents}</div>
+                    <div className="text-sm text-slate-700 mt-1">Enregistrements</div>
+                    <div className="text-xs text-slate-500 mt-2">
+                        Modification unitaire par étudiant
                     </div>
                 </div>
             </div>
@@ -343,9 +318,6 @@ export default function AttendanceSessionDetailPage() {
                                 Statut
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Notes
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Horodatage
                             </th>
                         </tr>
@@ -353,7 +325,6 @@ export default function AttendanceSessionDetailPage() {
                         <tbody className="bg-white divide-y divide-gray-200">
                         {studentsAttendance.map((attendance) => {
                             const currentStatus = getCurrentStatus(attendance);
-                            const currentNotes = getCurrentNotes(attendance);
 
                             return (
                                 <tr key={attendance.id} className="hover:bg-gray-50 transition-colors">
@@ -394,26 +365,7 @@ export default function AttendanceSessionDetailPage() {
                                             >
                                                 ❌ Absent
                                             </button>
-                                            <button
-                                                onClick={() => handleStatusChange(attendance.id, 'LATE')}
-                                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                                    currentStatus === 'LATE'
-                                                        ? 'bg-amber-100 text-amber-800 ring-2 ring-amber-500'
-                                                        : 'bg-gray-100 text-gray-800 hover:bg-amber-50'
-                                                }`}
-                                            >
-                                                ⏰ Retard
-                                            </button>
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <input
-                                            type="text"
-                                            value={currentNotes}
-                                            onChange={(e) => handleNotesChange(attendance.id, e.target.value)}
-                                            placeholder="Ajouter une note..."
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors"
-                                        />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {new Date(attendance.timestamp).toLocaleString('fr-FR')}
@@ -441,18 +393,13 @@ export default function AttendanceSessionDetailPage() {
                                 <span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span>
                                 <strong>Absent</strong> - L'étudiant n'était pas présent
                             </li>
-                            <li className="flex items-center">
-                                <span className="w-3 h-3 bg-amber-500 rounded-full mr-2"></span>
-                                <strong>Retard</strong> - L'étudiant est arrivé en retard
-                            </li>
                         </ul>
                     </div>
                     <div>
                         <h4 className="font-medium text-gray-900 mb-2">Bonnes pratiques</h4>
                         <ul className="space-y-2 text-sm text-gray-600">
-                            <li>• Utilisez les notes pour préciser les raisons d'absence ou de retard</li>
                             <li>• Les modifications sont sauvegardées individuellement</li>
-                            <li>• L'historique des modifications est conservé</li>
+                            <li>• Une action ne modifie que l'étudiant sélectionné</li>
                             <li>• Vous pouvez imprimer cette feuille pour archivage</li>
                         </ul>
                     </div>
