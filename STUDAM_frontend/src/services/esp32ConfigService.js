@@ -21,9 +21,26 @@ const normalizeDepartmentCode = (value) => {
     return words.map((word) => word[0]).join('').toUpperCase();
 };
 
+const normalizeLevel = (value) => {
+    const source = String(value || '').trim().toUpperCase();
+    if (!source) return '';
+
+    const match = source.match(/([1-5])/);
+    return match?.[1] || '';
+};
+
+const normalizeSemester = (value) => {
+    const source = String(value || '').trim().toUpperCase();
+    if (!source) return '';
+    if (source === 'S1' || source === 'S2') return source;
+    if (source.includes('1')) return 'S1';
+    if (source.includes('2')) return 'S2';
+    return source;
+};
+
 const buildTxtDepartmentField = (departmentNames = [], levels = [], semesters = []) => {
-    const normalizedLevels = [...new Set((Array.isArray(levels) ? levels : []).map((level) => String(level).trim()).filter(Boolean))];
-    const normalizedSemesters = [...new Set((Array.isArray(semesters) ? semesters : []).map((semester) => String(semester).trim()).filter(Boolean))];
+    const normalizedLevels = [...new Set((Array.isArray(levels) ? levels : []).map(normalizeLevel).filter(Boolean))];
+    const normalizedSemesters = [...new Set((Array.isArray(semesters) ? semesters : []).map(normalizeSemester).filter(Boolean))];
     const semesterSpec = normalizedSemesters.length > 0 ? normalizedSemesters.join('|') : 'S1';
     const levelSpec = normalizedLevels.length > 0
         ? normalizedLevels.map((level) => `${level}(${semesterSpec})`).join(',')
@@ -42,8 +59,8 @@ const buildTxtAffectField = (departmentNames = [], levels = [], semesters = [], 
         .map(normalizeDepartmentCode)
         .filter(Boolean))];
     const selectedDepartments = departments.length > 0 ? departments : ['GEN'];
-    const selectedLevels = [...new Set((Array.isArray(levels) ? levels : []).map((level) => String(level).trim()).filter(Boolean))];
-    const selectedSemesters = [...new Set((Array.isArray(semesters) ? semesters : []).map((semester) => String(semester).trim()).filter(Boolean))];
+    const selectedLevels = [...new Set((Array.isArray(levels) ? levels : []).map(normalizeLevel).filter(Boolean))];
+    const selectedSemesters = [...new Set((Array.isArray(semesters) ? semesters : []).map(normalizeSemester).filter(Boolean))];
     const selectedSubjects = [...new Set((Array.isArray(subjects) ? subjects : []).map((subject) => String(subject).trim()).filter(Boolean))];
 
     const levelsToUse = selectedLevels.length > 0 ? selectedLevels : ['3'];
