@@ -61,23 +61,7 @@ public class SubjectService {
 
     subject = subjectRepository.save(subject);
 
-    // Assign teacher (enforce one teacher per subject)
-    if (subjectRequestDTO.getTeacherId() != null) {
-      User newTeacher = userLookupService.getUserById(subjectRequestDTO.getTeacherId());
-
-      // Remove all existing teachers from this subject first
-      if (subject.getTeachers() != null && !subject.getTeachers().isEmpty()) {
-        for (User oldTeacher : new ArrayList<>(subject.getTeachers())) {
-          oldTeacher.getSubjects().remove(subject);
-          userRepository.save(oldTeacher);
-        }
-        subject.getTeachers().clear();
-      }
-
-      // Add the new teacher
-      newTeacher.addSubject(subject);
-      userRepository.save(newTeacher);
-    }
+    syncSubjectTeacher(subject, subjectRequestDTO.getTeacherId());
 
     return subject;
   }
@@ -104,23 +88,7 @@ public class SubjectService {
 
     subject = subjectRepository.save(subject);
 
-    // Update teacher assignment (enforce one teacher per subject)
-    if (subjectRequestDTO.getTeacherId() != null) {
-      User newTeacher = userLookupService.getUserById(subjectRequestDTO.getTeacherId());
-
-      // Remove all existing teachers from this subject first
-      if (subject.getTeachers() != null && !subject.getTeachers().isEmpty()) {
-        for (User oldTeacher : new ArrayList<>(subject.getTeachers())) {
-          oldTeacher.getSubjects().remove(subject);
-          userRepository.save(oldTeacher);
-        }
-        subject.getTeachers().clear();
-      }
-
-      // Add the new teacher
-      newTeacher.addSubject(subject);
-      userRepository.save(newTeacher);
-    }
+    syncSubjectTeacher(subject, subjectRequestDTO.getTeacherId());
 
     return subject;
   }
@@ -222,5 +190,31 @@ public class SubjectService {
     }
 
     return classes;
+  }
+
+  private void syncSubjectTeacher(Subject subject, Integer teacherId) {
+    User requestedTeacher = teacherId == null ? null : userLookupService.getUserById(teacherId);
+
+    if (subject.getTeachers() != null && !subject.getTeachers().isEmpty()) {
+      for (User teacher : new ArrayList<>(subject.getTeachers())) {
+        if (requestedTeacher != null && teacher.getId() == requestedTeacher.getId()) {
+          continue;
+        }
+        teacher.removeSubject(subject);
+        userRepository.save(teacher);
+      }
+    }
+
+    if (requestedTeacher == null) {
+      return;
+    }
+
+    if (subject.getTeachers() != null
+        && subject.getTeachers().stream().anyMatch(teacher -> teacher.getId() == requestedTeacher.getId())) {
+      return;
+    }
+
+    requestedTeacher.addSubject(subject);
+    userRepository.save(requestedTeacher);
   }
 }
