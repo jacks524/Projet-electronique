@@ -140,7 +140,7 @@ export default function CreateSubjectPage() {
         setLoading(true);
 
         try {
-            await subjectService.create({
+            const createdSubject = await subjectService.create({
                 name: formData.libelle,
                 code: formData.code.toUpperCase(),
                 description: formData.description,
@@ -151,6 +151,13 @@ export default function CreateSubjectPage() {
                 teacherId: parseInt(formData.teacherId, 10),
                 classId: formData.classId ? parseInt(formData.classId, 10) : null
             });
+
+            if (formData.classId && (createdSubject?.subjectId || createdSubject?.id)) {
+                await classService.assignSubject(
+                    parseInt(formData.classId, 10),
+                    createdSubject.subjectId || createdSubject.id
+                );
+            }
 
             toast.success("Matiere creee avec succes");
             router.push('/chief/subjects');

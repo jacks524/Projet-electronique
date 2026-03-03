@@ -69,6 +69,15 @@ const remove = async (classId) => {
     }
 };
 
+const assignSubject = async (classId, subjectId) => {
+    try {
+        await apiClient.put(`/class/${classId}/assign-subject/${subjectId}`);
+    } catch (error) {
+        console.error('Erreur API [assignSubjectToClass]:', error);
+        throw new Error("L'assignation de la matiere a la classe a echoue.");
+    }
+};
+
 const classService = {
     getByDepartment,
     getByTeacher,
@@ -76,6 +85,7 @@ const classService = {
     create,
     update,
     remove,
+    assignSubject,
 };
 
 export default classService;

@@ -43,7 +43,14 @@ const create = async (payload) => {
 
 const update = async (subjectId, payload) => {
     try {
-        const { data } = await apiClient.put(`/subject/${subjectId}`, payload);
+        const normalizedPayload = {
+            ...payload,
+            ...(payload.classId ? { classId: Number(payload.classId) } : {}),
+            ...(Array.isArray(payload.classes)
+                ? { classes: payload.classes.map((value) => Number(value)).filter((value) => !Number.isNaN(value)) }
+                : {}),
+        };
+        const { data } = await apiClient.put(`/subject/${subjectId}`, normalizedPayload);
         return data;
     } catch (error) {
         console.error('Erreur API [updateSubject]:', error);

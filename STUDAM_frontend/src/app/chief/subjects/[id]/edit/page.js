@@ -26,7 +26,7 @@ export default function EditSubjectPage() {
         heuresCoursParSemaine: '',
         departmentId: '',
         teacherId: '',
-        classes: []
+        classId: ''
     });
 
     const [departments, setDepartments] = useState([]);
@@ -79,8 +79,10 @@ export default function EditSubjectPage() {
             setTeachers(Array.isArray(teachersData) ? teachersData : []);
             setClasses(Array.isArray(classesData) ? classesData : []);
 
-            // Extract class IDs from subjectData if available
-            const assignedClassIds = subjectData?.classes ? subjectData.classes.map(c => c.id || c.classId) : [];
+            const assignedClassIds = Array.isArray(subjectData?.classes)
+                ? subjectData.classes.map((c) => c?.id || c?.classId).filter(Boolean)
+                : [];
+            const resolvedClassId = assignedClassIds.length > 0 ? String(assignedClassIds[0]) : '';
 
             setFormData({
                 libelle: subjectData?.name || subjectData?.libelle || '',
@@ -91,7 +93,7 @@ export default function EditSubjectPage() {
                 heuresCoursParSemaine: subjectData?.heuresCoursParSemaine ? subjectData.heuresCoursParSemaine.toString() : '',
                 departmentId: chiefDepartment.departmentId.toString(),
                 teacherId: subjectData?.teacher?.id ? subjectData.teacher.id.toString() : (subjectData?.teacherId ? subjectData.teacherId.toString() : ''),
-                classes: assignedClassIds
+                classId: resolvedClassId
             });
 
         } catch (error) {
@@ -174,8 +176,13 @@ export default function EditSubjectPage() {
                 heuresCoursParSemaine: parseInt(formData.heuresCoursParSemaine, 10) || 0,
                 departmentId: parseInt(formData.departmentId, 10),
                 teacherId: parseInt(formData.teacherId, 10),
-                classes: formData.classes
+                classId: formData.classId ? parseInt(formData.classId, 10) : null,
+                classes: formData.classId ? [parseInt(formData.classId, 10)] : []
             });
+
+            if (formData.classId) {
+                await classService.assignSubject(parseInt(formData.classId, 10), parseInt(subjectId, 10));
+            }
 
             toast.success("Matiere modifiee avec succes");
             router.push(`/chief/subjects/${subjectId}`);
@@ -298,21 +305,17 @@ export default function EditSubjectPage() {
                         </div>
 
                         <div className="md:col-span-2">
-                            <label htmlFor="classes" className="block text-sm font-medium text-gray-700 mb-1">
-                                Classes assignées
+                            <label htmlFor="classId" className="block text-sm font-medium text-gray-700 mb-1">
+                                Classe assignée
                             </label>
                             <select
-                                id="classes"
-                                name="classes"
-                                multiple
-                                value={formData.classes}
-                                onChange={(e) => {
-                                    const selected = Array.from(e.target.selectedOptions, option => parseInt(option.value));
-                                    setFormData(prev => ({ ...prev, classes: selected }));
-                                }}
+                                id="classId"
+                                name="classId"
+                                value={formData.classId}
+                                onChange={handleChange}
                                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#7c3aed] focus:border-[#7c3aed] sm:text-sm"
-                                size="4"
                             >
+                                <option value="">Selectionner une classe (optionnel)</option>
                                 {classes.map((classe) => (
                                     <option key={classe.classId} value={classe.classId}>
                                         {classe.name}
@@ -320,7 +323,7 @@ export default function EditSubjectPage() {
                                 ))}
                             </select>
                             <p className="mt-1 text-xs text-gray-500">
-                                Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs classes.
+                                Choisissez la classe dans laquelle cette matière doit apparaître.
                             </p>
                         </div>
 
