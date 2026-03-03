@@ -43,13 +43,7 @@ public class SubjectService {
     // Verify if department exists
     Department department = this.departmentRepository.findById(subjectRequestDTO.getDepartmentId())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
-    List<Class> classes = new ArrayList<Class>();
-    // Verify if classes exists
-    if (subjectRequestDTO.getClasses() != null && !subjectRequestDTO.getClasses().isEmpty()) {
-      for (int classId : subjectRequestDTO.getClasses()) {
-        classes.add(classLookupService.getClassById(classId));
-      }
-    }
+    List<Class> classes = resolveClasses(subjectRequestDTO);
 
     // Création du département
     Subject subject = new Subject();
@@ -103,11 +97,8 @@ public class SubjectService {
         subjectRequestDTO.getHeuresCoursParSemaine() != null ? subjectRequestDTO.getHeuresCoursParSemaine() : 0);
     subject.setDepartment(department);
 
-    if (subjectRequestDTO.getClasses() != null) {
-      List<Class> classes = new ArrayList<Class>();
-      for (int classId : subjectRequestDTO.getClasses()) {
-        classes.add(classLookupService.getClassById(classId));
-      }
+    if (subjectRequestDTO.getClasses() != null || subjectRequestDTO.getClassId() != null) {
+      List<Class> classes = resolveClasses(subjectRequestDTO);
       subject.setClasses(classes);
     }
 
@@ -212,5 +203,24 @@ public class SubjectService {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Semester must be S1 or S2");
     }
     return normalized;
+  }
+
+  private List<Class> resolveClasses(SubjectRequestDTO subjectRequestDTO) {
+    List<Class> classes = new ArrayList<Class>();
+    java.util.LinkedHashSet<Integer> classIds = new java.util.LinkedHashSet<>();
+
+    if (subjectRequestDTO.getClasses() != null && !subjectRequestDTO.getClasses().isEmpty()) {
+      classIds.addAll(subjectRequestDTO.getClasses());
+    }
+
+    if (subjectRequestDTO.getClassId() != null) {
+      classIds.add(subjectRequestDTO.getClassId());
+    }
+
+    for (int classId : classIds) {
+      classes.add(classLookupService.getClassById(classId));
+    }
+
+    return classes;
   }
 }

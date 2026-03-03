@@ -33,4 +33,6 @@ public class SubjectRequestDTO {
   private Integer teacherId;
 
   private List<Integer> classes;
+
+  private Integer classId;
 }

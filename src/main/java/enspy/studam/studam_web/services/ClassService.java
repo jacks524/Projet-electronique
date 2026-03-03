@@ -167,8 +167,17 @@ public class ClassService {
     public void assignSubjectToClass(int classId, int subjectId) {
         Class cls = this.classLookupService.getClassById(classId);
         Subject subject = this.subjectLookupService.getSubjectById(subjectId);
-        cls.getSubjects().add(subject);
-        classRepository.save(cls);
+        List<Subject> subjects = cls.getSubjects();
+        if (subjects == null) {
+            subjects = new ArrayList<>();
+            cls.setSubjects(subjects);
+        }
+        boolean alreadyAssigned = subjects.stream()
+                .anyMatch(existing -> existing.getSubjectId() == subject.getSubjectId());
+        if (!alreadyAssigned) {
+            subjects.add(subject);
+            classRepository.save(cls);
+        }
         java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
         payload.put("classId", cls.getClassId());
         payload.put("className", cls.getName());
