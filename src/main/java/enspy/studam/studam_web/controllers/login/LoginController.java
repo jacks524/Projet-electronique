@@ -206,7 +206,7 @@ public class LoginController {
   public ResponseEntity<TeacherResponseDTO> removeSubjetToTeacher(@PathVariable int teacherId,
       @PathVariable int subjectId) {
     User teacher = this.userService.removeSubjetToTeacher(teacherId, subjectId);
-    return ResponseEntity.ok().body(TeacherResponseDTO.toDTO(teacher, teacher.getSubjects()));
+    return ResponseEntity.ok().body(this.userService.buildTeacherResponse(teacher));
   }
 
   @PutMapping("/{teacherId}/assign-to-departments")
@@ -297,6 +297,6 @@ public class LoginController {
   @GetMapping("/teacher/{teacherId}")
   public ResponseEntity<TeacherResponseDTO> getTeacherById(@PathVariable int teacherId) {
     User teacher = this.userLookupService.getUserById(teacherId);
-    return ResponseEntity.ok().body(TeacherResponseDTO.toDTO(teacher, teacher.getSubjects()));
+    return ResponseEntity.ok().body(this.userService.buildTeacherResponse(teacher));
   }
 }

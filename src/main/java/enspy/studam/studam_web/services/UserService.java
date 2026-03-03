@@ -16,10 +16,12 @@ import enspy.studam.studam_web.dto.responseDTO.UserDTO.TeacherResponseDTO;
 import enspy.studam.studam_web.dto.responseDTO.UserDTO.UsersResponseStatictics;
 import enspy.studam.studam_web.enumeration.UserRoleEnum;
 import enspy.studam.studam_web.models.Department;
+import enspy.studam.studam_web.models.Schedule;
 import enspy.studam.studam_web.models.Subject;
 import enspy.studam.studam_web.models.User;
 import enspy.studam.studam_web.models.UserRole;
 import enspy.studam.studam_web.repositories.DepartmentRepository;
+import enspy.studam.studam_web.repositories.SchedulerRepository;
 import enspy.studam.studam_web.repositories.StudentRepository;
 import enspy.studam.studam_web.repositories.UserRepository;
 import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
@@ -42,6 +44,7 @@ public class UserService implements UserDetailsService {
   private DepartmentLookupService departmentLookupService;
   private final StudentLookupService studentLookupService;
   private final StudentRepository studentRepository;
+  private final SchedulerRepository schedulerRepository;
   private final WebSocketEventPublisher webSocketEventPublisher;
 
   @Override
@@ -90,28 +93,51 @@ public class UserService implements UserDetailsService {
     }
 
     return users.stream().map(user -> {
-      TeacherResponseDTO dto = TeacherResponseDTO.toDTO(user, user.getSubjects());
+      return buildTeacherResponse(user);
+    }).toList();
+  }
 
-      // Calculate class count and student count
-      java.util.Set<Integer> classIds = new java.util.HashSet<>();
-      int totalStudents = 0;
+  public TeacherResponseDTO buildTeacherResponse(User teacher) {
+    TeacherResponseDTO dto = TeacherResponseDTO.toDTO(teacher, teacher.getSubjects());
+    TeacherClassStats stats = buildTeacherClassStats(teacher);
+    dto.setClassCount(stats.classIds().size());
+    dto.setStudentCount(stats.totalStudents());
+    return dto;
+  }
 
-      // For each subject the teacher teaches
-      for (Subject subject : user.getSubjects()) {
-        if (subject.getClasses() != null) {
-          for (enspy.studam.studam_web.models.Class cls : subject.getClasses()) {
-            classIds.add(cls.getClassId());
-            // Count students in this class
-            totalStudents += (int) studentRepository.countByClasses_ClassId(cls.getClassId());
-          }
+  private TeacherClassStats buildTeacherClassStats(User teacher) {
+    java.util.Set<Integer> classIds = new java.util.HashSet<>();
+    int totalStudents = 0;
+
+    for (Subject subject : teacher.getSubjects()) {
+      if (subject.getClasses() == null) {
+        continue;
+      }
+      for (enspy.studam.studam_web.models.Class cls : subject.getClasses()) {
+        if (classIds.add(cls.getClassId())) {
+          totalStudents += (int) studentRepository.countByClasses_ClassId(cls.getClassId());
         }
       }
+    }
 
-      dto.setClassCount(classIds.size());
-      dto.setStudentCount(totalStudents);
+    if (!classIds.isEmpty()) {
+      return new TeacherClassStats(classIds, totalStudents);
+    }
 
-      return dto;
-    }).toList();
+    for (Schedule schedule : schedulerRepository.findByTeacher(teacher)) {
+      if (schedule.getTimetable() == null || schedule.getTimetable().getClazz() == null) {
+        continue;
+      }
+      enspy.studam.studam_web.models.Class cls = schedule.getTimetable().getClazz();
+      if (classIds.add(cls.getClassId())) {
+        totalStudents += (int) studentRepository.countByClasses_ClassId(cls.getClassId());
+      }
+    }
+
+    return new TeacherClassStats(classIds, totalStudents);
+  }
+
+  private record TeacherClassStats(java.util.Set<Integer> classIds, int totalStudents) {
   }
 
   public Page<UserResponseDTO> getAllUsers(int page, int size) {

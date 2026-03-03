@@ -11,6 +11,7 @@ import enspy.studam.studam_web.repositories.DepartmentRepository;
 import enspy.studam.studam_web.services.lookup.ClassLookupService;
 import enspy.studam.studam_web.services.lookup.DepartmentLookupService;
 import enspy.studam.studam_web.services.lookup.SubjectLookupService;
+import enspy.studam.studam_web.services.lookup.UserLookupService;
 import enspy.studam.studam_web.websocket.WebSocketEventPublisher;
 import lombok.AllArgsConstructor;
 import enspy.studam.studam_web.dto.responseDTO.ClassResponseDTO;
@@ -22,6 +23,7 @@ import enspy.studam.studam_web.models.Timetable;
 import enspy.studam.studam_web.models.AttendanceSession;
 import enspy.studam.studam_web.models.Attendance;
 import enspy.studam.studam_web.models.Schedule;
+import enspy.studam.studam_web.models.User;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -44,6 +46,7 @@ public class ClassService {
     private SubjectService subjectService;
     private ClassLookupService classLookupService;
     private SubjectLookupService subjectLookupService;
+    private UserLookupService userLookupService;
     private StudentRepository studentRepository;
     private TimetableRepository timetableRepository;
     private SchedulerRepository schedulerRepository;
@@ -130,11 +133,32 @@ public class ClassService {
     public List<Class> getTeacherClasses(int teacherId) {
         List<Subject> subjects = this.subjectService.getSubjectsByTeacherId(teacherId);
         List<Class> classes = new ArrayList<Class>();
+        java.util.Set<Integer> classIds = new java.util.LinkedHashSet<>();
 
-        // Ici on suppose qu'une matière appartient à une seule classe et un seul
-        // ensignant
         for (Subject subject : subjects) {
-            classes.addAll(subject.getClasses());
+            if (subject.getClasses() == null) {
+                continue;
+            }
+            for (Class clazz : subject.getClasses()) {
+                if (clazz != null && classIds.add(clazz.getClassId())) {
+                    classes.add(clazz);
+                }
+            }
+        }
+
+        if (!classes.isEmpty()) {
+            return classes;
+        }
+
+        User teacher = this.userLookupService.getUserById(teacherId);
+        for (Schedule schedule : schedulerRepository.findByTeacher(teacher)) {
+            if (schedule.getTimetable() == null || schedule.getTimetable().getClazz() == null) {
+                continue;
+            }
+            Class clazz = schedule.getTimetable().getClazz();
+            if (classIds.add(clazz.getClassId())) {
+                classes.add(clazz);
+            }
         }
 
         return classes;

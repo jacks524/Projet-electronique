@@ -1,6 +1,7 @@
 package enspy.studam.studam_web.services;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -8,10 +9,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import enspy.studam.studam_web.dto.requestDTO.ScheduleRequestDTO;
+import enspy.studam.studam_web.models.Class;
 import enspy.studam.studam_web.models.Schedule;
 import enspy.studam.studam_web.models.Subject;
 import enspy.studam.studam_web.models.Timetable;
 import enspy.studam.studam_web.models.User;
+import enspy.studam.studam_web.repositories.ClassRepository;
 import enspy.studam.studam_web.repositories.SchedulerRepository;
 import enspy.studam.studam_web.services.lookup.SchedulerLookupService;
 import enspy.studam.studam_web.services.lookup.SubjectLookupService;
@@ -25,6 +28,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class SchedulerService {
 
+  private final ClassRepository classRepository;
   private final SchedulerRepository schedulerRepository;
   private final SchedulerLookupService schedulerLookupService;
   private final UserService userService;
@@ -70,6 +74,7 @@ public class SchedulerService {
     schedule = schedulerRepository.save(schedule);
 
     this.userService.assignTeacherToSubject(entity.getSubjectId(), entity.getTeacherId());
+    ensureSubjectAssignedToTimetableClass(timetable, subject);
 
     publishScheduleEvent("schedule.created", schedule);
     return schedule;
@@ -90,9 +95,30 @@ public class SchedulerService {
     schedule = schedulerRepository.save(schedule);
 
     this.userService.assignTeacherToSubject(entity.getSubjectId(), entity.getTeacherId());
+    ensureSubjectAssignedToTimetableClass(timetable, subject);
 
     publishScheduleEvent("schedule.updated", schedule);
     return schedule;
+  }
+
+  private void ensureSubjectAssignedToTimetableClass(Timetable timetable, Subject subject) {
+    if (timetable == null || timetable.getClazz() == null || subject == null) {
+      return;
+    }
+
+    Class clazz = timetable.getClazz();
+    List<Subject> subjects = clazz.getSubjects();
+    if (subjects == null) {
+      subjects = new ArrayList<>();
+      clazz.setSubjects(subjects);
+    }
+
+    boolean alreadyAssigned = subjects.stream()
+        .anyMatch(existing -> existing.getSubjectId() == subject.getSubjectId());
+    if (!alreadyAssigned) {
+      subjects.add(subject);
+      classRepository.save(clazz);
+    }
   }
 
   private void publishScheduleEvent(String type, Schedule schedule) {
