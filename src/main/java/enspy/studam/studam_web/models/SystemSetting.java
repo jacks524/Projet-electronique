@@ -24,7 +24,7 @@ public class SystemSetting {
   private String settingKey;
 
   @Lob
-  @Column(columnDefinition = "LONGTEXT")
+  @Column(columnDefinition = "TEXT")
   private String settingValue;
 
   private LocalDateTime updatedAt;

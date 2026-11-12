@@ -2,16 +2,17 @@ spring:
   application:
     name: studam-web
   datasource:
-    url: jdbc:mysql://${DATABASE_HOST:localhost}:${DATABASE_PORT:3308}/${DATABASE_NAME:studam_database}?sslMode=${DATABASE_SSL_MODE:DISABLED}&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: ${DATABASE_USER:root}
+    url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:studam_database}?sslmode=${DATABASE_SSL_MODE:disable}
+    username: ${DATABASE_USER:postgres}
     password: ${DATABASE_PASSWORD:open2021}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
+        jdbc:
+          time_zone: UTC
 
   mail:
     host: smtp.gmail.com

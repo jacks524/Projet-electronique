@@ -21,8 +21,8 @@ public interface AttendanceSessionRepository extends JpaRepository<AttendanceSes
       SELECT a FROM AttendanceSession a
       WHERE (:teacher IS NULL OR a.teacher = :teacher)
         AND (:department IS NULL OR a.subject.department = :department)
-        AND (:startDate IS NULL OR a.date >= :startDate)
-        AND (:endDate IS NULL OR a.date <= :endDate)
+        AND (CAST(:startDate AS LocalDateTime) IS NULL OR a.date >= :startDate)
+        AND (CAST(:endDate AS LocalDateTime) IS NULL OR a.date <= :endDate)
       """)
   List<AttendanceSession> searchSessions(User teacher, Department department, LocalDateTime startDate,
       LocalDateTime endDate);

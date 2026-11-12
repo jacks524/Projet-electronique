@@ -8,18 +8,20 @@ services:
       - "9026:8080"
     environment:
       - DATABASE_HOST=db
-      - DATABASE_PORT=3306
-      - DATABASE_USER=root
+      - DATABASE_PORT=5432
+      - DATABASE_USER=postgres
       - DATABASE_PASSWORD=open2021
       - DATABASE_NAME=studam_database
+      - DATABASE_SSL_MODE=disable
     depends_on:
       - db
 
   db:
-    image: mysql:latest
+    image: postgres:16
     container_name: db
     environment:
-      MYSQL_DATABASE: studam_database
-      MYSQL_ROOT_PASSWORD: open2021
+      POSTGRES_DB: studam_database
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: open2021
     ports:
-      - "3308:3306"
+      - "5433:5432"

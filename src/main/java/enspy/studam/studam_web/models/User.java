@@ -23,10 +23,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "users") // "user" est un mot reserve en PostgreSQL
 @Data
 @NoArgsConstructor
 public class User implements UserDetails {
